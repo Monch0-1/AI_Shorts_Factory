@@ -1,0 +1,31 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Variables de entorno y configuración
+.env
+.env.*
+*.env
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos temporales
+*.mp4
+*.mp3
+*.wav
+temp_*/
+
+# Carpetas de salida
+output/
+resources/audio/temp_audio/
+
+# Archivos de IDE
+.idea/
+.vscode/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
