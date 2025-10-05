@@ -14,7 +14,7 @@ def generate_debate_script_json(topic: str, time_limit: int):
         items=types.Schema(
             type=types.Type.OBJECT,
             properties={
-                "speaker": types.Schema(type=types.Type.STRING, description="Narrator A or Narrator B"),
+                "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
                 "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
                 "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
             },
@@ -26,8 +26,8 @@ def generate_debate_script_json(topic: str, time_limit: int):
     _system_instruction = (
         "You are a highly skilled scriptwriter for short-form social media comedy and tech debates. "
         "Your primary goal is to write a casual, witty, and engaging dialogue strictly between two characters. "
-        "Narrator A must pose skeptical, common-sense questions to expose flaws. "
-        "Narrator B must provide clear, witty, and often funny analogies to explain complex concepts simply. "
+        "Nina must pose skeptical, common-sense questions to expose flaws. "
+        "Tina must provide clear, witty, and often funny analogies to explain complex concepts simply. "
         "The conversation must flow naturally without lecturing the audience. Return ONLY a valid JSON array."
     )
 
@@ -36,7 +36,7 @@ def generate_debate_script_json(topic: str, time_limit: int):
 
         TOPIC: {topic}
 
-        DURATION: The total read time should aim for approximately {time_limit} seconds.
+        DURATION: The total read time should aim for {time_limit} aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
 
         STYLE REQUIREMENTS:
         1. The entire script must be in **ENGLISH**.
@@ -44,11 +44,12 @@ def generate_debate_script_json(topic: str, time_limit: int):
         3. Include at least one **humorous or simple analogy** from Narrator B.
         
         **CHARACTERS & TONE:**
-        * **Narrator A (The Skeptical Beginner):** Speaks casually, uses contractions (e.g., "gonna," "don't"), and asks simple, common-sense questions to expose flaws or complexities. Must sound slightly frustrated or confused.
-        * **Narrator B (The Witty Expert):** Speaks clearly, uses humor, and provides simple, fun analogies to explain complex solutions. Must have a friendly, lighthearted tone.
+        * **Nina (The Skeptical Beginner):** Speaks casually, uses contractions (e.g., "gonna," "don't"), and asks simple, common-sense questions to expose flaws or complexities. Must sound slightly frustrated or confused.
+        * **Tina (The Witty Expert):** Speaks clearly, uses humor, and provides simple, fun analogies to explain complex solutions. Must have a friendly, lighthearted tone.
         * **Dialogue Style:** The conversation must flow naturally between A and B, maintaining a **casual, witty, and slightly exaggerated tone**. They are talking to each other, not lecturing the audience.
         
         **Content:** Include at least one **witty analogy** or **humorous example** from Narrator B.
+        **Json Format:** Use short lines of text, if a dialog is longer than 20 words, break it into multiple lines (this for short subtitles).
         **End**: Finish with a nice casual farewell
     
         Strictly adhere to the established character roles and return ONLY the JSON array structure.

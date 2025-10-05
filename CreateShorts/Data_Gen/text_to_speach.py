@@ -15,8 +15,8 @@ class AudioChunkInfo:
     filename: str
 
 VOICE_IDS = {
-    "Narrator A": "RXtWW6etvimS8QJ5nhVk",
-    "Narrator B": "2BJW5coyhAzSr8STdHbE",
+    "Nina": "kv829HVkmQ1fOJX1MjSN",
+    "Tina": "CCYamdRMfatPAgJsW7xb",
 }
 MODEL_ID = "eleven_multilingual_v2"
 client = load_env_data(ElevenLabs, "ELEVEN_API_KEY")

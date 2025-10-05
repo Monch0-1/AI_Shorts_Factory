@@ -5,10 +5,10 @@ This module handles the creation of vertical format videos (9:16) for social med
 including audio mixing and video composition functionality.
 """
 
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, ColorClip, CompositeVideoClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, ColorClip, CompositeVideoClip, TextClip
 from PIL import Image
 import os
-from typing import Optional
+from typing import Optional, List
 
 # --- Video Format Constants ---
 VERTICAL_WIDTH = 1080    # Width for vertical video format (9:16)
@@ -80,29 +80,20 @@ def format_video_vertical(video_clip: VideoFileClip, duration_sec: float) -> Com
     ])
 
 def create_final_video(voice_path: str, music_path: str, video_background_path: str, 
-                      output_path: str, duration_sec: float) -> None:
+                      output_path: str, duration_sec: float, 
+                      subtitle_clips: List[TextClip] = None) -> None:
     """
-    Creates a final vertical format video with mixed audio.
-
+    Creates a final vertical format video with mixed audio and subtitles.
+    
     Args:
-        voice_path (str): Path to voice audio file
-        music_path (str): Path to background music file
-        video_background_path (str): Path to background video file
-        output_path (str): Path for output video file
-        duration_sec (float): Desired video duration in seconds
-
-    Raises:
-        VideoMixingError: If video creation fails
+        voice_path: Path to voice audio file
+        music_path: Path to background music file
+        video_background_path: Path to background video file
+        output_path: Path for output video file
+        duration_sec: Desired video duration in seconds
+        subtitle_clips: Optional list of subtitle clips to add
     """
-    # Initialize resource handles
-    master_audio: Optional[CompositeAudioClip] = None
-    background_clip: Optional[VideoFileClip] = None
-    final_clip: Optional[CompositeVideoClip] = None
-
     try:
-        # Ensure output directory exists
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
         # Create audio mix
         master_audio = create_mixed_audio_clip(voice_path, music_path, duration_sec)
         
@@ -110,11 +101,15 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
         background_clip = VideoFileClip(video_background_path)
         formatted_video = format_video_vertical(background_clip, duration_sec)
         
-        # Combine audio and video
+        # Combine with subtitles if provided
+        if subtitle_clips:
+            formatted_video = CompositeVideoClip([formatted_video] + subtitle_clips)
+        
+        # Add audio
         final_clip = formatted_video.set_audio(master_audio)
 
         # Render final video
-        print("-> Rendering final video (9:16 Optimized)...")
+        print("-> Rendering final video with subtitles (9:16 Optimized)...")
         final_clip.write_videofile(
             output_path,
             fps=FPS,
@@ -123,7 +118,7 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
             logger=None,
             threads=4
         )
-        print(f"-> Video completed: {output_path} ({duration_sec} seconds)")
+        print(f"-> Video completed: {output_path}")
 
     except Exception as e:
         raise VideoMixingError(f"Failed to create final video: {str(e)}")
