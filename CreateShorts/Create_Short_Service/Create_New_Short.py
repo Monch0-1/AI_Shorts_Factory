@@ -32,6 +32,7 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         theme (str): Theme name to use for video configuration
         use_template (bool): Whether to use a template
     """
+
     print(f"-> Starting short video creation for topic: {topic}")
     print(f"-> Using theme: {theme}")
 
@@ -85,7 +86,8 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
             voice_path=final_audio_path,
             music_path=theme_config.music_path,
             video_background_path=theme_config.video_path,
-            output_path=str(project_root / "output" / "final_short.mp4"),
+            output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower()}.mp4"
+),
             duration_sec=duration_seconds,
             subtitle_clips=subtitle_clips,
             background_volume=theme_config.music_volume
