@@ -16,7 +16,7 @@ class AudioChunkInfo:
 
 VOICE_IDS = {
     "Nina": "kv829HVkmQ1fOJX1MjSN",
-    "Tina": "CCYamdRMfatPAgJsW7xb",
+    "Tina": "GwUCiXil6qHfygWUJEwS",
 }
 MODEL_ID = "eleven_multilingual_v2"
 client = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
@@ -103,3 +103,29 @@ def generate_dialogue_audio(json_script_str: str) -> list[AudioChunkInfo]:
         print(f"   Texto: {chunk.text}")
 
     return audio_chunks_info
+
+def clean_temp_audio():
+    """
+    Limpia todos los archivos de audio temporales en el directorio TEMP_DIR.
+    """
+    try:
+        if os.path.exists(TEMP_DIR):
+            # Obtener lista de archivos en el directorio
+            files = os.listdir(TEMP_DIR)
+            
+            # Eliminar cada archivo
+            for file in files:
+                file_path = os.path.join(TEMP_DIR, file)
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        print(f"-> Archivo eliminado: {file}")
+                except Exception as e:
+                    print(f"Error al eliminar {file}: {e}")
+            
+            print("-> Limpieza de archivos temporales completada")
+        else:
+            print(f"-> El directorio {TEMP_DIR} no existe")
+            
+    except Exception as e:
+        print(f"Error durante la limpieza: {e}")
