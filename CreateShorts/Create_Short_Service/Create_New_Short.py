@@ -2,12 +2,14 @@ import os
 from pathlib import Path
 
 from CreateShorts.Data_Gen.create_audio import assemble_dialogue_pydub
-from CreateShorts.Data_Gen.create_script_debate import generate_debate_script_json
+from CreateShorts.Data_Gen.generateScript import generate_script
 from CreateShorts.Data_Gen.mix_assets import create_final_video
 from CreateShorts.Data_Gen.text_to_speach import generate_dialogue_audio
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
 from create_video import get_absolute_path
 
+DEFAULT_MUSIC_THEME = "2_23_AM.mp3"
+HORROR_MUSIC_THEME = "horror.mp3"
 
 # Future update Skyreels.ai
 # Crear configuración personalizada (opcional)
@@ -20,18 +22,32 @@ config = SubtitleConfig(
 )
 
 
+def get_music_theme_path(theme: str | None) -> str:
+    """
+    Determina la ruta del archivo de música basado en el tema.
+
+    Args:
+        theme: Tema musical solicitado
+
+    Returns:
+        str: Nombre del archivo de música a utilizar
+    """
+    if theme == "horror":
+        return HORROR_MUSIC_THEME
+    return DEFAULT_MUSIC_THEME
+
 
 def get_project_root():
     """Obtiene la ruta raíz del proyecto"""
     return Path(__file__).parent.parent
 
-def create_complete_short(topic: str, duration_seconds: int):
+def create_complete_short(topic: str, duration_seconds: int, is_monologue: bool, theme: str = None, theme_context: str = None):
     """Creates a complete short video from start to finish."""
     print(f"-> Starting short video creation for topic: {topic}")
     
     # 1. Generate the script
     print("-> Generating script...")
-    script_json = generate_debate_script_json(topic, duration_seconds)
+    script_json = generate_script(topic, duration_seconds, is_monologue, theme_context)
     
     # 2. Generate audio chunks in memory
     print("-> Converting script to audio...")
@@ -68,7 +84,7 @@ def create_complete_short(topic: str, duration_seconds: int):
         project_root = get_project_root()
         create_final_video(
             voice_path=final_audio_path,
-            music_path=str(project_root / "resources" / "audio" / "2_23_AM.mp3"),
+            music_path=str(project_root / "resources" / "audio" / get_music_theme_path(theme)),
             video_background_path=str(project_root / "resources" / "video" / "4.mp4"),
             output_path=str(project_root / "output" / "final_short.mp4"),
             duration_sec=duration_seconds,
@@ -88,6 +104,19 @@ if __name__ == "__main__":
     output_video = get_absolute_path("final_short.mp4")
     
     create_complete_short(
-        topic="Genshin Impact new character Flins",
+        topic="The unsettling silence of a remote cabin, where things keep moving when you're not looking.",
         duration_seconds=60,
+        is_monologue=True,
+        theme= "horror",
+        theme_context=f"""The story is about extreme isolation and psychological horror. 
+        A solitary man, deeply obsessed with his recently deceased mother, 
+        lives in a decaying farmhouse. Following his mother's death, he sealed her room off, 
+        leaving the rest of the house to rot. The core horror is that the man didn't just leave the house; 
+        he started filling it with objects made from things he found—things that looked like furniture, 
+        clothing, or bowls, but were clearly fabricated from human remains. 
+        The discovery of these household items is the central horrifying event. 
+        Focus on the sensory details of the house: the dust, the silence, the smell of decay, 
+        and the chilling realization that ordinary objects have been twisted into something macabre. 
+        The climax should be the discovery of a 'trophy' item made of human skin that suggests a deeper, 
+        terrifying obsession with identity."""
     )

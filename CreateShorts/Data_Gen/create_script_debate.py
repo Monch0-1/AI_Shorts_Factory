@@ -32,7 +32,7 @@ def generate_debate_script_json(topic: str, time_limit: int):
     )
 
     prompt_template = f"""
-        Based on the following topic, generate a dialogue script for two distinct personalities, Narrator A and Narrator B. 
+        Based on the following topic, generate a dialogue script for two distinct personalities, Nima and Tina. 
 
         TOPIC: {topic}
 
@@ -40,8 +40,8 @@ def generate_debate_script_json(topic: str, time_limit: int):
 
         STYLE REQUIREMENTS:
         1. The entire script must be in **ENGLISH**.
-        2. Ensure Narrator A challenges Narrator B directly.
-        3. Include at least one **humorous or simple analogy** from Narrator B.
+        2. Ensure Nina challenges Tina directly.
+        3. Include at least one **humorous or simple analogy** from Tina.
         
         **CHARACTERS & TONE:**
         * **Nina (The Skeptical Beginner):** Speaks casually, uses contractions (e.g., "gonna," "don't"), and asks simple, common-sense questions to expose flaws or complexities. Must sound slightly frustrated or confused.
@@ -54,8 +54,6 @@ def generate_debate_script_json(topic: str, time_limit: int):
     
         Strictly adhere to the established character roles and return ONLY the JSON array structure.
         """
-
-
 
     try:
         response = client.models.generate_content(
