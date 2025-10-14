@@ -25,7 +25,7 @@ class VideoMixingError(Exception):
     """Custom exception for video mixing operations"""
     pass
 
-def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: float) -> CompositeAudioClip:
+def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: float, background_volume: float = 0.10) -> CompositeAudioClip:
     """
     Creates a composite audio clip by mixing voice and background music.
 
@@ -33,6 +33,7 @@ def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: floa
         voice_path (str): Path to the voice audio file
         music_path (str): Path to the background music file
         duration_sec (float): Desired duration in seconds
+        background_volume (float): Volume level for background music (0.0 to 1.0)
 
     Returns:
         CompositeAudioClip: Mixed audio clip with voice and background music
@@ -44,7 +45,7 @@ def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: floa
         voice_clip = AudioFileClip(voice_path)
         music_clip = AudioFileClip(music_path)
         music_clip = music_clip.subclip(0, duration_sec)
-        music_clip = music_clip.volumex(BACKGROUND_VOLUME)
+        music_clip = music_clip.volumex(background_volume)
         return CompositeAudioClip([voice_clip, music_clip]).set_duration(duration_sec)
     except Exception as e:
         raise VideoMixingError(f"Failed to create mixed audio: {str(e)}")
@@ -81,7 +82,8 @@ def format_video_vertical(video_clip: VideoFileClip, duration_sec: float) -> Com
 
 def create_final_video(voice_path: str, music_path: str, video_background_path: str, 
                       output_path: str, duration_sec: float, 
-                      subtitle_clips: List[TextClip] = None) -> None:
+                      subtitle_clips: List[TextClip] = None,
+                      background_volume: float = 0.10) -> None:
     """
     Creates a final vertical format video with mixed audio and subtitles.
     
@@ -92,10 +94,11 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
         output_path: Path for output video file
         duration_sec: Desired video duration in seconds
         subtitle_clips: Optional list of subtitle clips to add
+        background_volume: Volume level for background music (0.0 to 1.0)
     """
     try:
         # Create audio mix
-        master_audio = create_mixed_audio_clip(voice_path, music_path, duration_sec)
+        master_audio = create_mixed_audio_clip(voice_path, music_path, duration_sec, background_volume)
         
         # Load and format background video
         background_clip = VideoFileClip(video_background_path)

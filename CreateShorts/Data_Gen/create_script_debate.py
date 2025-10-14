@@ -1,35 +1,15 @@
 import os
 from google import genai
 from google.genai import types
-
+from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
 
-def generate_debate_script_json(topic: str, time_limit: int):
+def generate_debate_script_json(topic: str, time_limit: int, theme_config: ThemeConfig, use_template: bool = False):
     client = load_env_data(genai.Client, 'GEMINI_API_KEY')
 
-    # 1. Definicion del esquema de salida (JSON)
-    script_schema = types.Schema(
-        type=types.Type.ARRAY,
-        description="List of turns in the dialogue.",
-        items=types.Schema(
-            type=types.Type.OBJECT,
-            properties={
-                "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
-                "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
-                "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
-            },
-            required=["speaker", "line", "topic"]
-        )
-    )
-
-    # 1. Definición de las Reglas de Rol (System Instruction)
-    _system_instruction = (
-        "You are a highly skilled scriptwriter for short-form social media comedy and tech debates. "
-        "Your primary goal is to write a casual, witty, and engaging dialogue strictly between two characters. "
-        "Nina must pose skeptical, common-sense questions to expose flaws. "
-        "Tina must provide clear, witty, and often funny analogies to explain complex concepts simply. "
-        "The conversation must flow naturally without lecturing the audience. Return ONLY a valid JSON array."
-    )
+    # Obtener la configuración correctamente del theme_config
+    script_schema = theme_config.prompting.script_schema
+    _system_instruction = theme_config.prompting.system_instruction
 
     prompt_template = f"""
         Based on the following topic, generate a dialogue script for two distinct personalities, Narrator A and Narrator B. 
