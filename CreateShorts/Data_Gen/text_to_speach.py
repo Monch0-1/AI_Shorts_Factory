@@ -22,6 +22,7 @@ class AudioChunkInfo:
 VOICE_IDS = {
     "Nina": "kv829HVkmQ1fOJX1MjSN",
     "Tina": "GwUCiXil6qHfygWUJEwS",
+    "Anon": "GwUCiXil6qHfygWUJEwS",
 }
 MODEL_ID = "eleven_multilingual_v2"
 client = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
