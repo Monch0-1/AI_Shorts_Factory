@@ -102,7 +102,7 @@ themes:
             "properties": {
               "speaker": {
                 "type": "string",
-                "description": "The narrator's name (e.g., Alex, Survivor)."
+                "description": "The narrator's name (e.g., Anon, Survivor)."
               },
               "line": {
                 "type": "string",

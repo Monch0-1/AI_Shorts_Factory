@@ -9,6 +9,7 @@ from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, Col
 from PIL import Image
 import os
 from typing import Optional, List
+from moviepy.editor import concatenate_videoclips, concatenate_audioclips
 
 # --- Video Format Constants ---
 VERTICAL_WIDTH = 1080    # Width for vertical video format (9:16)
@@ -18,35 +19,38 @@ FPS = 30                 # Frames per second for output video
 VIDEO_CODEC = 'libx264'  # Video codec for compatibility
 AUDIO_CODEC = 'aac'      # Audio codec for compatibility
 
-# Configuración para el redimensionamiento
 Image.ANTIALIAS = Image.Resampling.LANCZOS
+
 
 class VideoMixingError(Exception):
     """Custom exception for video mixing operations"""
     pass
 
-def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: float, background_volume: float = 0.10) -> CompositeAudioClip:
+
+def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: float,
+                            background_volume: float = 0.10) -> CompositeAudioClip:
     """
-    Creates a composite audio clip by mixing voice and background music.
-
-    Args:
-        voice_path (str): Path to the voice audio file
-        music_path (str): Path to the background music file
-        duration_sec (float): Desired duration in seconds
-        background_volume (float): Volume level for background music (0.0 to 1.0)
-
-    Returns:
-        CompositeAudioClip: Mixed audio clip with voice and background music
-
-    Raises:
-        VideoMixingError: If audio mixing fails
+    Creates a composite audio clip by mixing voice and background music,
+    looping the music if necessary.
     """
     try:
         voice_clip = AudioFileClip(voice_path)
         music_clip = AudioFileClip(music_path)
+
+        if music_clip.duration < duration_sec:
+            num_loops = int(duration_sec / music_clip.duration) + 1
+            concatenated_music = music_clip
+            for _ in range(num_loops - 1):
+                concatenated_music = concatenate_audioclips([concatenated_music, music_clip])
+            music_clip = concatenated_music
+
         music_clip = music_clip.subclip(0, duration_sec)
+        voice_clip = voice_clip.subclip(0, duration_sec)
+
         music_clip = music_clip.volumex(background_volume)
-        return CompositeAudioClip([voice_clip, music_clip]).set_duration(duration_sec)
+
+        return CompositeAudioClip([voice_clip, music_clip])
+
     except Exception as e:
         raise VideoMixingError(f"Failed to create mixed audio: {str(e)}")
 
@@ -80,34 +84,68 @@ def format_video_vertical(video_clip: VideoFileClip, duration_sec: float) -> Com
         video_resized.set_pos("center")
     ])
 
+def create_looped_clip(clip: VideoFileClip, target_duration: float) -> VideoFileClip:
+    """
+    Creates a looped video clip from the given clip to ensure it reaches
+    or exceeds the target duration. The resulting video clip is truncated
+    to exactly match the target duration.
+
+    :param clip: The source video clip to be looped.
+    :type clip: VideoFileClip
+    :param target_duration: The desired duration of the final video, in seconds.
+    :type target_duration: float
+    :return: A new video clip object with a looped and truncated version of the source clip.
+    :rtype: VideoFileClip
+    :raises Exception: If an error occurs during the looping or concatenation process.
+    """
+    try:
+        num_repeats = int(target_duration / clip.duration) + 1
+        clips = [clip.copy() for _ in range(num_repeats)]
+        concatenated = concatenate_videoclips(clips)
+        result = concatenated.subclip(0, target_duration)
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error en create_looped_clip: {str(e)}")
+        raise
+
+
 def create_final_video(voice_path: str, music_path: str, video_background_path: str, 
                       output_path: str, duration_sec: float, 
                       subtitle_clips: List[TextClip] = None,
                       background_volume: float = 0.10) -> None:
     """
     Creates a final vertical format video with mixed audio and subtitles.
-    
-    Args:
-        voice_path: Path to voice audio file
-        music_path: Path to background music file
-        video_background_path: Path to background video file
-        output_path: Path for output video file
-        duration_sec: Desired video duration in seconds
-        subtitle_clips: Optional list of subtitle clips to add
-        background_volume: Volume level for background music (0.0 to 1.0)
     """
+    
+    duration_sec = round(duration_sec)
+
+    voice_clip = AudioFileClip(voice_path)
+    actual_duration = round(voice_clip.duration)
+    voice_clip.close()
+
+    duration_sec = min(duration_sec, actual_duration)
+    background_clip = VideoFileClip(video_background_path)
+
+    if background_clip.duration < duration_sec:
+        video_clip_final = create_looped_clip(background_clip, duration_sec)
+        print(f"Alerta: Video de fondo loopeado para alcanzar {duration_sec:.2f}s")
+    else:
+        video_clip_final = background_clip.subclip(0, duration_sec)
+
     try:
         # Create audio mix
         master_audio = create_mixed_audio_clip(voice_path, music_path, duration_sec, background_volume)
-        
+
         # Load and format background video
-        background_clip = VideoFileClip(video_background_path)
-        formatted_video = format_video_vertical(background_clip, duration_sec)
-        
+        # CORRECCIÓN: Usar el clip ajustado (video_clip_final) para el formateo vertical
+        formatted_video = format_video_vertical(video_clip_final, duration_sec)
+
         # Combine with subtitles if provided
         if subtitle_clips:
             formatted_video = CompositeVideoClip([formatted_video] + subtitle_clips)
-        
+
         # Add audio
         final_clip = formatted_video.set_audio(master_audio)
 
@@ -122,6 +160,7 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
             threads=4
         )
         print(f"-> Video completed: {output_path}")
+
 
     except Exception as e:
         raise VideoMixingError(f"Failed to create final video: {str(e)}")

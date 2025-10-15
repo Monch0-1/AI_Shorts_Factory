@@ -84,8 +84,8 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
 
     # Calcular duración total
     duration_sum = sum(a.duration for a in audio_chunks)
-    duration_seconds = duration_sum + 0.5  # Buffer
-    print(f"-> Duración total del audio: {duration_sum:.2f} segundos")
+    duration_seconds = round(duration_sum)  # Redondear en lugar de añadir buffer
+    print(f"-> Duración total del audio: {duration_seconds} segundos")
 
     # Verificar límite de duración
     if duration_seconds > 200:
@@ -123,16 +123,12 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
 
 
 if __name__ == "__main__":
-    background_img = get_absolute_path(".venv/Scripts/background.jpg")
-    output_video = get_absolute_path("final_short.mp4")
 
-    _context_story = """
-    I once spent three hours debugging a weird memory leak in my Java service. I was checking garbage collection logs, memory dumps, and every single static variable. I was going completely insane trying to find a complicated multithreading issue. Finally, I noticed the junior dev had accidentally put a logging variable inside a recursive loop, printing a gigabyte of data every few seconds. The entire "memory leak" was just the console logs maxing out the buffer. I didn't know whether to scream or laugh. I deleted the logger, and everything worked perfectly. It taught me the most complex bugs often have the dumbest, simplest causes.
-    """
+    _context_story = """I I was applying for a simple marketing job after college. The interviewer, a man named 'Dave,' emailed saying, 'Meet me at The Corner Cafe at 6 PM.' I thought, 'Wow, very casual office culture!' I got there, Dave was at a tiny table, candlelit, with jazz music playing. He ordered two glasses of wine. I spent ten minutes talking about my 'long-term relationship goals' with the company and how 'open I am to new experiences.' He kept smiling weirdly. Finally, he said, 'Wait, you're looking for a job? I thought you were Nancy from the dating app.' I realized I was one table off. I had interviewed a random stranger about my career goals over Merlot. I just said, 'Well, I'm great under pressure,' grabbed my things, and ran"""
     
     create_complete_short(
-        topic="Unusual bug in Java service",
-        duration_seconds=100,
+        topic="The time I confused a job interview with a blind date.",
+        duration_seconds=120,
         theme="reddit",
         use_template=True,
         is_monologue=True,
