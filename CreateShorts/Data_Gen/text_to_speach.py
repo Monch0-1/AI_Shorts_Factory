@@ -3,7 +3,12 @@ import os
 from dataclasses import dataclass
 from moviepy.editor import AudioFileClip
 from elevenlabs.client import ElevenLabs
+from elevenlabs import VoiceSettings
 from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.theme_config import ThemeConfig
+from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
+from typing import Optional
+
 
 @dataclass
 class AudioChunkInfo:
@@ -22,15 +27,41 @@ MODEL_ID = "eleven_multilingual_v2"
 client = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
 TEMP_DIR = os.path.join("PythonProject", "CreateShorts", "resources", "audio", "temp_audio")
 
-def generate_dialogue_audio(json_script_str: str) -> list[AudioChunkInfo]:
+
+def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) -> Optional[VoiceSettings]:
+    """
+    Convierte la dataclass custom en el objeto VoiceSettings nativo de ElevenLabs.
+    """
+    if settings_data is None:
+        # Valores por defecto si no hay configuración
+        return VoiceSettings(
+            stability=0.5,
+            similarity_boost=0.75,
+            style=0.0,
+            speed=1.0,
+            use_speaker_boost=True
+        )
+
+    # Crear el objeto VoiceSettings con los valores de la configuración
+    return VoiceSettings(
+        stability=settings_data.stability if settings_data.stability is not None else 0.5,
+        similarity_boost=settings_data.similarity_boost if settings_data.similarity_boost is not None else 0.75,
+        style=settings_data.style if settings_data.style is not None else 0.0,
+        speed=settings_data.speed if settings_data.speed is not None else 1.0,
+        use_speaker_boost=settings_data.use_speaker_boost if settings_data.use_speaker_boost is not None else True
+    )
+
+def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeConfig] = None) -> list[AudioChunkInfo]:
     """Genera y guarda chunks de audio para cada línea en el diálogo JSON.
 
     Args:
-        json_script_str: Cadena JSON que contiene el script del diálogo
+        json_script_str (str): Cadena JSON que contiene el script del diálogo
+        theme_config (Optional[ThemeConfig]): Configuración del tema que incluye voice_settings
 
     Returns:
         list[AudioChunkInfo]: Lista de información de chunks de audio
     """
+
     if client is None:
         return []
 
@@ -43,6 +74,7 @@ def generate_dialogue_audio(json_script_str: str) -> list[AudioChunkInfo]:
         return []
 
     audio_chunks_info = []
+    voice_settings_obj = get_elevenlabs_settings(theme_config.voice_settings)
 
     for i, turn in enumerate(script_data):
         speaker_name = turn['speaker']
@@ -60,6 +92,7 @@ def generate_dialogue_audio(json_script_str: str) -> list[AudioChunkInfo]:
                 voice_id=voice_id,
                 model_id=MODEL_ID,
                 output_format="mp3_44100_128",
+                voice_settings=voice_settings_obj
             )
 
             # Convertir el generador a bytes

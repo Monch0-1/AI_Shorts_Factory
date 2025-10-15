@@ -35,13 +35,19 @@ themes:
             "required": ["speaker", "line", "topic"]
           }
         }
+    voice_settings:
+      stability: 0.75
+      similarity_boost: 0.90
+      speed: 1.00
+      style: 0.0
+      use_speaker_boost: True
   
   horror:
     video:
       path: "resources/video/horror_background.mp4"
     music:
       path: "resources/audio/horror.mp3"
-      volume: 0.15
+      volume: 0.20
     prompting:
       system_instruction: |
         You are a horror storyteller creating eerie, suspenseful content.
@@ -71,3 +77,48 @@ themes:
             "required": ["speaker", "line", "topic"]
           }
         }
+    voice_settings:
+      stability: 0.90
+      similarity_boost: 0.85
+      speed: 0.95
+      use_speaker_boost: False
+
+  reddit:
+    video:
+      path: "resources/video/reddit_bgv.mp4"
+    music:
+      path: "resources/audio/reddit_bgm.mp3"
+      volume: 0.10
+    prompting:
+      system_instruction: |
+        You are a master script editor and adapter for short-form social media narratives. Your primary goal is to convert a user-provided story concept into a compelling, first-person monologue designed for high retention.
+        The narrative must be reflective, engaging or amusing and build to a clear point of learning, unexpected twist or funny anecdote. The mood must be flexible (e.g., Amused, Vengeful, Thoughtful).
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of lines in the first-person monologue.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "speaker": {
+                "type": "string",
+                "description": "The narrator's name (e.g., Alex, Survivor)."
+              },
+              "line": {
+                "type": "string",
+                "description": "The concise line of the monologue."
+              },
+              "mood": {
+                "type": "string",
+                "description": "The emotional state of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked)."
+              }
+            },
+            "required": ["speaker", "line", "mood"]
+          }
+        }
+    voice_settings:
+      stability: 0.75
+      similarity_boost: 0.90
+      speed: 1.05
+      style: 0.0
+      use_speaker_boost: True

@@ -39,6 +39,15 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
     # Cargar configuración del tema
     theme_manager = ThemeManager()
     theme_config = theme_manager.get_theme_config(theme)
+    
+    if theme_config is None:
+        print(f"Error: No se pudo cargar la configuración del tema '{theme}'")
+        return
+        
+    print(f"-> Configuración del tema cargada:")
+    print(f"   Video path: {theme_config.video_path}")
+    print(f"   Music path: {theme_config.music_path}")
+    print(f"   Voice settings: {theme_config.voice_settings}")
 
     # 1. Generate the script
     print("-> Generating script...")
@@ -51,7 +60,7 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
 
     # 2. Generate audio chunks in memory
     print("-> Converting script to audio...")
-    audio_chunks = generate_dialogue_audio(script_json)
+    audio_chunks = generate_dialogue_audio(script_json, theme_config)
 
     if not audio_chunks:
         print("ERROR: Failed to generate audio chunks")
@@ -86,8 +95,7 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
             voice_path=final_audio_path,
             music_path=theme_config.music_path,
             video_background_path=theme_config.video_path,
-            output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower()}.mp4"
-),
+            output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower()}.mp4"),
             duration_sec=duration_seconds,
             subtitle_clips=subtitle_clips,
             background_volume=theme_config.music_volume
