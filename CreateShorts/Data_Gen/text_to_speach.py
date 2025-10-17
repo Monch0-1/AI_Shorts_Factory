@@ -26,7 +26,7 @@ VOICE_IDS = {
 }
 MODEL_ID = "eleven_multilingual_v2"
 client = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
-TEMP_DIR = os.path.join("PythonProject", "CreateShorts", "resources", "audio", "temp_audio")
+TEMP_DIR = os.path.join("TempFiles", "CreateShorts", "resources", "audio", "temp_audio")
 
 
 def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) -> Optional[VoiceSettings]:
