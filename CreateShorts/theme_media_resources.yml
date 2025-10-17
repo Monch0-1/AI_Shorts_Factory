@@ -1,11 +1,16 @@
 themes:
   default:
+    name: default
     video:
       path: "resources/video/4.mp4"
     music:
       path: "resources/audio/2_23_AM.mp3"
       volume: 0.10
     prompting:
+      refinement_goal: "The dialogue must maintain a 1:1 question-answer ratio and prioritize humor over technical detail."
+      best_examples:
+        - "Example 1: (Tina uses the 'universal coffee recipe' analogy.)"
+        - "Example 2: (Nina's question uses a common, frustrated developer phrase.)"
       system_instruction: |
         You are a highly skilled scriptwriter for short-form social media comedy and tech debates.
         Your primary goal is to write a casual, witty, and engaging dialogue strictly between two characters.
@@ -43,6 +48,7 @@ themes:
       use_speaker_boost: True
   
   horror:
+    name: horror
     video:
       path: "resources/video/horror_background.mp4"
     music:
@@ -57,24 +63,24 @@ themes:
       script_schema: |
         {
           "type": "array",
-          "description": "List of turns in the dialogue.",
+          "description": "List of lines in the first-person monologue.",
           "items": {
             "type": "object",
             "properties": {
               "speaker": {
                 "type": "string",
-                "description": "Nina or Tina"
+                "description": "The narrator's name (e.g., Anon, Survivor)."
               },
               "line": {
                 "type": "string",
-                "description": "The concise line text."
+                "description": "The concise line of the monologue."
               },
-              "topic": {
+              "mood": {
                 "type": "string",
-                "description": "The discussed subtopic."
+                "description": "The emotional state of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked)."
               }
             },
-            "required": ["speaker", "line", "topic"]
+            "required": ["speaker", "line", "mood"]
           }
         }
     voice_settings:
@@ -84,12 +90,17 @@ themes:
       use_speaker_boost: False
 
   reddit:
+    name: reddit
     video:
       path: "resources/video/reddit_bgv.mp4"
     music:
       path: "resources/audio/reddit_bgm.mp3"
-      volume: 0.10
+      volume: 0.15
     prompting:
+      refinement_goal: "The narrative must build suspense quickly and end with a definitive, satisfying twist."
+      best_examples:
+        - "Example 1: The opening hook must occur within the first 10 words."
+        - "Example 2: The narrative must use visual metaphor keywords like 'cold dread' or 'unsettling silence'."
       system_instruction: |
         You are a master script editor and adapter for short-form social media narratives. Your primary goal is to convert a user-provided story concept into a compelling, first-person monologue designed for high retention.
         The narrative must be reflective, engaging or amusing and build to a clear point of learning, unexpected twist or funny anecdote. The mood must be flexible (e.g., Amused, Vengeful, Thoughtful).

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Final
 
 from CreateShorts.Data_Gen.create_audio import assemble_dialogue_pydub
 from CreateShorts.Data_Gen.create_script_debate import generate_debate_script_json
@@ -6,11 +7,13 @@ from CreateShorts.Data_Gen.create_script_monologue import generate_monolog_scrip
 from CreateShorts.Data_Gen.mix_assets import create_final_video
 from CreateShorts.Data_Gen.text_to_speach import generate_dialogue_audio
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
-from create_video import get_absolute_path
+from CreateShorts.Prompt_Refinig_Service.refine_base_prompt import refine_base_prompt
 from CreateShorts.theme_config import ThemeManager, ThemeConfig
 
+MAX_TIME_LIMIT: Final[int] = 120
 # Future update Skyreels.ai
 # Crear configuración personalizada (opcional)
+
 config = SubtitleConfig(
     fontsize=45,
     font='Arial-Bold',
@@ -43,15 +46,20 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
     print(f"-> Starting short video creation for topic: {topic}")
     print(f"-> Using theme: {theme}")
 
-    # Cargar configuración del tema
+    # Load theme config
     theme_manager = ThemeManager()
     theme_config = theme_manager.get_theme_config(theme)
+
+    script_prompt = refine_base_prompt(
+        base_topic_or_idea=topic,
+        theme_config=theme_config
+    )
     
     if theme_config is None:
         print(f"Error: No se pudo cargar la configuración del tema '{theme}'")
         return
         
-    print(f"-> Configuración del tema cargada:")
+    print(f"-> Theme configuration loaded:")
     print(f"   Video path: {theme_config.video_path}")
     print(f"   Music path: {theme_config.music_path}")
     print(f"   Voice settings: {theme_config.voice_settings}")
@@ -61,9 +69,10 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
     print("-> Generating script...")
     if is_monologue:
         script_json = generate_monolog_script_json(
-            topic=topic,
+            final_script_prompt=script_prompt,
             time_limit=duration_seconds,
             theme_config=theme_config,
+            context=context_story
         )
 
     else:
@@ -87,7 +96,6 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
     duration_seconds = round(duration_sum)  # Redondear en lugar de añadir buffer
     print(f"-> Duración total del audio: {duration_seconds} segundos")
 
-    # Verificar límite de duración
     if duration_seconds > 200:
         print(f"⚠️ Advertencia: La duración ({duration_seconds:.2f}s) excede 120s")
 
@@ -117,18 +125,22 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
             background_volume=theme_config.music_volume
         )
     finally:
-        # Limpiar archivos temporales
         from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio
         clean_temp_audio()
 
 
 if __name__ == "__main__":
 
-    _context_story = """I I was applying for a simple marketing job after college. The interviewer, a man named 'Dave,' emailed saying, 'Meet me at The Corner Cafe at 6 PM.' I thought, 'Wow, very casual office culture!' I got there, Dave was at a tiny table, candlelit, with jazz music playing. He ordered two glasses of wine. I spent ten minutes talking about my 'long-term relationship goals' with the company and how 'open I am to new experiences.' He kept smiling weirdly. Finally, he said, 'Wait, you're looking for a job? I thought you were Nancy from the dating app.' I realized I was one table off. I had interviewed a random stranger about my career goals over Merlot. I just said, 'Well, I'm great under pressure,' grabbed my things, and ran"""
+    _context_story = """
+    So, I work at a restaurant, and the other night we had this sweet elderly couple come in for dinner. They finished their meal, and the gentleman excused himself to the restroom. No big deal, right? Well, he was in there for like, and hour until his wife finally went in to retrieve him. Fast forward a few hours—now we're closing up, and it’s my turn to clean the bathroom.
+    I walk in, and oh my gosh, the horror. The toilet was clogged to the brim with poop, the trash can was overflowing with paper towels smeared with—you guessed it—poop, and there was poop on the floor. And the smell. Oh, the smell. I’m telling you, I couldn't even.
+    So, my coworker Dan (bless his soul) took one for the team. He unclogged the toilet, wiped up the poop on the floor, and I had to tackle the trash can. I pulled out the bag, and lo and behold, there was a rogue turd hiding underneath the trash bag in the trash can. I don't even want to know how that happened.
+    Even after Dan wiped down the walls with bleach, the bathroom reeked for days. It’s only just starting to smell normal, but it was so bad you could smell it in the dining room. One of the cooks has dubbed this guy “The Phantom Shitter.” So yeah, that was our night. Hope someone finds this as hilarious as we did (after the trauma subsided, of course).
+    """
     
     create_complete_short(
-        topic="The time I confused a job interview with a blind date.",
-        duration_seconds=120,
+        topic="The Phantom Shitter that my coworker and I had to clean up after",
+        duration_seconds=60,
         theme="reddit",
         use_template=True,
         is_monologue=True,

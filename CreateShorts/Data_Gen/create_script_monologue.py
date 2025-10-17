@@ -1,47 +1,48 @@
 import os
+from typing import Final
+
 from google import genai
 from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
 
+WORDS_PER_MINUTE: Final[int] = 130
+SECONDS: Final[int] = 60
 
-def generate_monolog_script_json(topic: str, time_limit: int, theme_config: ThemeConfig, context_story: str = None) -> str:
-    # 1. Inicialización y Configuración
+def generate_monolog_script_json(
+        final_script_prompt: str,
+        time_limit: int,
+        theme_config: ThemeConfig,
+        context: str = None
+) -> str:
     client = load_env_data(genai.Client, 'GEMINI_API_KEY')
 
-    # Obtener la configuración de esquema e instrucción del tema cargado
     script_schema = theme_config.prompting.script_schema
     _system_instruction = theme_config.prompting.system_instruction
 
-    # 2. Construcción del Prompt Principal
-    # Usamos la historia de contexto si se proporciona, si no, usamos el topic.
-    story_context = context_story if context_story else topic
+    # 1. FINAL PROMPT CONSTRUCTION
+    # The refined prompt already includes the story, style and guidelines.
+    # We only add the final formatting and length instructions.
 
     prompt_template = f"""
+        You are a master script editor and adapter for short-form social media narratives.
 
-    You are a master script editor and adapter for short-form social media narratives.
-    
-    **PRIMARY INSTRUCTION:** Generate a first-person monologue script. The entire script must be **in English** and follow the structured JSON format provided.
-    
-    **LENGTH RESTRICTION (CRITICAL):** The final script MUST contain **Approximately {int(time_limit * 130 / 60)} WORDS** in total withing range of plus or minus 20%, 
-    consider this will be used for a TTS audio file so the duration in seconds could go higher than expected we need to be mindful of the number of words in the monologue.
-    
-    CONTEXT: {story_context} 
-    
-    DURATION: The total read time should aim for {time_limit} seconds.
+        **PRIMARY INSTRUCTION (From Prompt Refiner):** {final_script_prompt}
 
-    **NARRATIVE STYLE & TONE:**
-    1. The speaker is a 'Survivor' or 'Witness' will be defined as 'Anon', recounting a personal experience (first-person).
-    2. The style must be focused on the narrative's core emotion (e.g., Dread, Vengeance, Amused Reflection).
-    3. The narrative must flow line-by-line, maintaining a clear tone defined by the 'mood' field.
+        **LENGTH RESTRICTION (CRITICAL):** The final script MUST contain **Approximately {int(time_limit * WORDS_PER_MINUTE / SECONDS)} WORDS** in total (range +/20%).
 
-    **Json Format:** Use short lines of text; if a line is longer than 10 words, break it into multiple lines for short subtitles.
-    **End**: The monologue must conclude with a strong, definitive final thought, an ambiguous or unsettling question, or funny comment given the context.
-    
-    Strictly adhere to the established character roles and the WORD COUNT then return **ONLY** the JSON array structure.
-    """
+        **FINAL FORMAT:** Adhere strictly to the JSON schema provided.
+        
+        **CONTEXT:** {context}
 
-    # 3. Llamada a la API
+        If a sentence is too long, you **MUST** break it into multiple separate lines/entries in the JSON array but keep natural conversation flow.
+        **SUBTITLE READABILITY RULE (STRICT):** Each line in the JSON array must be short for optimized subtitles, natural phrase optimized for fast reading. 
+        Lines **MUST NOT EXCEED 15 WORDS** without loosing propper narrative flow.
+
+        Return **ONLY** the JSON array structure.
+        """
+
+    # 2. API call
     try:
         response = client.models.generate_content(
             model='gemini-2.5-flash',
@@ -50,10 +51,9 @@ def generate_monolog_script_json(topic: str, time_limit: int, theme_config: Them
                 response_mime_type="application/json",
                 response_schema=script_schema,
                 system_instruction=_system_instruction,
-                temperature=0.7  # Una temperatura neutral, adecuada para historias
+                temperature=0.7
             )
         )
-        # El texto de respuesta será una cadena JSON válida
         return response.text
 
     except Exception as e:

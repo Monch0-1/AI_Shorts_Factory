@@ -80,7 +80,7 @@ def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeCo
     for i, turn in enumerate(script_data):
         speaker_name = turn['speaker']
         line_text = turn['line']
-        voice_id = VOICE_IDS.get(speaker_name)
+        voice_id = VOICE_IDS[speaker_name] if speaker_name in VOICE_IDS else VOICE_IDS["Anon"]
 
         if not voice_id:
             print(f"ERROR: No se encontró Voice ID para el hablante: {speaker_name}")
