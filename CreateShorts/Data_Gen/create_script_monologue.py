@@ -6,7 +6,7 @@ from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
 
-WORDS_PER_MINUTE: Final[int] = 130
+WORDS_PER_MINUTE: Final[int] = 100
 SECONDS: Final[int] = 60
 
 def generate_monolog_script_json(
@@ -38,6 +38,7 @@ def generate_monolog_script_json(
         If a sentence is too long, you **MUST** break it into multiple separate lines/entries in the JSON array but keep natural conversation flow.
         **SUBTITLE READABILITY RULE (STRICT):** Each line in the JSON array must be short for optimized subtitles, natural phrase optimized for fast reading. 
         Lines **MUST NOT EXCEED 15 WORDS** without loosing propper narrative flow.
+        Use the context given by the user to guide the script.
 
         Return **ONLY** the JSON array structure.
         """

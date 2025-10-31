@@ -11,6 +11,7 @@ class PromptingConfig:
     system_instruction: str
     script_schema: types.Schema
     refinement_goal: str
+    target_quality_rules: List[str] = field(default_factory=list)
     best_examples: List[str] = field(default_factory=list)
 
 @dataclass
@@ -109,6 +110,7 @@ class ThemeManager:
                         system_instruction=prompting_data.get('system_instruction', _get_default_system_instruction()),
                         script_schema=script_schema_obj,
                         refinement_goal=prompting_data.get('refinement_goal', ''),
+                        target_quality_rules=prompting_data.get('target_quality_rules', []),
                         best_examples=prompting_data.get('best_examples', [])
                     )
 

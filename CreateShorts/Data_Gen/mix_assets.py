@@ -34,19 +34,18 @@ def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: floa
         voice_clip = AudioFileClip(voice_path)
         music_clip = AudioFileClip(music_path)
 
-        # Si la música es más corta, la loopeamos
+        # Si la música es más corta, creamos loops manualmente
         if music_clip.duration < duration_sec:
-            music_clip = music_clip.loop(duration=duration_sec)
+            num_loops = int(duration_sec / music_clip.duration) + 1
+            music_clips = [music_clip] * num_loops
+            music_clip = concatenate_audioclips(music_clips)
 
         # La música se corta a la duración_sec (diálogo + buffer)
         music_clip = music_clip.subclip(0, duration_sec)
-
-        # La voz se mantiene con su duración original (dialogue_duration) y termina antes que la música
-        # Aquí NO se debe aplicar subclip, ya que voice_clip.duration ya es el tiempo del diálogo.
-
+        
+        # Ajustamos el volumen de la música
         music_clip = music_clip.volumex(background_volume)
 
-        # NOTA: moviepy ajusta automáticamente la duración de los clips compuestos.
         return CompositeAudioClip([voice_clip, music_clip]).set_duration(duration_sec)
 
     except Exception as e:

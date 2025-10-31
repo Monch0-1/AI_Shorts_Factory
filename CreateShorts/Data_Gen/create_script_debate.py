@@ -1,10 +1,21 @@
 import os
+from typing import Final
+from pathlib import Path
 from google import genai
 from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
 
-def generate_debate_script_json(topic: str, time_limit: int, theme_config: ThemeConfig, use_template: bool = False):
+WORDS_PER_MINUTE: Final[int] = 250
+SECONDS: Final[int] = 60
+
+def generate_debate_script_json(
+        topic: str,
+        time_limit: int,
+        theme_config: ThemeConfig,
+        use_template: bool = False,
+        context: str = None
+):
     client = load_env_data(genai.Client, 'GEMINI_API_KEY')
 
     # Obtener la configuración correctamente del theme_config
@@ -16,8 +27,9 @@ def generate_debate_script_json(topic: str, time_limit: int, theme_config: Theme
             Based on the following topic, generate a dialogue script for two distinct personalities, Narrator A and Narrator B. 
     
             TOPIC: {topic}
+            CONTEXT: {context}
     
-            DURATION: The total read time should aim for {time_limit} aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
+            DURATION: The total read time should aim for {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
     
             STYLE REQUIREMENTS:
             1. The entire script must be in **ENGLISH**.
@@ -30,7 +42,7 @@ def generate_debate_script_json(topic: str, time_limit: int, theme_config: Theme
             * **Dialogue Style:** The conversation must flow naturally between A and B, maintaining a **casual, witty, and slightly exaggerated tone**. They are talking to each other, not lecturing the audience.
             
             **Content:** Include at least one **witty analogy** or **humorous example** from Narrator B.
-            **Json Format:** Use short lines of text, if a dialog is longer than 20 words, break it into multiple lines (this for short subtitles).
+            **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
             **End**: Finish with a nice casual farewell
         
             Strictly adhere to the established character roles and return ONLY the JSON array structure.
@@ -42,15 +54,16 @@ def generate_debate_script_json(topic: str, time_limit: int, theme_config: Theme
                 **PRIMARY INSTRUCTION:** Generate a dialogue script about a "Top 5 List" between two distinct personalities, Nina and Tina. The entire script must be **in English** and follow the structured JSON format provided.
     
                 **TOPIC:** The Top 5 {topic}.
+                **CONTEXT:**
     
                 **STRUCTURED DEBATE FLOW:**
                 The script MUST follow a structure where the list is presented, and Nina challenges the ranking/inclusion of at least 3 items.
-                1.  **OPENING:** Casual greeting/topic setup. (1-2 lines)
+                1.  **OPENING:** Casual greeting/topic setup. (1-2 lines but consider more if the line had to broken in multiple lines as per the Json Format rule)
                 2.  **ITEMS 5, 4, 3:** Tina presents the item, Nina asks a skeptical/confused question about the item (e.g., "But isn't that too slow?"), and Tina defends the item with an analogy.
                 3.  **ITEMS 2, 1:** Tina presents the final items, Nina expresses strong disagreement or surprise, and Tina delivers the final, witty defense.
-                4.  **CLOSING:** Nina acknowledges the list, and Tina delivers a casual farewell. (1-2 lines)
+                4.  **CLOSING:** Nina acknowledges the list, and Tina delivers a casual farewell. (1-2 lines but consider more if the line had to broken in multiple lines as per the Json Format rule)
     
-                **DURATION:** The total read time should aim for {time_limit} aproximatedly withing range of plus 20%.
+                DURATION: The total read time should aim for {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
     
                 **CHARACTERS & TONE:**
                 * **Nina (The Skeptical Challenger):** Asks critical questions about the ranking or the drawbacks of an item. Must use contractions (e.g., "don't," "isn't that").
@@ -59,7 +72,8 @@ def generate_debate_script_json(topic: str, time_limit: int, theme_config: Theme
                 **STYLE REQUIREMENTS:**
                 1.  **Language:** ENTIRELY IN ENGLISH.
                 2.  **Content:** Include at least one **humorous or simple analogy** from Tina per challenged item.
-                3.  **Json Format:** Use short lines of text.
+                3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
+
     
                 Return **ONLY** the JSON array structure.
             """
@@ -76,6 +90,15 @@ def generate_debate_script_json(topic: str, time_limit: int, theme_config: Theme
             )
         )
         # El texto de respuesta será una cadena JSON válida
+
+        # Save the response to a file for debugging purposes
+        debug_dir = Path(__file__).parent.parent / "debug_scripts"
+        debug_dir.mkdir(exist_ok=True)
+        sanitized_topic = "".join(c for c in topic if c.isalnum() or c in (' ', '_')).rstrip()
+        debug_file_path = debug_dir / f"{sanitized_topic.replace(' ', '_')}.json"
+        with open(debug_file_path, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+
         return response.text
 
     except Exception as e:
