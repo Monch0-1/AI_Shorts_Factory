@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
-from dataclasses import dataclass
-from typing import Dict, Optional
+from dataclasses import dataclass, field
+from typing import Dict, Optional, List
 from google.genai import types
 from CreateShorts.utils import get_project_root
 from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
@@ -10,9 +10,13 @@ from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVo
 class PromptingConfig:
     system_instruction: str
     script_schema: types.Schema
+    refinement_goal: str
+    target_quality_rules: List[str] = field(default_factory=list)
+    best_examples: List[str] = field(default_factory=list)
 
 @dataclass
 class ThemeConfig:
+    name: str
     video_path: str
     music_path: str
     music_volume: float
@@ -88,6 +92,7 @@ class ThemeManager:
 
             for theme_name, theme_data in config['themes'].items():
                 try:
+                    name = theme_data['name']
                     video_path = str(project_root / "CreateShorts" / theme_data['video']['path'])
                     music_path = str(project_root / "CreateShorts" / theme_data['music']['path'])
                     music_volume = theme_data['music'].get('volume', 0.10)
@@ -103,7 +108,10 @@ class ThemeManager:
 
                     prompting_config = PromptingConfig(
                         system_instruction=prompting_data.get('system_instruction', _get_default_system_instruction()),
-                        script_schema=script_schema_obj
+                        script_schema=script_schema_obj,
+                        refinement_goal=prompting_data.get('refinement_goal', ''),
+                        target_quality_rules=prompting_data.get('target_quality_rules', []),
+                        best_examples=prompting_data.get('best_examples', [])
                     )
 
                     # Cargar voice settings
@@ -123,6 +131,7 @@ class ThemeManager:
                     print(f"Voice Settings: {voice_settings}")
 
                     self.themes[theme_name] = ThemeConfig(
+                        name=name,
                         video_path=video_path,
                         music_path=music_path,
                         music_volume=music_volume,

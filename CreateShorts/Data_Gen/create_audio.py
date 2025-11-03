@@ -24,10 +24,10 @@ def assemble_dialogue_pydub(audio_chunks: List[AudioChunkInfo], output_filename:
         if audio_clips:
             final_audio = concatenate_audioclips(audio_clips)
             final_audio.write_audiofile(output_filename)
-            print(f"-> Ensamblaje de audio finalizado: {output_filename}")
+            print(f"-> Audio assembly finished: {output_filename}")
             
     finally:
-        # Limpiar los clips y archivos temporales
+        # Clean up clips and temporary files
         for clip in audio_clips:
             clip.close()
         

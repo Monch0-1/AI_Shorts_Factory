@@ -12,12 +12,13 @@ from typing import Optional, List
 from moviepy.editor import concatenate_videoclips, concatenate_audioclips
 
 # --- Video Format Constants ---
-VERTICAL_WIDTH = 1080    # Width for vertical video format (9:16)
+VERTICAL_WIDTH = 1080    # Width for vertical video format (9:16).
 VERTICAL_HEIGHT = 1920   # Height for vertical video format (9:16)
 BACKGROUND_VOLUME = 0.10 # Background music volume level (10% of original)
 FPS = 30                 # Frames per second for output video
 VIDEO_CODEC = 'libx264'  # Video codec for compatibility
 AUDIO_CODEC = 'aac'      # Audio codec for compatibility
+AUDIO_BUFFER_SEC = 0.5
 
 Image.ANTIALIAS = Image.Resampling.LANCZOS
 
@@ -29,27 +30,23 @@ class VideoMixingError(Exception):
 
 def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: float,
                             background_volume: float = 0.10) -> CompositeAudioClip:
-    """
-    Creates a composite audio clip by mixing voice and background music,
-    looping the music if necessary.
-    """
     try:
         voice_clip = AudioFileClip(voice_path)
         music_clip = AudioFileClip(music_path)
 
+        # If the music is shorter, we create loops manually.
         if music_clip.duration < duration_sec:
             num_loops = int(duration_sec / music_clip.duration) + 1
-            concatenated_music = music_clip
-            for _ in range(num_loops - 1):
-                concatenated_music = concatenate_audioclips([concatenated_music, music_clip])
-            music_clip = concatenated_music
+            music_clips = [music_clip] * num_loops
+            music_clip = concatenate_audioclips(music_clips)
 
+        # The music is cut to duration_sec (dialogue + buffer).
         music_clip = music_clip.subclip(0, duration_sec)
-        voice_clip = voice_clip.subclip(0, duration_sec)
-
+        
+        # We adjust the music volume.
         music_clip = music_clip.volumex(background_volume)
 
-        return CompositeAudioClip([voice_clip, music_clip])
+        return CompositeAudioClip([voice_clip, music_clip]).set_duration(duration_sec)
 
     except Exception as e:
         raise VideoMixingError(f"Failed to create mixed audio: {str(e)}")
@@ -107,40 +104,38 @@ def create_looped_clip(clip: VideoFileClip, target_duration: float) -> VideoFile
         return result
         
     except Exception as e:
-        print(f"Error en create_looped_clip: {str(e)}")
+        print(f"Error in create_looped_clip: {str(e)}")
         raise
 
 
-def create_final_video(voice_path: str, music_path: str, video_background_path: str, 
-                      output_path: str, duration_sec: float, 
-                      subtitle_clips: List[TextClip] = None,
-                      background_volume: float = 0.10) -> None:
-    """
-    Creates a final vertical format video with mixed audio and subtitles.
-    """
-    
-    duration_sec = round(duration_sec)
+def create_final_video(voice_path: str, music_path: str, video_background_path: str,
+                       output_path: str, duration_sec: float,
+                       subtitle_clips: List[TextClip] = None,
+                       background_volume: float = 0.10) -> None:
+    # 1. Get the REAL duration of the dialogue.
+    voice_clip_temp = AudioFileClip(voice_path)
+    dialogue_duration = voice_clip_temp.duration
+    voice_clip_temp.close()  # Release the temporary clip.
 
-    voice_clip = AudioFileClip(voice_path)
-    actual_duration = round(voice_clip.duration)
-    voice_clip.close()
+    # 2. CALCULATE FINAL DURATION: Dialogue + 0.5s Buffer.
+    final_video_duration = dialogue_duration + AUDIO_BUFFER_SEC
 
-    duration_sec = min(duration_sec, actual_duration)
+    # 3. The cut and loop logic now uses the FINAL duration.
     background_clip = VideoFileClip(video_background_path)
 
-    if background_clip.duration < duration_sec:
-        video_clip_final = create_looped_clip(background_clip, duration_sec)
-        print(f"Alerta: Video de fondo loopeado para alcanzar {duration_sec:.2f}s")
+    if background_clip.duration < final_video_duration:
+        video_clip_final = create_looped_clip(background_clip, final_video_duration)
+        print(f"Alert: Background video looped to reach {final_video_duration:.2f}s")
     else:
-        video_clip_final = background_clip.subclip(0, duration_sec)
+        video_clip_final = background_clip.subclip(0, final_video_duration)
 
     try:
-        # Create audio mix
-        master_audio = create_mixed_audio_clip(voice_path, music_path, duration_sec, background_volume)
+        # Create audio mix: WE PASS THE FINAL DURATION.
+        master_audio = create_mixed_audio_clip(voice_path, music_path, final_video_duration, background_volume)
 
         # Load and format background video
-        # CORRECCIÓN: Usar el clip ajustado (video_clip_final) para el formateo vertical
-        formatted_video = format_video_vertical(video_clip_final, duration_sec)
+        # CORRECTION: Use the adjusted clip (video_clip_final) for vertical formatting.
+        formatted_video = format_video_vertical(video_clip_final, final_video_duration)
 
         # Combine with subtitles if provided
         if subtitle_clips:

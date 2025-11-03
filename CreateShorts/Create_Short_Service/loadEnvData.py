@@ -1,29 +1,7 @@
-# import os
-# from google import genai
-# from elevenlabs.client import ElevenLabs
-# from dotenv import load_dotenv # ⬅️ NUEVA IMPORTACIÓN
-# from google.genai import Client
-#
-# load_dotenv()
-#
-# # LEER LA CLAVE EXPLÍCITAMENTE
-# GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-#
-# # Verificar si la clave se encontró antes de intentar usarla
-# if not GEMINI_API_KEY:
-#     print("ERROR FATAL: La clave ELEVEN_API_KEY no se encontró en el entorno.")
-#     exit()
-#
-# try:
-#     # CORRECCIÓN CLAVE: Pasamos la clave directamente al constructor
-#     client = genai.Client(api_key=GEMINI_API_KEY)
-#
-# except Exception:
-#     # Este bloque solo se alcanza si el cliente no se inicializa por otras razones
-#     print("ERROR: Fallo al inicializar genai Client.")
-#     exit()
-
-
+import os
+from dotenv import load_dotenv
+from google import genai
+from googleapiclient.discovery import build
 import os
 from dotenv import load_dotenv
 
@@ -47,6 +25,47 @@ def load_env_data(client_class, keyword):
         # Lanza una excepción más específica si la inicialización falla
         raise RuntimeError(f"ERROR al inicializar {client_class.__name__}: {e}")
 
-# Ejemplo de uso en generateScript.py:
-# from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
-# client = load_env_data(genai.Client, 'GEMINI_API_KEY')
+
+# CreateShorts/Create_Short_Service/load_env_data.py (o un nuevo módulo utils)
+
+# Asegúrate de llamar a load_dotenv() al inicio de tu aplicación
+
+def load_unified_assets() -> dict:
+    """
+    [DEPRECATED: Usar esta función en código nuevo, reemplazar la antigua load_env_data]
+    Inicializa todos los clientes de API y recolecta las claves de entorno necesarias
+    para la Fábrica de Contenido (Gemini, ElevenLabs, Google Search).
+    """
+
+    # 1. Obtener Credenciales
+    # Usamos la clave de Gemini como base, si no hay clave de búsqueda específica
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    SEARCH_API_KEY = os.getenv("GOOGLE_SEARCH_API_KEY", GEMINI_API_KEY)
+    SEARCH_ENGINE_ID = os.getenv("GOOGLE_SEARCH_ENGINE_ID")
+
+    # 2. Inicializar Clientes (Usando las claves del entorno)
+    gemini_client = None
+    search_service = None
+
+    try:
+        # Cliente de Gemini
+        gemini_client = genai.Client()
+    except Exception as e:
+        print(f"ERROR: No se pudo inicializar Gemini Client. {e}")
+
+    # Cliente de Google Custom Search
+    if SEARCH_API_KEY and SEARCH_ENGINE_ID:
+        try:
+            search_service = build("customsearch", "v1", developerKey=SEARCH_API_KEY)
+        except Exception as e:
+            print(f"ERROR: No se pudo inicializar Google Search API Client: {e}")
+
+    # 3. Retornar el diccionario de activos
+    return {
+        'GEMINI_CLIENT': gemini_client,
+        'SEARCH_SERVICE': search_service,
+        'SEARCH_API_KEY': SEARCH_API_KEY,
+        'SEARCH_ENGINE_ID': SEARCH_ENGINE_ID,  # El valor 'cx'
+    }
+
+load_dotenv()

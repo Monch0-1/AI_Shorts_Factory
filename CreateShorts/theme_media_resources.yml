@@ -1,11 +1,22 @@
 themes:
   default:
+    name: default
     video:
       path: "resources/video/4.mp4"
     music:
       path: "resources/audio/2_23_AM.mp3"
       volume: 0.10
     prompting:
+      refinement_goal: "The dialogue must maintain a 1:1 question-answer ratio and prioritize humor over technical detail."
+      target_quality_rules:
+        - "Funny"
+        - "Witty"
+        - "Use modern lingo"
+        - "Engaging"
+        - "Relatable"
+      best_examples:
+        - "Example 1: (Tina uses the 'universal coffee recipe' analogy.)"
+        - "Example 2: (Nina's question uses a common, frustrated developer phrase.)"
       system_instruction: |
         You are a highly skilled scriptwriter for short-form social media comedy and tech debates.
         Your primary goal is to write a casual, witty, and engaging dialogue strictly between two characters.
@@ -43,6 +54,7 @@ themes:
       use_speaker_boost: True
   
   horror:
+    name: horror
     video:
       path: "resources/video/horror_background.mp4"
     music:
@@ -57,24 +69,24 @@ themes:
       script_schema: |
         {
           "type": "array",
-          "description": "List of turns in the dialogue.",
+          "description": "List of lines in the first-person monologue.",
           "items": {
             "type": "object",
             "properties": {
               "speaker": {
                 "type": "string",
-                "description": "Nina or Tina"
+                "description": "The narrator's name (e.g., Anon, Survivor)."
               },
               "line": {
                 "type": "string",
-                "description": "The concise line text."
+                "description": "The concise line of the monologue."
               },
-              "topic": {
+              "mood": {
                 "type": "string",
-                "description": "The discussed subtopic."
+                "description": "The emotional state of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked)."
               }
             },
-            "required": ["speaker", "line", "topic"]
+            "required": ["speaker", "line", "mood"]
           }
         }
     voice_settings:
@@ -84,12 +96,17 @@ themes:
       use_speaker_boost: False
 
   reddit:
+    name: reddit
     video:
       path: "resources/video/reddit_bgv.mp4"
     music:
       path: "resources/audio/reddit_bgm.mp3"
-      volume: 0.10
+      volume: 0.15
     prompting:
+      refinement_goal: "The narrative must build suspense quickly and end with a definitive, satisfying twist."
+      best_examples:
+        - "Example 1: The opening hook must occur within the first 10 words."
+        - "Example 2: The narrative must use visual metaphor keywords like 'cold dread' or 'unsettling silence'."
       system_instruction: |
         You are a master script editor and adapter for short-form social media narratives. Your primary goal is to convert a user-provided story concept into a compelling, first-person monologue designed for high retention.
         The narrative must be reflective, engaging or amusing and build to a clear point of learning, unexpected twist or funny anecdote. The mood must be flexible (e.g., Amused, Vengeful, Thoughtful).
@@ -120,5 +137,112 @@ themes:
       stability: 0.75
       similarity_boost: 0.90
       speed: 1.05
+      style: 0.0
+      use_speaker_boost: True
+
+  inspirational:
+    name: inspirational
+    video:
+      path: "resources/video/reddit_bgv.mp4" # Usar un fondo abstracto/motivational
+    music:
+      path: "resources/audio/inspirational_music.mp3" # Usar una pista de música más épica/motivacional
+      volume: 0.18
+    prompting:
+      refinement_goal: "The narrative must  connect with an audience through shared emotions and relatable stories, while also providing a clear, actionable message and a strong call to action."
+      best_examples:
+        - "Example 1: Organize the speech with an engaging introduction, a well-developed body, and a powerful conclusion. "
+        - "Example 2: The narrative must offer practical insights, strategies, or perspectives that the audience can use to make positive changes"
+      system_instruction: |
+        You are a highly articulate and authoritative life coach and software entrepreneur. 
+        Your primary goal is to adapt the user's core idea into a compelling, motivational monologue designed for personal and professional reflection. 
+        The speech must be delivered with clarity, conviction, and a friendly, reflective tone.
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of lines in the motivational monologue.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "speaker": {
+                "type": "string",
+                "description": "The speaker's name (e.g., Tina, Expert)."
+              },
+              "line": {
+                "type": "string",
+                "description": "The concise line of the monologue."
+              },
+              "mood": {
+                "type": "string",
+                "description": "The emotional state (e.g., Reflective, Assertive, Calming, Conclusive)."
+              }
+            },
+            "required": ["speaker", "line", "mood"]
+          }
+        }
+    voice_settings:
+      stability: 0.90
+      similarity_boost: 0.90
+      speed: 0.90
+      style: 0.0
+      use_speaker_boost: True
+
+  story_formatter:
+    name: story_formatter
+    video:
+      path: "resources/video/reddit_bgv.mp4" # Fondo neutro y motivacional
+    music:
+      path: "resources/audio/reddit_bgm.mp3" # Música ambiental neutra
+      volume: 0.15
+    prompting:
+      system_instruction: |
+        You are a meticulous script editor specializing in adapting and segmenting existing prose into concise, high-retention social media monologue format. Your primary goal is to preserve the user's original meaning and structure, while optimizing it for short-form video readability.
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of complete video parts. Each part contains a segment of the story.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "part_number": {
+                "type": "integer",
+                "description": "The index of the part (e.g., 1, 2, 3)."
+              },
+              "story_summary": {
+                "type": "string",
+                "description": "A brief summary of the content in this part (e.g., 'The discovery of the mystery door' or 'The aftermath of the fight')."
+              },
+              "script_lines": {
+                "type": "array",
+                "description": "The segmented script lines for this specific video part.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "speaker": {
+                      "type": "string",
+                      "description": "The consistent narrator's name."
+                    },
+                    "line": {
+                      "type": "string",
+                      "description": "The concise line text (max 10 words)."
+                    },
+                    "mood": {
+                      "type": "string",
+                      "description": "The emotional tone for the line."
+                    }
+                  },
+                  "required": ["speaker", "line", "mood"]
+                }
+              }
+            },
+            "required": ["part_number", "story_summary", "script_lines"]
+          }
+        }
+      refinement_goal: "The output must be a faithful segment-by-segment retelling of the user's input, optimized for subtitle reading speed and clarity, without adding new commentary or opinion."
+      best_examples: [ ] # Vacío, ya que la fuente es externa
+
+    voice_settings:
+      stability: 0.85 # Tono muy estable para la narración
+      similarity_boost: 0.85
+      speed: 1.00 # Velocidad normal de lectura
       style: 0.0
       use_speaker_boost: True
