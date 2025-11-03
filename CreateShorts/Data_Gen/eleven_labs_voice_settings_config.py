@@ -4,7 +4,7 @@ from typing import Optional
 
 @dataclass
 class ElevenLabsVoiceSettings:
-    """Configuración para la voz de ElevenLabs"""
+    """Configuration for the ElevenLabs voice"""
     stability: Optional[float] = None
     similarity_boost: Optional[float] = None
     style: Optional[float] = None

@@ -12,7 +12,7 @@ from typing import Optional
 
 @dataclass
 class AudioChunkInfo:
-    """Clase para almacenar información sobre cada chunk de audio"""
+    """Class to store information about each audio chunk"""
     content: bytes
     duration: float
     speaker: str
@@ -31,10 +31,10 @@ TEMP_DIR = os.path.join("TempFiles", "CreateShorts", "resources", "audio", "temp
 
 def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) -> Optional[VoiceSettings]:
     """
-    Convierte la dataclass custom en el objeto VoiceSettings nativo de ElevenLabs.
+    Converts the custom dataclass into the native ElevenLabs VoiceSettings object.
     """
     if settings_data is None:
-        # Valores por defecto si no hay configuración
+        # Default values if there is no configuration
         return VoiceSettings(
             stability=0.5,
             similarity_boost=0.75,
@@ -43,7 +43,7 @@ def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) ->
             use_speaker_boost=True
         )
 
-    # Crear el objeto VoiceSettings con los valores de la configuración
+    # Create the VoiceSettings object with the configuration values
     return VoiceSettings(
         stability=settings_data.stability if settings_data.stability is not None else 0.5,
         similarity_boost=settings_data.similarity_boost if settings_data.similarity_boost is not None else 0.75,
@@ -53,14 +53,14 @@ def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) ->
     )
 
 def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeConfig] = None) -> list[AudioChunkInfo]:
-    """Genera y guarda chunks de audio para cada línea en el diálogo JSON.
+    """Generates and saves audio chunks for each line in the JSON dialogue.
 
     Args:
-        json_script_str (str): Cadena JSON que contiene el script del diálogo
-        theme_config (Optional[ThemeConfig]): Configuración del tema que incluye voice_settings
+        json_script_str (str): JSON string containing the dialogue script
+        theme_config (Optional[ThemeConfig]): Theme configuration that includes voice_settings
 
     Returns:
-        list[AudioChunkInfo]: Lista de información de chunks de audio
+        list[AudioChunkInfo]: List of audio chunk information
     """
 
     if client is None:
@@ -71,7 +71,7 @@ def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeCo
     try:
         script_data = json.loads(json_script_str)
     except json.JSONDecodeError as e:
-        print(f"ERROR: No se pudo decodificar el JSON del script. {e}")
+        print(f"ERROR: Could not decode the script JSON. {e}")
         return []
 
     audio_chunks_info = []
@@ -83,11 +83,11 @@ def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeCo
         voice_id = VOICE_IDS[speaker_name] if speaker_name in VOICE_IDS else VOICE_IDS["Anon"]
 
         if not voice_id:
-            print(f"ERROR: No se encontró Voice ID para el hablante: {speaker_name}")
+            print(f"ERROR: Voice ID not found for speaker: {speaker_name}")
             return []
 
         try:
-            # Obtener el audio desde la API
+            # Get audio from the API
             audio_generator = client.text_to_speech.convert(
                 text=line_text,
                 voice_id=voice_id,
@@ -96,20 +96,20 @@ def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeCo
                 voice_settings=voice_settings_obj
             )
 
-            # Convertir el generador a bytes
+            # Convert the generator to bytes
             audio_content = b''.join(chunk for chunk in audio_generator)
 
-            # Guardar el chunk en un archivo
+            # Save the chunk to a file
             chunk_filename = f'chunk_{i}_{speaker_name}.mp3'
             chunk_path = os.path.join(TEMP_DIR, chunk_filename)
             with open(chunk_path, 'wb') as f:
                 f.write(audio_content)
 
-            # Obtener la duración usando moviepy
+            # Get duration using moviepy
             with AudioFileClip(chunk_path) as audio_clip:
                 duration = audio_clip.duration
 
-            # Crear objeto AudioChunkInfo
+            # Create AudioChunkInfo object
             chunk_info = AudioChunkInfo(
                 content=audio_content,
                 duration=duration,
@@ -121,45 +121,45 @@ def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeCo
             audio_chunks_info.append(chunk_info)
 
         except Exception as e:
-            print(f"ERROR generando audio para '{speaker_name}': {e}")
+            print(f"ERROR generating audio for '{speaker_name}': {e}")
             return []
 
-    print(f"-> Generación de audio completada. Se crearon {len(audio_chunks_info)} chunks.")
-    print(f"-> Los chunks de audio se guardaron en: {TEMP_DIR}")
+    print(f"-> Audio generation completed. {len(audio_chunks_info)} chunks were created.")
+    print(f"-> Audio chunks were saved in: {TEMP_DIR}")
     
-    # Imprimir información de duración para cada chunk
+    # Print duration information for each chunk
     #test1
     #tete
     for chunk in audio_chunks_info:
         print(f"-> Chunk: {chunk.filename}")
-        print(f"   Duración: {chunk.duration:.2f} segundos")
-        print(f"   Hablante: {chunk.speaker}")
-        print(f"   Texto: {chunk.text}")
+        print(f"   Duration: {chunk.duration:.2f} seconds")
+        print(f"   Speaker: {chunk.speaker}")
+        print(f"   Text: {chunk.text}")
 
     return audio_chunks_info
 
 def clean_temp_audio():
     """
-    Limpia todos los archivos de audio temporales en el directorio TEMP_DIR.
+    Cleans all temporary audio files in the TEMP_DIR directory.
     """
     try:
         if os.path.exists(TEMP_DIR):
-            # Obtener lista de archivos en el directorio
+            # Get list of files in the directory
             files = os.listdir(TEMP_DIR)
             
-            # Eliminar cada archivo
+            # Delete each file
             for file in files:
                 file_path = os.path.join(TEMP_DIR, file)
                 try:
                     if os.path.isfile(file_path):
                         os.remove(file_path)
-                        print(f"-> Archivo eliminado: {file}")
+                        print(f"-> File deleted: {file}")
                 except Exception as e:
-                    print(f"Error al eliminar {file}: {e}")
+                    print(f"Error deleting {file}: {e}")
             
-            print("-> Limpieza de archivos temporales completada")
+            print("-> Cleanup of temporary files completed")
         else:
-            print(f"-> El directorio {TEMP_DIR} no existe")
+            print(f"-> The directory {TEMP_DIR} does not exist")
             
     except Exception as e:
-        print(f"Error durante la limpieza: {e}")
+        print(f"Error during cleanup: {e}")

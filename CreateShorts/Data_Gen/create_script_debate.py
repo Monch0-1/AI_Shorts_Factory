@@ -5,6 +5,7 @@ from google import genai
 from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.ContextualDataService.ContextualDataGenerator import get_fresh_context
 
 WORDS_PER_MINUTE: Final[int] = 250
 SECONDS: Final[int] = 60
@@ -18,16 +19,17 @@ def generate_debate_script_json(
 ):
     client = load_env_data(genai.Client, 'GEMINI_API_KEY')
 
-    # Obtener la configuración correctamente del theme_config
+    # Get the configuration correctly from theme_config
     script_schema = theme_config.prompting.script_schema
     _system_instruction = theme_config.prompting.system_instruction
 
     if not use_template:
+        context_generated = get_fresh_context(topic)
         prompt_template = f"""
             Based on the following topic, generate a dialogue script for two distinct personalities, Narrator A and Narrator B. 
     
             TOPIC: {topic}
-            CONTEXT: {context}
+            CONTEXT: {context_generated}
     
             DURATION: The total read time should aim for {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
     
@@ -41,20 +43,23 @@ def generate_debate_script_json(
             * **Tina (The Witty Expert):** Speaks clearly, uses humor, and provides simple, fun analogies to explain complex solutions. Must have a friendly, lighthearted tone.
             * **Dialogue Style:** The conversation must flow naturally between A and B, maintaining a **casual, witty, and slightly exaggerated tone**. They are talking to each other, not lecturing the audience.
             
-            **Content:** Include at least one **witty analogy** or **humorous example** from Narrator B.
-            **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
-            **End**: Finish with a nice casual farewell
+            **STYLE REQUIREMENTS:**
+                1.  **Language:** ENTIRELY IN ENGLISH.
+                2.  **Content:** Include at least one **humorous or simple analogy** from Tina.
+                3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
+                4. **End**: Finish with a nice casual farewell
         
             Strictly adhere to the established character roles and return ONLY the JSON array structure.
             """
     else:
+        context_generated = get_fresh_context(topic)
         prompt_template = f"""
                 You are a highly skilled scriptwriter for short-form social media comedy, specializing in creating structured Top 5 lists and debates.
     
                 **PRIMARY INSTRUCTION:** Generate a dialogue script about a "Top 5 List" between two distinct personalities, Nina and Tina. The entire script must be **in English** and follow the structured JSON format provided.
     
                 **TOPIC:** The Top 5 {topic}.
-                **CONTEXT:**
+                **CONTEXT:{context_generated}**
     
                 **STRUCTURED DEBATE FLOW:**
                 The script MUST follow a structure where the list is presented, and Nina challenges the ranking/inclusion of at least 3 items.
@@ -89,7 +94,7 @@ def generate_debate_script_json(
                 temperature=0.7
             )
         )
-        # El texto de respuesta será una cadena JSON válida
+        # The response text will be a valid JSON string
 
         # Save the response to a file for debugging purposes
         debug_dir = Path(__file__).parent.parent / "debug_scripts"
@@ -102,4 +107,4 @@ def generate_debate_script_json(
         return response.text
 
     except Exception as e:
-        return f"Error en la generación del guion JSON: {e}"
+        return f"Error in JSON script generation: {e}"

@@ -1,0 +1,137 @@
+[
+  {
+    "speaker": "Tina",
+    "line": "Hey Nina! Ready for my top 5 Genshin DPS characters and their best-in-slot supports?",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Always ready to debate your questionable rankings, Tina. Hit me!",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Alright, kicking off at number 5, we have Wriothesley, specifically in a Melt team, now supercharged by Citlali.",
+    "topic": "Top 5 List - #5 Wriothesley"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Wriothesley? Isn't he just a fancy punchy boy?",
+    "topic": "Skepticism - Wriothesley"
+  },
+  {
+    "speaker": "Nina",
+    "line": "How good can he really be compared to the big guns?",
+    "topic": "Skepticism - Wriothesley"
+  },
+  {
+    "speaker": "Tina",
+    "line": "With Citlali, he's like a boxer who just got rocket-powered gloves.",
+    "topic": "Defense - Wriothesley"
+  },
+  {
+    "speaker": "Tina",
+    "line": "His damage isn't just good; it's explosively consistent now.",
+    "topic": "Defense - Wriothesley"
+  },
+  {
+    "speaker": "Tina",
+    "line": "At number 4, Ganyu, especially in Melt or Freeze with Shenhe or Kazuha.",
+    "topic": "Top 5 List - #4 Ganyu"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Ganyu? But isn't Ayaka generally considered better for Cryo DPS?",
+    "topic": "Skepticism - Ganyu"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Ganyu feels a bit slow sometimes.",
+    "topic": "Skepticism - Ganyu"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Ayaka is a finely tuned sports car, yes. But Ganyu is a high-precision sniper rifle.",
+    "topic": "Defense - Ganyu"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Different tools for different jobs, and Ganyu's charged shots still hit like a meteor.",
+    "topic": "Defense - Ganyu"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Coming in at number 3, we have Mavuika, now shining brightly as a Pyro DPS with Citlali.",
+    "topic": "Top 5 List - #3 Mavuika"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Mavuika? Who's that? Isn't Hu Tao still the undisputed Pyro queen?",
+    "topic": "Skepticism - Mavuika"
+  },
+  {
+    "speaker": "Tina",
+    "line": "If Hu Tao is the seasoned chef with a secret recipe, Mavuika is the new culinary prodigy.",
+    "topic": "Defense - Mavuika"
+  },
+  {
+    "speaker": "Tina",
+    "line": "They just got a super-oven in the form of Citlali, making their dishes, or rather damage, incredibly potent.",
+    "topic": "Defense - Mavuika"
+  },
+  {
+    "speaker": "Tina",
+    "line": "For our number 2 spot, it's Arlecchino, especially with Citlali, making her a top-tier Pyro DPS.",
+    "topic": "Top 5 List - #2 Arlecchino"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Arlecchino is good, I'll give you that, but number 2?",
+    "topic": "Disagreement - Arlecchino"
+  },
+  {
+    "speaker": "Nina",
+    "line": "That's a bold claim, Tina!",
+    "topic": "Disagreement - Arlecchino"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Citlali doesn't just support her; she turns Arlecchino into an unstoppable inferno.",
+    "topic": "Defense - Arlecchino"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's like adding nitro to an already powerful engine. The numbers don't lie.",
+    "topic": "Defense - Arlecchino"
+  },
+  {
+    "speaker": "Tina",
+    "line": "And finally, at number 1, still reigning supreme, Neuvillette with Furina and Kazuha.",
+    "topic": "Top 5 List - #1 Neuvillette"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Ugh, Neuvillette again? He's too easy, where's the fun in just holding a button?",
+    "topic": "Disagreement - Neuvillette"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Fun is subjective, Nina, but pure, unadulterated power isn't.",
+    "topic": "Defense - Neuvillette"
+  },
+  {
+    "speaker": "Tina",
+    "line": "He's like a laser cannon when everyone else has a water pistol. Still the king of raw damage.",
+    "topic": "Defense - Neuvillette"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Okay, I'll admit, your analogies were pretty good this time. Still not convinced about Mavuika, though!",
+    "topic": "Closing"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Give it time, Nina. The meta always evolves!",
+    "topic": "Closing"
+  }
+]

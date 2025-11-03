@@ -12,7 +12,7 @@ from typing import Optional, List
 from moviepy.editor import concatenate_videoclips, concatenate_audioclips
 
 # --- Video Format Constants ---
-VERTICAL_WIDTH = 1080    # Width for vertical video format (9:16)
+VERTICAL_WIDTH = 1080    # Width for vertical video format (9:16).
 VERTICAL_HEIGHT = 1920   # Height for vertical video format (9:16)
 BACKGROUND_VOLUME = 0.10 # Background music volume level (10% of original)
 FPS = 30                 # Frames per second for output video
@@ -34,16 +34,16 @@ def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: floa
         voice_clip = AudioFileClip(voice_path)
         music_clip = AudioFileClip(music_path)
 
-        # Si la música es más corta, creamos loops manualmente
+        # If the music is shorter, we create loops manually.
         if music_clip.duration < duration_sec:
             num_loops = int(duration_sec / music_clip.duration) + 1
             music_clips = [music_clip] * num_loops
             music_clip = concatenate_audioclips(music_clips)
 
-        # La música se corta a la duración_sec (diálogo + buffer)
+        # The music is cut to duration_sec (dialogue + buffer).
         music_clip = music_clip.subclip(0, duration_sec)
         
-        # Ajustamos el volumen de la música
+        # We adjust the music volume.
         music_clip = music_clip.volumex(background_volume)
 
         return CompositeAudioClip([voice_clip, music_clip]).set_duration(duration_sec)
@@ -104,7 +104,7 @@ def create_looped_clip(clip: VideoFileClip, target_duration: float) -> VideoFile
         return result
         
     except Exception as e:
-        print(f"Error en create_looped_clip: {str(e)}")
+        print(f"Error in create_looped_clip: {str(e)}")
         raise
 
 
@@ -112,29 +112,29 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
                        output_path: str, duration_sec: float,
                        subtitle_clips: List[TextClip] = None,
                        background_volume: float = 0.10) -> None:
-    # 1. Obtener la duración REAL del diálogo
+    # 1. Get the REAL duration of the dialogue.
     voice_clip_temp = AudioFileClip(voice_path)
     dialogue_duration = voice_clip_temp.duration
-    voice_clip_temp.close()  # Liberar el clip temporal
+    voice_clip_temp.close()  # Release the temporary clip.
 
-    # 2. CALCULAR LA DURACIÓN FINAL: Diálogo + Buffer de 0.5s
+    # 2. CALCULATE FINAL DURATION: Dialogue + 0.5s Buffer.
     final_video_duration = dialogue_duration + AUDIO_BUFFER_SEC
 
-    # 3. La lógica de corte y loop ahora usa la duración FINAL
+    # 3. The cut and loop logic now uses the FINAL duration.
     background_clip = VideoFileClip(video_background_path)
 
     if background_clip.duration < final_video_duration:
         video_clip_final = create_looped_clip(background_clip, final_video_duration)
-        print(f"Alerta: Video de fondo loopeado para alcanzar {final_video_duration:.2f}s")
+        print(f"Alert: Background video looped to reach {final_video_duration:.2f}s")
     else:
         video_clip_final = background_clip.subclip(0, final_video_duration)
 
     try:
-        # Create audio mix: PASAMOS LA DURACIÓN FINAL
+        # Create audio mix: WE PASS THE FINAL DURATION.
         master_audio = create_mixed_audio_clip(voice_path, music_path, final_video_duration, background_volume)
 
         # Load and format background video
-        # CORRECCIÓN: Usar el clip ajustado (video_clip_final) para el formateo vertical
+        # CORRECTION: Use the adjusted clip (video_clip_final) for vertical formatting.
         formatted_video = format_video_vertical(video_clip_final, final_video_duration)
 
         # Combine with subtitles if provided

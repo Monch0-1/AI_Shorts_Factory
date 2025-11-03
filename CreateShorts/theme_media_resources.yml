@@ -189,9 +189,9 @@ themes:
   story_formatter:
     name: story_formatter
     video:
-      path: "resources/video/4.mp4" # Fondo neutro y motivacional
+      path: "resources/video/reddit_bgv.mp4" # Fondo neutro y motivacional
     music:
-      path: "resources/audio/2_23_AM.mp3" # Música ambiental neutra
+      path: "resources/audio/reddit_bgm.mp3" # Música ambiental neutra
       volume: 0.15
     prompting:
       system_instruction: |

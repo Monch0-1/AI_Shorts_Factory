@@ -6,7 +6,7 @@ from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
 
-WORDS_PER_MINUTE: Final[int] = 100
+WORDS_PER_MINUTE: Final[int] = 250
 SECONDS: Final[int] = 60
 
 def generate_monolog_script_json(
@@ -29,21 +29,24 @@ def generate_monolog_script_json(
 
         **PRIMARY INSTRUCTION (From Prompt Refiner):** {final_script_prompt}
 
-        **LENGTH RESTRICTION (CRITICAL):** The final script MUST contain **Approximately {int(time_limit * WORDS_PER_MINUTE / SECONDS)} WORDS** in total (range +/20%).
+        **DURATION:** The total read time should aim for {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
 
         **FINAL FORMAT:** Adhere strictly to the JSON schema provided.
         
         **CONTEXT:** {context}
+        
+        **STYLE REQUIREMENTS:**
+                1.  **Language:** ENTIRELY IN ENGLISH.
+                3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consistency, 
+                      the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
+                4.  **End**: Finish with a nice casual farewell
 
-        If a sentence is too long, you **MUST** break it into multiple separate lines/entries in the JSON array but keep natural conversation flow.
-        **SUBTITLE READABILITY RULE (STRICT):** Each line in the JSON array must be short for optimized subtitles, natural phrase optimized for fast reading. 
-        Lines **MUST NOT EXCEED 15 WORDS** without loosing propper narrative flow.
         Use the context given by the user to guide the script.
 
         Return **ONLY** the JSON array structure.
         """
 
-    # 2. API call
+    # 2. API call.
     try:
         response = client.models.generate_content(
             model='gemini-2.5-flash',
@@ -58,4 +61,4 @@ def generate_monolog_script_json(
         return response.text
 
     except Exception as e:
-        return f"Error en la generación del guion JSON: {e}"
+        return f"Error in JSON script generation: {e}"

@@ -4,18 +4,18 @@ import json
 from google import genai
 from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
-# Suponemos que tienes una función para cargar los datos de la Base de Conocimiento
-# En producción, esto llamaría a MongoDB.
+# We assume you have a function to load data from the Knowledge Base.
+# In production, this would call MongoDB.
 
 from ..Create_Short_Service.loadEnvData import load_env_data
 
 
-def refine_base_prompt(base_topic_or_idea: str, theme_config: ThemeConfig) -> str:
+def refine_base_prompt(base_topic_or_idea: str, theme_config: ThemeConfig, pro_enabled: bool = False) -> str:
     client = load_env_data(genai.Client, 'GEMINI_API_KEY')
     config = theme_config.prompting
 
-    # 1. OBTENER LA SABIDURÍA (Base de Conocimiento)
-    # Carga la información de rendimiento (Dummy en esta etapa)
+    # 1. GET WISDOM (Knowledge Base)
+    # Load performance information (Dummy at this stage)
     wisdom_data = load_refinement_data(theme_config.name)
 
     if wisdom_data:
@@ -28,7 +28,7 @@ def refine_base_prompt(base_topic_or_idea: str, theme_config: ThemeConfig) -> st
         theme_wisdom = "Not provided, use best from general statistics"
         top_prompts = []
 
-    # 2. CONSTRUIR EL PROMPT MAESTRO DE REFINAMIENTO
+    # 2. BUILD THE MASTER REFINEMENT PROMPT
     refinement_instruction = f"""
     You are an expert prompt refiner. Your task is to transform the user's base idea into a FINAL, highly detailed, single-string prompt that will be passed directly to a script generator.
 
@@ -47,25 +47,30 @@ def refine_base_prompt(base_topic_or_idea: str, theme_config: ThemeConfig) -> st
     Output ONLY the finalized, single, highly-detailed prompt text, ready for script generation. Do NOT include any commentary.
     """
 
-    # 3. LLAMADA A GEMINI PRO
+    gen_model = 'gemini-2.5-flash'
+
+    if pro_enabled:
+        gen_model = 'gemini-2.5-pro'
+
+    # 3. CALL TO GEMINI PRO
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-pro',  # Usamos PRO para la tarea de razonamiento
+            model=gen_model,  # We use PRO for the reasoning task
             contents=refinement_instruction,
             config=types.GenerateContentConfig(
-                temperature=0.3  # Baja temperatura para precisión en el output del prompt
+                temperature=0.3  # Low temperature for precision in the prompt output
             )
         )
-        return self_critique_and_refine(response.text.strip(), config.target_quality_rules, client)
+        return self_critique_and_refine(response.text.strip(), config.target_quality_rules, client, gen_model)
 
 
     except Exception as e:
-        # Fallback de seguridad: si el refinamiento falla, devolvemos la idea base
-        print(f"Error en el PromptRefiningService: {e}. Usando idea base como fallback.")
+        # Safety fallback: if refinement fails, return the base idea
+        print(f"Error in PromptRefiningService: {e}. Using base idea as fallback.")
         return base_topic_or_idea
 
 
-def self_critique_and_refine(initial_refinement_prompt: str, target_quality_rules: list[str], client: genai.Client) -> str:
+def self_critique_and_refine(initial_refinement_prompt: str, target_quality_rules: list[str], client: genai.Client, gen_model: str) -> str:
     """
     Iteratively refines a prompt using a self-critique loop until it meets a target quality score.
 
@@ -76,6 +81,10 @@ def self_critique_and_refine(initial_refinement_prompt: str, target_quality_rule
 
     Returns:
         str: The refined prompt that meets the quality criteria, or the last attempt if the target is not met.
+        :param client:
+        :param target_quality_rules:
+        :param initial_refinement_prompt:
+        :param gen_model:
     """
     current_prompt = initial_refinement_prompt
     optimized_prompt = ""
@@ -88,7 +97,7 @@ def self_critique_and_refine(initial_refinement_prompt: str, target_quality_rule
 
         try:
             optimized_prompt_response = client.models.generate_content(
-                model='gemini-2.5-pro',
+                model=gen_model,
                 contents=current_prompt,
                 config=types.GenerateContentConfig(
                     temperature=0.6 + (i * 0.1)  # Increase creativity with each attempt
@@ -138,21 +147,21 @@ def self_critique_and_refine(initial_refinement_prompt: str, target_quality_rule
             current_prompt = f"Slightly rewrite the following prompt to be less formal, less structured, and include the minor flaw: '{flaw}'. Prompt to rewrite: '{optimized_prompt}'."
 
     # Fallback if it doesn't achieve 85% in 3 attempts.
-    print("-> Could not reach target score. Returning last valid prompt.")
+    print("-> Could not reach target score. Returning the last valid prompt.")
     return optimized_prompt
 
 def load_refinement_data(theme_name: str) -> dict | None:
     """
-    Carga los datos de refinamiento para un tema específico.
+    Loads refinement data for a specific theme.
     
     Args:
-        theme_name (str): Nombre del tema
+        theme_name (str): Theme name
         
     Returns:
-        dict: Diccionario con la configuración de refinamiento que incluye:
-            - general: Configuración general
-            - theme: Configuración específica del tema
-            - top_prompts: Lista de los mejores ejemplos (actualmente no implementado)
+        dict: Dictionary with the refinement configuration, including:
+            - general: General configuration
+            - theme: Theme-specific configuration
+            - top_prompts: List of the best examples (not currently implemented)
     """
     dummy_datta = {
         "reddit":{

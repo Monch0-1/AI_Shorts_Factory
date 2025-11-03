@@ -15,7 +15,7 @@ from CreateShorts.theme_config import ThemeManager, ThemeConfig
 MAX_TIME_LIMIT: Final[int] = 120
 
 # Future update Skyreels.ai
-# Crear configuración personalizada (opcional)
+# Create custom configuration (optional)
 
 config = SubtitleConfig(
     fontsize=45,
@@ -27,7 +27,7 @@ config = SubtitleConfig(
 
 
 def get_project_root():
-    """Obtiene la ruta raíz del proyecto"""
+    """Gets the project root path"""
     return Path(__file__).parent.parent
 
 
@@ -58,11 +58,12 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
 
     script_prompt = refine_base_prompt(
         base_topic_or_idea=topic,
-        theme_config=theme_config
+        theme_config=theme_config,
+        pro_enabled=False
     )
 
     if theme_config is None:
-        print(f"Error: No se pudo cargar la configuración del tema '{theme}'")
+        print(f"Error: Could not load theme configuration for '{theme}'")
         return
 
     print(f"-> Theme configuration loaded:")
@@ -70,30 +71,12 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
     print(f"   Music path: {theme_config.music_path}")
     print(f"   Voice settings: {theme_config.voice_settings}")
 
-    # 1. Generate the script here we need to validate if is it monologue or debate
-    # if theme is horror or reddit, then we use monologue, else default (will change to debate).
+    # 1. Generate the script. Here we need to validate if it is a monologue or a debate.
+    # If the theme is horror or reddit, we use monologue; otherwise, default (which will change to debate).
     print("-> Generating script...")
 
-    # if theme != "story_formatter":
-    #     if is_monologue:
-    #         script_json_input = generate_monolog_script_json(
-    #             final_script_prompt=script_prompt,
-    #             time_limit=duration_seconds,
-    #             theme_config=theme_config,
-    #             context=context_story
-    #         )
-    #
-    #     else:
-    #         script_json_input = generate_debate_script_json(
-    #             topic=topic,
-    #             time_limit=duration_seconds,
-    #             theme_config=theme_config,
-    #             use_template=use_template,
-    #             context=context_story
-    #         )
-
     def generate_audio_video(script_json_input: str, output_suffix: str = "_"):
-        # 2. Generate audio chunks in memory
+        # 2. Generate audio chunks in memory.
         print("-> Converting script to audio...")
         audio_chunks = generate_dialogue_audio(script_json_input, theme_config)
 
@@ -103,12 +86,12 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
 
         duration_sum = sum(a.duration for a in audio_chunks)
         duration_second = round(duration_sum)
-        print(f"-> Duración total del audio: {duration_second} segundos")
+        print(f"-> Total audio duration: {duration_second} seconds")
 
         if duration_second > 200:
-            print(f"⚠️ Advertencia: La duración ({duration_second:.2f}s) excede 120s")
+            print(f"⚠️ Warning: The duration ({duration_second:.2f}s) exceeds 120s")
 
-        # 3. Assemble audio chunks
+        # 3. Assemble audio chunks.
         print("-> Assembling audio chunks...")
         temp_audio_path = "temp_dialogue.mp3"
         final_audio_path = assemble_dialogue_pydub(audio_chunks, temp_audio_path)
@@ -121,7 +104,7 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
             subtitle_gen = SubtitleGenerator(config)
             subtitle_clips = subtitle_gen.create_subtitle_clips(audio_chunks)
 
-            # 5. Create final video with everything
+            # 5. Create the final video with everything.
             project_root = get_project_root()
             create_final_video(
                 voice_path=final_audio_path,
@@ -143,7 +126,7 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         return "[]"
 
     if theme == "story_formatter":
-        # --- LÓGICA DE SERIE (Multi-Parte) ---
+        # --- SERIES LOGIC (Multi-Part) ---
 
         json_series_str = generate_formatter_script_json(
             time_limit=duration_seconds,
@@ -152,32 +135,32 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         )
 
         try:
-            # multi_part_scripts_data es una LISTA DE DICCIONARIOS de Python
+            # multi_part_scripts_data is a LIST OF Python DICTIONARIES
             multi_part_scripts_data = json.loads(json_series_str)
 
         except json.JSONDecodeError as e:
-            print(f"Error fatal: El JSON devuelto por Gemini no es válido. {e}")
-            return  # Abortar
+            print(f"Fatal error: The JSON returned by Gemini is not valid. {e}")
+            return  # Abort
 
         if not multi_part_scripts_data:
-            print("ERROR: Falló la segmentación de la historia multiparte.")
+            print("ERROR: Multi-part story segmentation failed.")
             return
 
-        # 2. ITERAR y RE-SERIALIZAR para la Fábrica
+        # 2. ITERATE and RE-SERIALIZE for the Factory
         for part_data in multi_part_scripts_data:
             part_number = part_data.get("part_number", 1)
 
-            # 🚨 CORRECCIÓN CLAVE: Pasamos SÓLO las líneas, serializadas a string.
+            # 🚨 KEY CORRECTION: We pass ONLY the lines, serialized to a string.
             single_script_json_str = get_script_lines_json_str(part_data)
 
-            # Ejecutar el pipeline de un solo video para esta parte
+            # Execute the single video pipeline for this part
             generate_audio_video(
                 script_json_input=single_script_json_str,
                 output_suffix=f"_part_{part_number}"
             )
 
     else:
-        # --- LÓGICA DE VIDEO ÚNICO (Monólogo o Debate) ---
+        # --- SINGLE VIDEO LOGIC (Monologue or Debate) ---
 
         if is_monologue:
             script_json_str = generate_monolog_script_json(
@@ -209,215 +192,14 @@ if __name__ == "__main__":
     #  Use AI tool, nothing wrong with that, but never forget that what you bring to the table is the most important part.
     # """
     _context_story = """
-    Chapter 1: A Bunch of Brainless Idiots in A Play...
-    
-    “Because I love you.”
-    
-    
-    The moment she heard those words, the puppet-like Lou Yaoyao completely collapsed. Tears began to fall like a broken string of pearls, unable to stop.
-    
-    
-    Across the glass, Qin Zhi felt pain as he saw the tears fall from her eyes. He placed his hand on the glass window, wanting to wipe her tears, yet it was all but futile. In the end, he said with an aching heart: “Yaoyao, don’t cry.”
-    
-    
-    But, how could she stop the tears? Lou Yaoyao cried until she almost fainted. Separated by the glass, Qin Zhi continued to console her in a gentle voice. That voice made her think back to a time where as long as she cried and make a scene, he would drop everything, no matter what it was, and come to accompany and coax her with that same gentle voice of his.
-    
-    
-    She had been a fool to have believed that they had only had siblings affection. She had been a damn fool to have caused him take the blame for her.
-    
-    
-    “Qin Zhi, why didn’t you tell me earlier?” Lou Yaoyao asked tearfully.
-    
-    
-    Qin Zhi just smiled.
-    
-    
-    He didn’t give her an answer as she knew what the answer was. Even if he told her, it would have been useless. Because at that time she had been obsessed with Chen Hao. In her eyes, there was no one else but Chen Hao.
-    
-    
-    Having understood this, Lou Yaoyao cried more tears.
-    
-    
-    The guard urged Lou Yaoyao away as the prison visiting hour was over.
-    
-    
-    Qin Zhi called Lou Yaoyao.
-    
-    
-    Lou Yaoyao held the receiver and leaned towards the glass crying and gasping for breath. She braced herself to hear what he had to say.
-    
-    
-    Recupera tu presión 120/80 y limpia tus arterias ya
-    Glycogen Plus
-    Ads by Pubfuture
-    
-    “Yaoyao, I cannot be by your side to guard you anymore. You must take good care of yourself. Don’t be so willful anymore. Do you understand?”
-    
-    
-    “Yes, yes.” Lou Yaoyao nodded absentmindedly.
-    
-    
-    “Yaoyao...“
-    
-    
-    “Yes, yes.”
-    
-    
-    “Don’t marry Chen Hao. Find a man who will truly love you. When you do find him, be good to him, and live a good life, understand?”
-    
-    
-    “Yes, yes.”
-    
-    
-    Qin Zhi continued to speak endlessly. This was the first time in Lou Yaoyao’s entire life that she didn’t find his lecturing annoying. She earnestly responded, even though she didn’t hear a single word.
-    
-    
-    The guard warned them to speed it up. Qin Zhi finally gave Lou Yaoyao a profound glance, put down the receiver, and finally got up to leave.
-    
-    
-    Lou Yaoyao suddenly stood up and started hitting the window hard, despite the guard’s warning. She pointed at the receiver.
-    
-    
-    Qin Zhi sounded an apology to the guard and, once again, picked up the receiver.
-    
-    
-    Lou Yaoyao looked at Qin Zhi through the glass. This once handsome man had always paid attention to cleanliness, but after some short months, that man was no more. He had stubble that he seemed to have missed while shaving hastily. His face had become yellowish and unusually haggard, except his eyes. His eyes were still as brilliant as they were before. It seemed like the hardships of life had not affected him. As Lou Yaoyao looked, she felt a burst of sadness. Qin Zhi opened his mouth to hurry her up. Then, Lou Yaoyao said in unswerving arrogance, “Qin Zhi, you know that I am willful and selfish, therefore indulge me once again for the last time. Wait for me okay? I’m not asking you, I’m ordering you. You wait for me, or else don’t even think about having a good life after. You know that I can make one’s life a living hell!”
-    
-    
-    She was always a vicious woman. Forcing people to do the things and never knowing how to repent, nevertheless, she was proud of it.
-    
-    
-    At the beginning, Qin Zhi had not understood what she was speaking about. When he had figured it out, Lou Yaoyao had smiled, put down the receiver, and gone out.
-    
-    
-    At first, Qin Zhi did not understand what she was saying. When he finally understood, Lou Yaoyao had smiled at him as she. He put down the receiver and walked away.
-    
-    
-    After staring blankly at nothing for quite a while, Qin Zhi finally laughed. If she wanted him to wait, then he would wait. He resigned himself to the fact that in this lifetime, his life had fallen into this woman’s hand.
-    
-    Ads by Pubfuture
-    Pubfuture Ads
-    
-    Lou Yaoyao cried for a long time until both her eyes were swollen like peaches. As she walked outside, the sunlight gave her a temporary blackout of vision.
-    
-    
-    “Yaoyao.“
-    
-    
-    Chen Hao, who was waiting outside, called out to her. He threw away the cigarette butt and smiled as he walks toward her.
-    
-    
-    He wore a white shirt with a pair of white tailored trousers. His handsome and delicate face carried a faint smile. Walking in the sunlight, the golden ray behind him looked dazzling.
-    
-    
-    Lou Yaoyao opened her eyes wide to face this man, she had looked at him many times, but this was the first time she seriously looked at him, thoroughly looked.
-    
-    
-    Chen Hao reached for her hand, but Lou Yaoyao shook it off with disgust and walked straight to the side of the car.
-    
-    
-    Chen Hao’s face stiffened but quickly resumed his smiling expression. He walked to the side of the car and considerately assisted her in opening the car door.
-    
-    
-    Once Lou Yaoyao sat in, Chen Hao circled to the driver’s seat and started the car.
-    
-    
-    Lou Yaoyao looked out of the window in a daze, as Chen Hao used the side mirror to look at her expression.
-    
-    
-    Lou Yaoyao, looking impatient, turned her head, sneered and said, “Chen Hao, you must truly despise me? Right?”
-    
-    
-    “Yaoyao, what kind of nonsense are you talking about?” Chen Hao was apparently surprised at what Lou Yaoyao had said as his face filled with astonishment. He turned his head to look at her with eyes overflowing with gentle helplessness. Eyes of a man who was helpless against the willfulness of his girlfriend.
-    
-    
-    Lou Yaoyao, however, wasn’t deceived by him, so she minded her own business and said, “How can you not despise me. I killed your beloved woman and child. How can you not despise me?”
-    
-    
-    Chen Hao knitted his brows and snarled: “Lou Yaoyao, what kind of nonsense are you talking about!”
-    
-    
-    “I talk nonsense? You know what clearly happened. At the time, all three of us were there at the scene. You know how Lou Qingqing died, don’t you? The one who killed Lou Qingqing was me, not Qin Zhi.” After Lou Yaoyao said everything on her mind, she dropped another bombshell, “I’m going to turn myself in.”
-    
-    
-    She had been muddle headed before, but after crying in the prison, her mind unexpectedly became very clear. She must not let Qin Zhi take the blame for her. Qin Zhi was now 32 years old, the prime of man’s lifetime. To serve ten years in prison in this rapidly progressing era meant that when he came out, the world would be like another universe.
-    
-    
-    Although she was selfish, she would not let Qin Zhi ruin his whole life because of her. He deserved to have a much better life.
-    
-    
-    Esta modelo tiene tantas curvas que fue reclutada por el FBI
-    Herbeauty
-    
-    
-    Chen Hao was shocked by what Lou Yaoyao had said and stared at her in surprise. He was in shock for quite a while. He looked earnestly at her and found that she was serious. His eyes flashed with a hint of fury, but soon put himself under control. Using a gentle voice, he said, “Yaoyao, we are going to get married next month. Don’t speak of this kind of nonsense. You and I are going to get married. Lou Qingqing and I are of no importance.”
-    
-    
-    There won’t be a wedding.” Lou Yaoyao didn’t bother paying any attention to Chen Hao’s excuses. She mockingly said: “Aren’t you happy? You will finally get rid of me!”
-    
-    
-    Chen Hao was enraged by her speech, with a look of affectionate and wounded, he said: “Lou Yaoyao, in the end, how can I convince you of my sincerity?”
-    
-    
-    Lou Yaoyao just felt disgusted to the point of wanting to throw up, just not so long ago, she had —because of an argument with Lou Qingqing— accidentally killed Lou Qingqing as well as Lou Qingqing’s unborn child with her own hand, one corpse with two lives. However now, this man was actually talk about sincerity to the killer of his own child?
-    
-    
-    Lou Yaoyao felt disgusted to the point of being nauseous. Not too long ago, she—because of an argument—had killed Lou Qingqing and Lou Qingqing’s unborn child by accident, one corpse with two lives. However, this man was seriously talking about sincerity to her, the killer of his own child?
-    
-    
-    Lou Yaoyao suddenly felt sad for Lou Qingqing. They were sisters of the same father but different mothers. They had fought over such a disgusting man for more than ten years.
-    
-    
-    Oh Lou Qingqing, if you were to look at this man now, would you crawl out of your grave?
-    
-    
-    Perhaps... Chen Hao never loved Lou Qingqing?
-    
-    
-    The more she thought, the more disgusted she was. Lou Yaoyao really didn’t want to look at this man’s face at the moment, “Stop the car!”
-    
-    
-    How could Chen Hao stop the car? He looked over at her with his face still filled with great sadness, “Yaoyao, I know that you and Qin Zhe have always had a good relationship, so good in fact that it even makes me jealous. But that does not mean you can take the blame for Qin Zhe’s crime. I love you so much. Where do you place me in your heart? Have you ever even thought about my feeling?”
-    
-    
-    Lou Yaoyao was dumbstruck. F***! She should have figured out a long ago that this man simply had a problem within his brain!
-    
-    
-    “Stop talking. You make me feel disgusted! My brain must have been flooded with water to be in love with a man like you!” Lou Yaoyao was about to burst with rage. She looked at Chen Hao with hatred, “I will say it one more time. Stop the car!”
-    
-    
-    Chen Hao, of course, would not stop the car. The fair and handsome face twisted with pain and was on the verge of tears: “Yaoyao...“
-    
-    
-    Looking at Chen Hao’s face, Lou Yaoyao completely broke down, “Please stop talking. Whenever you open your mouth to talk, I just want to throw up!”
-    
-    
-    Chen Hao seemed repulsed by the blunt remarks. Thus, he forgot his pretense and looked at her with wide eyes and a stiff face. He’d heard about Lou Yaoyao’s vicious mind and malicious speech. However, Lou Yaoyao had always been fond of him so, naturally, she would not speak to him with such foul language. Now he had just discovered that this woman had such a vulgar mouth.
-    
-    
-    Lou Yaoyao was the kind of person that when she liked you, she would hold you up to the sky, but when she hated you, this woman would lose her mind!
-    
-    
-    If she had been smart enough, she would not have had such a bitter falling-out at this time. If she had been smart enough, enough to endure patiently, she would not...
-    
-    
-    The two of them were at a deadlock. Lou Yaoyao was not in the mood to look at him. Chen Hao took a few deep breaths and managed to calm himself down with great difficulty. He turned his head to show affection when the sound of a horn and the sudden screeching of brakes were heard.
-    
-    
-    At the corner of the mountain road ahead, a heavy loaded truck crashed straight into them.
-    
-    
-    The moment the steel reinforcement bar clashed against the forehead, time stopped. Twenty seven years of Lou Yaoyao’s life flashed before her eyes. An indescribable thought crossed her mind: This is such a tragic fairy tale with an extremely weird ending. Cinderella, the heroine, was stabbed to death by her vicious stepsister and then the fickle and heartless prince was about to live a happily ever after with her vicious stepsister. Unexpectedly, the prince and the stepsister were killed in a car accident. Furthermore, they died without a corpse intact! The situation was indeed a melodramatic (dog-blood) fairy tale!
-    
-    
-    Before she closed her eyes, Lou Yaoyao thought of her unwillingness and regretted everything: Poor Qin Zhi, it seems that you will have to wait for me until the next life!
+    I use to work for a automatic carwash that originally charged $3 for a wash. One spring we had changed our prices from $3 to $5. I lived in a state that has a lot of winter visitors (old people). The next winter a man comes to purchase a wash during one of the busiest times of the day. He starts to get very angry tells me he is not paying $5 for a wash and demands I reduce the price to $3 for him. After explaining why I cannot do this he gets even more angry. He gets out of his car to yell at me for what felt like forever. At this point there are probably 15-20 cars behind him and no way to get him to leave. The woman behind him gets out of her car and starts yelling at him. I apologize and tell her to please get into her car as I resolved this. She ignores me and continues to bad mouth the guy. He gets angry and goes into his trunk and pulls out his gun. He starts waving it around and threatening the woman, my staff, and me. The woman dives into her car and starts to cry. It isn't my first time having someone pull a gun on me so I calmly tell him to put away his gun since we called the cops. He gets in his car and says he ain't leaving. Within 3 minutes he drives through our gate, drives through a non moving carwash, and makes a run for it. We get his license and when the cops arrive we give the description and plate number. The cop comes back about 45 mins later for more information and tells us that they arrested him and called CPS because he had been drinking and left his 3 yr old grandson at his house, alone, while he went to the carwash. Blew my mind!
     """
 
     create_complete_short(
-        topic="Top genshin DPS characters (and their best in slot support)",
+        topic="Instant Karma stories about Karen's getting what they deserve",
         duration_seconds=75,
-        theme="default",
-        use_template=True,
-        is_monologue=False,
+        theme="reddit",
+        use_template=False,
+        is_monologue=True,
         context_story=_context_story
     )

@@ -57,4 +57,4 @@ def generate_formatter_script_json(time_limit: int, theme_config: ThemeConfig, c
         return response.text
 
     except Exception as e:
-        return f"Error en la generación del guion JSON: {e}"
+        return f"Error in JSON script generation: {e}"
