@@ -6,6 +6,8 @@ from unittest.mock import patch, MagicMock
 from CreateShorts.ContextualDataService.ContextualDataGenerator import perform_google_search, get_fresh_context
 
 class TestContextualDataGenerator(unittest.TestCase):
+
+    @patch('ContextualDataService.ContextualDataGenerator.build')
     def test_perform_google_search(self, mock_build):
         # Arrange
         mock_service = MagicMock()
