@@ -1,0 +1,5 @@
+.git
+.venv
+__pycache__
+output/*.mp4
+.idea
