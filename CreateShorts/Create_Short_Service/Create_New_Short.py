@@ -8,7 +8,7 @@ from CreateShorts.Data_Gen.create_audio import assemble_dialogue_pydub
 from CreateShorts.Data_Gen.create_script_debate import generate_debate_script_json
 from CreateShorts.Data_Gen.create_script_monologue import generate_monolog_script_json
 from CreateShorts.Data_Gen.mix_assets import create_final_video
-from CreateShorts.Data_Gen.text_to_speach import generate_dialogue_audio
+from CreateShorts.Data_Gen.text_to_speach import generate_dialogue_audio, clean_temp_audio
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
 from CreateShorts.Data_Gen.formatter_script import generate_formatter_script_json
 from CreateShorts.Prompt_Refinig_Service.refine_base_prompt import refine_base_prompt
@@ -60,6 +60,117 @@ def get_project_root():
     return Path(__file__).parent.parent
 
 
+def _select_video_resource(theme_config: ThemeConfig, video_index: Optional[int]) -> str:
+    """Selects the background video path based on index or random choice."""
+    if not theme_config.video_paths:
+        print("   WARNING: No video paths found in theme config.")
+        return ""
+
+    if video_index is not None and 0 <= video_index < len(theme_config.video_paths):
+        selected = theme_config.video_paths[video_index]
+        print(f"   Video path (Selected {video_index}): {selected}")
+        return selected
+
+    selected = random.choice(theme_config.video_paths)
+    print(f"   Video path (Random): {selected}")
+    return selected
+
+
+def _run_av_pipeline(script_json: str, topic: str, theme_config: ThemeConfig, video_path: str, output_suffix: str = "_"):
+    """
+    Executes the Audio/Video generation pipeline:
+    TTS -> Audio Assembly -> Subtitles -> Final Video Rendering.
+    """
+    print("-> Converting script to audio...")
+    audio_chunks = generate_dialogue_audio(script_json, theme_config)
+
+    if not audio_chunks:
+        print("ERROR: Failed to generate audio chunks")
+        return
+
+    duration_sum = sum(a.duration for a in audio_chunks)
+    duration_second = round(duration_sum)
+    print(f"-> Total audio duration: {duration_second} seconds")
+
+    if duration_second > 200:
+        print(f"⚠️ Warning: The duration ({duration_second:.2f}s) exceeds 120s")
+
+    # Assembling audio chunks
+    print("-> Assembling audio chunks...")
+    temp_audio_path = "temp_dialogue.mp3"
+    final_audio_path = assemble_dialogue_pydub(audio_chunks, temp_audio_path)
+
+    if not final_audio_path:
+        print("ERROR: Failed to assemble audio")
+        return
+
+    try:
+        subtitle_gen = SubtitleGenerator(config)
+        subtitle_clips = subtitle_gen.create_subtitle_clips(audio_chunks)
+
+        # Create the final video
+        project_root = get_project_root()
+        create_final_video(
+            voice_path=final_audio_path,
+            music_path=theme_config.music_path,
+            video_background_path=video_path,
+            output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower() + output_suffix}.mp4"),
+            duration_sec=duration_second,
+            subtitle_clips=subtitle_clips,
+            background_volume=theme_config.music_volume
+        )
+    finally:
+        clean_temp_audio()
+
+
+def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
+    """Handles the generation of multi-part story videos."""
+    json_series_str = generate_formatter_script_json(
+        time_limit=request.duration_seconds,
+        theme_config=theme_config,
+        context_story=request.context_story
+    )
+
+    try:
+        multi_part_scripts_data = json.loads(json_series_str)
+    except json.JSONDecodeError as e:
+        print(f"Fatal error: The JSON returned by Gemini is not valid. {e}")
+        return
+
+    if not multi_part_scripts_data:
+        print("ERROR: Multi-part story segmentation failed.")
+        return
+
+    for part_data in multi_part_scripts_data:
+        part_number = part_data.get("part_number", 1)
+        script_lines = part_data.get('script_lines', [])
+        single_script_json_str = json.dumps(script_lines) if script_lines else "[]"
+
+        _run_av_pipeline(single_script_json_str, request.topic, theme_config, video_path, output_suffix=f"_part_{part_number}")
+
+
+def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
+    """Handles the generation of standard Monologue or Debate videos."""
+    if request.is_monologue:
+        final_prompt = refine_base_prompt(request.topic, theme_config, False)
+        script_json_str = generate_monolog_script_json(
+            final_script_prompt=final_prompt,
+            time_limit=request.duration_seconds,
+            theme_config=theme_config,
+            context=request.context_story
+        )
+    else:
+        script_json_str = generate_debate_script_json(
+            topic=request.topic,
+            time_limit=request.duration_seconds,
+            theme_config=theme_config,
+            use_template=request.use_template,
+            context=request.context_story
+        )
+
+    _run_av_pipeline(script_json_str, request.topic, theme_config, video_path)
+
+
 def create_complete_short(topic: str, duration_seconds: int, theme: str = "default", use_template: bool = False,
                           is_monologue: bool = False, context_story: str = "", video_index: int = None):
     """
@@ -79,153 +190,38 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         :param is_monologue:
     """
 
-    print(f"-> Starting short video creation for topic: {topic}")
-    print(f"-> Using theme: {theme}")
+    # Structure input data into a Request Object
+    request = VideoRequest(
+        topic=topic,
+        duration_seconds=duration_seconds,
+        theme=theme,
+        use_template=use_template,
+        is_monologue=is_monologue,
+        context_story=context_story,
+        video_index=video_index
+    )
+
+    print(f"-> Starting short video creation for topic: {request.topic}")
+    print(f"-> Using theme: {request.theme}")
 
     # Load theme config
     theme_manager = ThemeManager()
-    theme_config = theme_manager.get_theme_config(theme)
-
-    # script_prompt = refine_base_prompt(
-    #     base_topic_or_idea=topic,
-    #     theme_config=theme_config,
-    #     pro_enabled=False
-    # )
+    theme_config = theme_manager.get_theme_config(request.theme)
 
     if theme_config is None:
-        print(f"Error: Could not load theme configuration for '{theme}'")
+        print(f"Error: Could not load theme configuration for '{request.theme}'")
         return
 
     print(f"-> Theme configuration loaded:")
-
-    # Select video (Random or Specific)
-    selected_video_path = ""
-    if theme_config.video_paths:
-        if video_index is not None and 0 <= video_index < len(theme_config.video_paths):
-            selected_video_path = theme_config.video_paths[video_index]
-            print(f"   Video path (Selected {video_index}): {selected_video_path}")
-        else:
-            selected_video_path = random.choice(theme_config.video_paths)
-            print(f"   Video path (Random): {selected_video_path}")
-    else:
-        print("   WARNING: No video paths found in theme config.")
-
+    video_path = _select_video_resource(theme_config, request.video_index)
     print(f"   Music path: {theme_config.music_path}")
     print(f"   Voice settings: {theme_config.voice_settings}")
 
-    # 1. Generate the script. Here we need to validate if it is a monologue or a debate.
-    # If the theme is horror or reddit, we use monologue; otherwise, default (which will change to debate).
     print("-> Generating script...")
-
-    def generate_audio_video(script_json_input: str, output_suffix: str = "_"):
-        # 2. Generate audio chunks in memory.
-        print("-> Converting script to audio...")
-        audio_chunks = generate_dialogue_audio(script_json_input, theme_config)
-
-        if not audio_chunks:
-            print("ERROR: Failed to generate audio chunks")
-            return
-
-        duration_sum = sum(a.duration for a in audio_chunks)
-        duration_second = round(duration_sum)
-        print(f"-> Total audio duration: {duration_second} seconds")
-
-        if duration_second > 200:
-            print(f"⚠️ Warning: The duration ({duration_second:.2f}s) exceeds 120s")
-
-        # 3. Assemble audio chunks.
-        print("-> Assembling audio chunks...")
-        temp_audio_path = "temp_dialogue.mp3"
-        final_audio_path = assemble_dialogue_pydub(audio_chunks, temp_audio_path)
-
-        if not final_audio_path:
-            print("ERROR: Failed to assemble audio")
-            return
-
-        try:
-            subtitle_gen = SubtitleGenerator(config)
-            subtitle_clips = subtitle_gen.create_subtitle_clips(audio_chunks)
-
-            # 5. Create the final video with everything.
-            project_root = get_project_root()
-            create_final_video(
-                voice_path=final_audio_path,
-                music_path=theme_config.music_path,
-                video_background_path=selected_video_path,
-                output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower() + output_suffix}.mp4"),
-                duration_sec=duration_second,
-                subtitle_clips=subtitle_clips,
-                background_volume=theme_config.music_volume
-            )
-        finally:
-            from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio
-            clean_temp_audio()
-
-    def get_script_lines_json_str(_part_data: dict) -> str:
-        script_lines = _part_data.get('script_lines')
-        if script_lines:
-            return json.dumps(script_lines)
-        return "[]"
-
-    if theme == "story_formatter":
-        # --- SERIES LOGIC (Multi-Part) ---
-
-        json_series_str = generate_formatter_script_json(
-            time_limit=duration_seconds,
-            theme_config=theme_config,
-            context_story=context_story
-        )
-
-        try:
-            # multi_part_scripts_data is a LIST OF Python DICTIONARIES
-            multi_part_scripts_data = json.loads(json_series_str)
-
-        except json.JSONDecodeError as e:
-            print(f"Fatal error: The JSON returned by Gemini is not valid. {e}")
-            return  # Abort
-
-        if not multi_part_scripts_data:
-            print("ERROR: Multi-part story segmentation failed.")
-            return
-
-        # 2. ITERATE and RE-SERIALIZE for the Factory
-        for part_data in multi_part_scripts_data:
-            part_number = part_data.get("part_number", 1)
-
-            # 🚨 KEY CORRECTION: We pass ONLY the lines, serialized to a string.
-            single_script_json_str = get_script_lines_json_str(part_data)
-
-            # Execute the single video pipeline for this part
-            generate_audio_video(
-                script_json_input=single_script_json_str,
-                output_suffix=f"_part_{part_number}"
-            )
-
+    if request.theme == "story_formatter":
+        _handle_story_series_flow(request, theme_config, video_path)
     else:
-        # --- SINGLE VIDEO LOGIC (Monologue or Debate) ---
-
-        if is_monologue:
-
-            script_json_str = generate_monolog_script_json(
-                final_script_prompt=refine_base_prompt(
-                    topic,
-                    theme_config,
-                    False
-                ),
-                time_limit=duration_seconds,
-                theme_config=theme_config,
-                context=context_story
-            )
-        else:
-            script_json_str = generate_debate_script_json(
-                topic=topic,
-                time_limit=duration_seconds,
-                theme_config=theme_config,
-                use_template=use_template,
-                context=context_story
-            )
-
-        generate_audio_video(script_json_input=script_json_str)
+        _handle_standard_flow(request, theme_config, video_path)
 
 
 def create_short_from_json(request_data: Union[dict, VideoRequest]):
@@ -309,7 +305,7 @@ This concept mixes relatable everyday beliefs with surprising corrections, makin
     # Example using the VideoRequest Data Class
     video_request = VideoRequest(
         topic="5 Everyday Myths You Still Believe (But Aren’t True)",
-        duration_seconds=800,
+        duration_seconds=80,
         theme="Default",
         use_template=True,
         is_monologue=False,

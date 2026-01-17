@@ -4,6 +4,10 @@ themes:
     video:
       paths:
         - "resources/video/4.mp4"
+        - "resources/video/5.mp4"
+        - "resources/video/6.mp4"
+        - "resources/video/7.mp4"
+        - "resources/video/8.mp4"
     music:
       path: "resources/audio/2_23_AM.mp3"
       volume: 0.10
