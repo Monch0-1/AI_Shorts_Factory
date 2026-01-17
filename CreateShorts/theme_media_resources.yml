@@ -2,7 +2,8 @@ themes:
   default:
     name: default
     video:
-      path: "resources/video/4.mp4"
+      paths:
+        - "resources/video/4.mp4"
     music:
       path: "resources/audio/2_23_AM.mp3"
       volume: 0.10
@@ -56,7 +57,8 @@ themes:
   horror:
     name: horror
     video:
-      path: "resources/video/horror_background.mp4"
+      paths:
+        - "resources/video/horror_background.mp4"
     music:
       path: "resources/audio/horror.mp3"
       volume: 0.20
@@ -98,7 +100,8 @@ themes:
   reddit:
     name: reddit
     video:
-      path: "resources/video/reddit_bgv.mp4"
+      paths:
+        - "resources/video/reddit_bgv.mp4"
     music:
       path: "resources/audio/reddit_bgm.mp3"
       volume: 0.15
@@ -143,7 +146,8 @@ themes:
   inspirational:
     name: inspirational
     video:
-      path: "resources/video/reddit_bgv.mp4" # Usar un fondo abstracto/motivational
+      paths:
+        - "resources/video/reddit_bgv.mp4" # Usar un fondo abstracto/motivational
     music:
       path: "resources/audio/inspirational_music.mp3" # Usar una pista de música más épica/motivacional
       volume: 0.18
@@ -189,7 +193,8 @@ themes:
   story_formatter:
     name: story_formatter
     video:
-      path: "resources/video/reddit_bgv.mp4" # Fondo neutro y motivacional
+      paths:
+        - "resources/video/reddit_bgv.mp4" # Fondo neutro y motivacional
     music:
       path: "resources/audio/2_23_AM.mp3" # Música ambiental neutra
       volume: 0.02

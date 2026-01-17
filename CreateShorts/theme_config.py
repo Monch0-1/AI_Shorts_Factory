@@ -17,7 +17,7 @@ class PromptingConfig:
 @dataclass
 class ThemeConfig:
     name: str
-    video_path: str
+    video_paths: List[str]
     music_path: str
     music_volume: float
     prompting: PromptingConfig
@@ -93,7 +93,14 @@ class ThemeManager:
             for theme_name, theme_data in config['themes'].items():
                 try:
                     name = theme_data['name']
-                    video_path = str(project_root / "CreateShorts" / theme_data['video']['path'])
+
+                    video_data = theme_data.get('video', {})
+                    if 'paths' in video_data:
+                        raw_paths = video_data['paths']
+                    else:
+                        raw_paths = [video_data.get('path')] if 'path' in video_data else []
+
+                    video_paths = [str(project_root / "CreateShorts" / p) for p in raw_paths]
                     music_path = str(project_root / "CreateShorts" / theme_data['music']['path'])
                     music_volume = theme_data['music'].get('volume', 0.10)
 
@@ -132,7 +139,7 @@ class ThemeManager:
 
                     self.themes[theme_name] = ThemeConfig(
                         name=name,
-                        video_path=video_path,
+                        video_paths=video_paths,
                         music_path=music_path,
                         music_volume=music_volume,
                         prompting=prompting_config,
@@ -168,7 +175,8 @@ class ThemeManager:
         )
 
         self.themes['default'] = ThemeConfig(
-            video_path=str(project_root / "CreateShorts/resources/video/4.mp4"),
+            name="default",
+            video_paths=[str(project_root / "CreateShorts/resources/video/4.mp4")],
             music_path=str(project_root / "CreateShorts/resources/audio/2_23_AM.mp3"),
             music_volume=0.10,
             prompting=default_prompting
