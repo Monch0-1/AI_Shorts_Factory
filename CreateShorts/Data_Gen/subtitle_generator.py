@@ -7,11 +7,11 @@ from CreateShorts.Data_Gen.moviepy_config import *
 @dataclass
 class SubtitleConfig:
     """Configuration for the subtitle style"""
-    fontsize: int = 65  # Increased for better visibility
+    fontsize: int = 170  # Increased for better visibility
     font: str = 'Arial-Bold'
     color: str = 'white'
     stroke_color: str = 'black'
-    stroke_width: int = 3  # Increased for better readability
+    stroke_width: int = 4  # Increased for better readability
     size: tuple = (700, None)  # Reduced max width for shorter lines
     method: str = 'caption'
     align: str = 'center'
@@ -44,7 +44,7 @@ class SubtitleGenerator:
                                size=self.config.size,
                                align=self.config.align,
                                interline=self.config.interline) # Adjusted for better position
-                       .set_position(('center', 0.80), relative=True)
+                       .set_position(('center', 'center'), relative=True)
                        .set_start(current_time)
                        .set_duration(chunk.duration))
             
@@ -57,16 +57,16 @@ class SubtitleGenerator:
         """Optimizes text for better readability."""
         # Remove extra spaces
         text = ' '.join(text.split())
-        
+
         # Split into shorter lines if necessary
         words = text.split()
         if len(words) > 6:  # If there are more than 6 words
             mid = len(words) // 2
             return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
-        
+
         return text
 
-    def add_subtitles(self, video_path: str, audio_chunks: List[AudioChunkInfo], 
+    def add_subtitles(self, video_path: str, audio_chunks: List[AudioChunkInfo],
                      output_path: str) -> None:
         """Adds subtitles to the video based on audio chunks."""
         try:

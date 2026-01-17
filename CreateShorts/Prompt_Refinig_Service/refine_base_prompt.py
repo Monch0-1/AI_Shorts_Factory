@@ -123,7 +123,7 @@ def self_critique_and_refine(initial_refinement_prompt: str, target_quality_rule
 
         try:
             critique_response = client.models.generate_content(
-                model='gemini-2.5-pro',
+                model=gen_model,
                 contents=critique_prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )

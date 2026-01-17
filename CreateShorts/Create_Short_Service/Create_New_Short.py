@@ -56,11 +56,11 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
     theme_manager = ThemeManager()
     theme_config = theme_manager.get_theme_config(theme)
 
-    script_prompt = refine_base_prompt(
-        base_topic_or_idea=topic,
-        theme_config=theme_config,
-        pro_enabled=False
-    )
+    # script_prompt = refine_base_prompt(
+    #     base_topic_or_idea=topic,
+    #     theme_config=theme_config,
+    #     pro_enabled=False
+    # )
 
     if theme_config is None:
         print(f"Error: Could not load theme configuration for '{theme}'")
@@ -163,8 +163,13 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         # --- SINGLE VIDEO LOGIC (Monologue or Debate) ---
 
         if is_monologue:
+
             script_json_str = generate_monolog_script_json(
-                final_script_prompt=script_prompt,
+                final_script_prompt=refine_base_prompt(
+                    topic,
+                    theme_config,
+                    False
+                ),
                 time_limit=duration_seconds,
                 theme_config=theme_config,
                 context=context_story
@@ -182,24 +187,56 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
 
 
 if __name__ == "__main__":
-    # _context_story = """
-    #  There is a lot of hype lately about AI tools, seems like the new gold fever, but how true is that?.
-    #  AI tools definitively are a new way to generate income, either you are a programmer, a content creator, even an accountant if you like, you can use AI tools for everything.
-    #  This, however, does not mean you will magically make money at the click of a button, you will need to think hard, work hard or and be creative.
-    #  This video, for example, it does uses AI tools, but behind it there is a complicated algorithm that put it all together, there is hard work behind this video.
-    #  You might think that is not really that impressive, and you are right, is not. However, the point is that because a lot of hard work behind it, it has been improving rapidly, and now it is capable to create very complex content with minimal effort.
-    #  Nothing is for free and just remember that AI tools are not magic, it is your mind what makes the magic.
-    #  Use AI tool, nothing wrong with that, but never forget that what you bring to the table is the most important part.
+#     _context_story = """
+#      Am I the a-hole For intentionally scary my neighbours kids
+#
+# My bedroom window faces the front yard. During the day I have the blinds half open, enough to let in some light and sunshine for my cats. From the street and even the front yard, it’s not possible to see clearly into my bedroom. Because of this, I do often walk through my bedroom in my underwear or just partly dressed to get to the bathroom. I don’t risk walking around naked though.
+#
+# Recently, my neighbour’s twin kids, both male and I’m guessing around 7 years old, have started looking in my bedroom window. I don’t just mean standing by the window in my yard, I’m talking faces and hands completely pressed up against the window looking in.
+#
+# I assume this started with them looking at my cats, but now I think they consider it some type of game with me. If they see me, they run back home laughing. I have caught them outside on a number of occasions and asked them directly not to do this, but again they just run away laughing like it’s a game.
+#
+# I’ve also spoken to their parents multiple times, and they refuse to do anything about it. The response I got was “they’re just kids being kids” and “if you don’t want someone looking in your window just keep it closed”. I think that teaching your kids that it’s ok to go onto someone’s property and peek in their window is kinda fucked up. I know they’re only young, but I still feel like my privacy is being invaded.
+#
+# This has been going on almost daily for months now, until last week. I walked in my bedroom and heard the kids outside playing, then spotted the terrifying demon like mask that my boyfriend wore to a Halloween party the night before. So I got an idea.
+#
+# I stood next to my window wearing the mask for almost 20 minutes. Finally I heard the footsteps approaching and waited until both kids had their noses pressed up against the window. At that moment I jumped out, mask right at their eye level, and let out the deepest and loudest roar I possibly could.
+#
+# In all the years living next to these neighbours I’ve never heard them scream as loudly as they did when they saw me. They ran home screaming and crying, and just minutes later their mother was at my door, calling me a monster for scaring her children. I simply told her that I do what I want in my own house, and if her kids don’t want to see that they should stay away from my window.
+#
+# It’s been a week now and I’m glad to say the kids have not even stepped foot on my front lawn. Not sure if it’s because they’re traumatised, or the parents have just told them not to do it anymore. Either way, I’m happy.
+#
+# I felt justified at the time, but everyone I’ve told has said that I took it too far for such young children. So I don’t know, Am I the a-hole?
+
+
     # """
-    _context_story = """
-    I use to work for a automatic carwash that originally charged $3 for a wash. One spring we had changed our prices from $3 to $5. I lived in a state that has a lot of winter visitors (old people). The next winter a man comes to purchase a wash during one of the busiest times of the day. He starts to get very angry tells me he is not paying $5 for a wash and demands I reduce the price to $3 for him. After explaining why I cannot do this he gets even more angry. He gets out of his car to yell at me for what felt like forever. At this point there are probably 15-20 cars behind him and no way to get him to leave. The woman behind him gets out of her car and starts yelling at him. I apologize and tell her to please get into her car as I resolved this. She ignores me and continues to bad mouth the guy. He gets angry and goes into his trunk and pulls out his gun. He starts waving it around and threatening the woman, my staff, and me. The woman dives into her car and starts to cry. It isn't my first time having someone pull a gun on me so I calmly tell him to put away his gun since we called the cops. He gets in his car and says he ain't leaving. Within 3 minutes he drives through our gate, drives through a non moving carwash, and makes a run for it. We get his license and when the cops arrive we give the description and plate number. The cop comes back about 45 mins later for more information and tells us that they arrested him and called CPS because he had been drinking and left his 3 yr old grandson at his house, alone, while he went to the carwash. Blew my mind!
+    _context_story = """This short video (around 5 minutes) would explore five common, relatable items or habits we all encounter daily, but with surprising or quirky backstories. The tone should be light, fun, and sprinkled with interesting facts that make viewers say, 
+    “Wait, really?!” Perfect for keeping attention in a short format.
+    
+    INSTRUCTIONS: 
+    Structure Outline
+1. 	Intro 
+• 	Quick hook: “We use these things every day, but their origins are stranger than you think…”
+• 	Energetic visuals and upbeat music to set the mood.
+2. 	Top 5 Countdown 
+• 	#5: The Toothbrush – Ancient civilizations used twigs and frayed sticks long before bristles.
+• 	#4: Jeans – Originally designed as durable workwear for miners, now a global fashion staple.
+• 	#3: Coffee – Legend says it was discovered after goats in Ethiopia got hyper from eating coffee berries.
+• 	#2: Umbrella – First used in ancient China not for rain, but as a symbol of status and shade.
+• 	#1: High-Fives – The gesture only became popular in the late 1970s, thanks to baseball players.
+2. 	Each item gets about 40–50 seconds with visuals, fun facts, and maybe a playful animation or stock footage.
+3. 	Outro 
+• 	Wrap-up: “So next time you sip coffee or throw on jeans, remember their weird beginnings!”
+• 	Call-to-action: “Which origin story surprised you the most? Comment below!”
+    
     """
 
+
     create_complete_short(
-        topic="Instant Karma stories about Karen's getting what they deserve",
-        duration_seconds=75,
-        theme="reddit",
-        use_template=False,
-        is_monologue=True,
+        topic="Top 5 Everyday Things You Didn’t Know Had Weird Origins",
+        duration_seconds=800,
+        theme="Default",
+        use_template=True,
+        is_monologue=False,
         context_story=_context_story
     )

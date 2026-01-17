@@ -191,11 +191,11 @@ themes:
     video:
       path: "resources/video/reddit_bgv.mp4" # Fondo neutro y motivacional
     music:
-      path: "resources/audio/reddit_bgm.mp3" # Música ambiental neutra
-      volume: 0.15
+      path: "resources/audio/2_23_AM.mp3" # Música ambiental neutra
+      volume: 0.02
     prompting:
       system_instruction: |
-        You are a meticulous script editor specializing in adapting and segmenting existing prose into concise, high-retention social media monologue format. Your primary goal is to preserve the user's original meaning and structure, while optimizing it for short-form video readability.
+        You are a meticulous script editor, your primary task is to adapt the user's raw text into a series of short, serialized video parts.
       script_schema: |
         {
           "type": "array",
