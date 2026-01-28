@@ -253,6 +253,7 @@ def create_short_from_json(request_data: Union[dict, VideoRequest]):
         video_index=video_request.video_index
     )
 
+# Example usage, this will be move to an API endpoint later
 
 if __name__ == "__main__":
 #     _context_story = """
@@ -278,39 +279,39 @@ if __name__ == "__main__":
 
 
     # """
-    _context_story = """This video (around 5 minutes) would debunk five super common misconceptions that most people have 
-    heard or even still believe. It’s relatable, surprising, and sparks curiosity—perfect for keeping viewers hooked in a short format.
+    _context_story = """This 5‑minute video would explore common sayings we use all the time, but whose backstories are quirky, 
+    unexpected, or downright weird. It’s fun, relatable, and sparks curiosity—ideal for short-form content.
     
     INSTRUCTIONS: 
     Structure Outline
-1. 	Intro (30 seconds)
-• 	Hook: “Think you know the truth about these everyday facts? You might be wrong…”
-• 	Quick montage of the myths to tease what’s coming.
-2. 	Top 5 Countdown (4 minutes)
-• 	#5: Goldfish Memory – They don’t just have 3-second memories; studies show they can remember things for months.
-• 	#4: Cracking Knuckles Causes Arthritis – Research shows no direct link; it’s mostly harmless.
-• 	#3: Humans Only Use 10% of Their Brain – Neuroscience proves we use nearly all parts of our brain, just not all at once.
-• 	#2: Sugar Makes Kids Hyper – Multiple studies show no consistent evidence; excitement is usually situational.
-• 	#1: The Great Wall of China Visible from Space – Astronauts confirm it’s not easily visible without aid; it blends with the landscape.
-2. 	Each myth gets about 40–50 seconds with visuals, playful debunking, and maybe a quick animation or stock footage.
-3. 	Outro (30 seconds)
-• 	Wrap-up: “So next time someone repeats these myths, you’ll know the truth!”
-• 	Call-to-action: “Which myth fooled you the longest? Share below!”
-
-This concept mixes relatable everyday beliefs with surprising corrections, making it both fun and informative.
+    1. 	Intro (30 seconds)
+    • 	Hook: “We say these phrases every day, but do you know where they actually come from?”
+    • 	Quick montage of the phrases to tease the countdown.
+    2. 	Top 5 Countdown (4 minutes)
+    • 	#5: “Spill the Beans” – Originated from ancient voting systems where beans were used to cast votes; spilling them revealed the result.
+    • 	#4: “Caught Red-Handed” – Dates back to Scottish law in the 1400s, referring to being found with blood on your hands after a crime.
+    • 	#3: “Break the Ice” – Comes from ships breaking ice to open trade routes, later meaning to ease social tension.
+    • 	#2: “Saved by the Bell” – Not from boxing originally, but from safety coffins in the 18th century, where a bell was attached in case someone was buried alive.
+    • 	#1: “Kick the Bucket” – Likely from animals being slaughtered while hanging from a beam called a “bucket,” leading to the phrase for dying.
+    2. 	Each phrase gets about 40–50 seconds with visuals, playful animations, or stock footage to illustrate the origin.
+    3. 	Outro (30 seconds)
+    • 	Wrap-up: “Next time you use these phrases, you’ll know the bizarre stories behind them!”
+    • 	Call-to-action: “Which origin surprised you the most? Drop it in the comments!”
+    
+    This concept blends relatable language with fun historical trivia, keeping viewers entertained while learning something new.
     
     """
 
 
     # Example using the VideoRequest Data Class
     video_request = VideoRequest(
-        topic="5 Everyday Myths You Still Believe (But Aren’t True)",
-        duration_seconds=80,
-        theme="Default",
-        use_template=True,
-        is_monologue=False,
-        context_story=_context_story,
-        # video_index=0  # Optional
+        topic="Put here your title",
+        duration_seconds=60, # Approx time duration, need to work on accuracy
+        theme="Default", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
+        use_template=True, # Template for monologue type
+        is_monologue=False, # Use monologue features such as the new prompt refiner
+        context_story=_context_story, # Your context
+        # video_index=0  # Optional # To select a video, this will be useful for web application
     )
 
     create_short_from_json(video_request)
