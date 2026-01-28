@@ -1,0 +1,422 @@
+[
+  {
+    "speaker": "Tina",
+    "line": "Hey Nina! Ready to dive into some mind-blowing truths?",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Tina",
+    "line": "We're counting down the Top 5 Everyday Myths You Still Believe",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Tina",
+    "line": "But Aren't True.",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Alright, Tina, I'm ready to have my world rocked.",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Nina",
+    "line": "But I bet I don't believe any of them.",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Tina",
+    "line": "We'll see about that!",
+    "topic": "Opening"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Coming in at Number 5: The myth that Zone 2 cardio is the absolute pinnacle",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "for all your fitness benefits.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "What? But everyone on social media says Zone 2 is the holy grail!",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Isn't that the perfect pace for endurance and fat burning?",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's good, but not the *only* or *best* thing.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "New research suggests it might not be intense enough for optimal cardiovascular gains",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "or metabolic improvements if that's all you're doing.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Think of it like watering a garden.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Zone 2 is a gentle, steady drizzle that keeps things hydrated.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "But sometimes your plants need a good, hard rain",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "to really soak the roots and encourage deep growth.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You need variety!",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Okay, I guess a drizzle won't clear the dust off my car.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Point taken.",
+    "topic": "Zone 2 Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Number 4 on our list: The idea that steady-state cardio alone",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "is a highly effective strategy for significant weight loss.",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Wait, what? My hour on the treadmill isn't enough to shed pounds?",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "That doesn't make any sense! I'm burning calories!",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You are, but for weight loss, it's largely ineffective on its own.",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Your body adapts, and the calorie burn plateaus.",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's like trying to bail out a leaky boat with a teacup.",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You're doing work, but if the leak (your diet) is too big,",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "or you're not using a bigger bucket (strength training, varied intensity),",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "you won't make much progress.",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "So, my teacup isn't cutting it.",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Looks like I need a bigger bucket, or maybe to plug the leak first.",
+    "topic": "Steady-State Cardio Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Exactly! Moving on to Number 3: The myth that collagen supplements",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "are completely useless and just get digested without benefit.",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Oh, come on! I've always heard collagen just breaks down in your stomach",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "and doesn't actually reach your skin or joints.",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Why is it on *this* list?",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Because recent scientific reviews show collagen peptides",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "can absolutely be effective!",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "They're broken down into smaller amino acid chains",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "that the body *can* absorb and use to stimulate its own collagen production.",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's like sending tiny construction workers to a building site.",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You don't send the whole skyscraper, right?",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You send the bricks, the steel beams, and the crew.",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Those peptides are the building blocks and the signal",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "to get your body's collagen factory humming.",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "So, I've been missing out on my internal construction crew?",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Fine, you've convinced me on that one.",
+    "topic": "Collagen Supplements Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Excellent! Time for Number 2: The myth that AI will directly replace",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "the majority of software engineers.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "No way! Developers are already panicking about job security!",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "You can't tell me AI isn't coming for their jobs!",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's a huge misconception!",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "The current understanding is that engineers *using* AI",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "will replace engineers who *aren't*.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "AI is a tool, not a sentient overlord.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Think of it like a really smart hammer.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It makes building faster and more efficient,",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "but you still need a carpenter to design the house,",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "understand the client's needs, and know *where* to hit the nail.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Engineers will evolve, not vanish.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "A smart hammer, huh? I guess that makes sense.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Still, a little scary.",
+    "topic": "AI Replacing Engineers Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "And finally, our Number 1 myth: The persistent belief",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "that vaccination causes autism.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Seriously? People still believe that?",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "It's been thoroughly debunked by countless scientific reviews",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "and every major health organization!",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Unfortunately, yes.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Despite overwhelming evidence, this myth continues to circulate,",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "fueled by misinformation and fear.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's like trying to convince someone the Earth is round",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "when they're staring at a flat map.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "The evidence is there, but the perception is stubbornly stuck.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's a testament to how powerful a single, compelling (though false) story",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "can be, even against a mountain of facts.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Wow, that's a tough one to shake.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Nina",
+    "line": "I guess some myths just have incredible staying power.",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "They certainly do!",
+    "topic": "Vaccination Autism Myth"
+  },
+  {
+    "speaker": "Tina",
+    "line": "And there you have it, Nina, our Top 5 Everyday Myths!",
+    "topic": "Closing"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Hope you learned something new!",
+    "topic": "Closing"
+  },
+  {
+    "speaker": "Nina",
+    "line": "My mind is officially blown, Tina.",
+    "topic": "Closing"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Thanks for debunking those for me!",
+    "topic": "Closing"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Anytime! See you next time!",
+    "topic": "Closing"
+  }
+]

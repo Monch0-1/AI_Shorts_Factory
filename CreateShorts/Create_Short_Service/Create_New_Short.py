@@ -1,12 +1,14 @@
 import json
+import random
 from pathlib import Path
-from typing import Final
+from typing import Final, Optional, Union
+from dataclasses import dataclass
 
 from CreateShorts.Data_Gen.create_audio import assemble_dialogue_pydub
 from CreateShorts.Data_Gen.create_script_debate import generate_debate_script_json
 from CreateShorts.Data_Gen.create_script_monologue import generate_monolog_script_json
 from CreateShorts.Data_Gen.mix_assets import create_final_video
-from CreateShorts.Data_Gen.text_to_speach import generate_dialogue_audio
+from CreateShorts.Data_Gen.text_to_speach import generate_dialogue_audio, clean_temp_audio
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
 from CreateShorts.Data_Gen.formatter_script import generate_formatter_script_json
 from CreateShorts.Prompt_Refinig_Service.refine_base_prompt import refine_base_prompt
@@ -25,14 +27,152 @@ config = SubtitleConfig(
     stroke_width=2
 )
 
+@dataclass
+class VideoRequest:
+    """
+    Encapsulates the parameters required to create a short video.
+    Acts as a Data Transfer Object (DTO) for video generation requests.
+    """
+    topic: str
+    duration_seconds: int
+    theme: str = "default"
+    use_template: bool = False
+    is_monologue: bool = False
+    context_story: str = ""
+    video_index: Optional[int] = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'VideoRequest':
+        """Creates a VideoRequest instance from a dictionary, handling defaults."""
+        return cls(
+            topic=data.get("topic", "Untitled"),
+            duration_seconds=data.get("duration_seconds", 60),
+            theme=data.get("theme", "default"),
+            use_template=data.get("use_template", False),
+            is_monologue=data.get("is_monologue", False),
+            context_story=data.get("context_story", ""),
+            video_index=data.get("video_index")
+        )
+
 
 def get_project_root():
     """Gets the project root path"""
     return Path(__file__).parent.parent
 
 
+def _select_video_resource(theme_config: ThemeConfig, video_index: Optional[int]) -> str:
+    """Selects the background video path based on index or random choice."""
+    if not theme_config.video_paths:
+        print("   WARNING: No video paths found in theme config.")
+        return ""
+
+    if video_index is not None and 0 <= video_index < len(theme_config.video_paths):
+        selected = theme_config.video_paths[video_index]
+        print(f"   Video path (Selected {video_index}): {selected}")
+        return selected
+
+    selected = random.choice(theme_config.video_paths)
+    print(f"   Video path (Random): {selected}")
+    return selected
+
+
+def _run_av_pipeline(script_json: str, topic: str, theme_config: ThemeConfig, video_path: str, output_suffix: str = "_"):
+    """
+    Executes the Audio/Video generation pipeline:
+    TTS -> Audio Assembly -> Subtitles -> Final Video Rendering.
+    """
+    print("-> Converting script to audio...")
+    audio_chunks = generate_dialogue_audio(script_json, theme_config)
+
+    if not audio_chunks:
+        print("ERROR: Failed to generate audio chunks")
+        return
+
+    duration_sum = sum(a.duration for a in audio_chunks)
+    duration_second = round(duration_sum)
+    print(f"-> Total audio duration: {duration_second} seconds")
+
+    if duration_second > 200:
+        print(f"⚠️ Warning: The duration ({duration_second:.2f}s) exceeds 120s")
+
+    # Assembling audio chunks
+    print("-> Assembling audio chunks...")
+    temp_audio_path = "temp_dialogue.mp3"
+    final_audio_path = assemble_dialogue_pydub(audio_chunks, temp_audio_path)
+
+    if not final_audio_path:
+        print("ERROR: Failed to assemble audio")
+        return
+
+    try:
+        subtitle_gen = SubtitleGenerator(config)
+        subtitle_clips = subtitle_gen.create_subtitle_clips(audio_chunks)
+
+        # Create the final video
+        project_root = get_project_root()
+        create_final_video(
+            voice_path=final_audio_path,
+            music_path=theme_config.music_path,
+            video_background_path=video_path,
+            output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower() + output_suffix}.mp4"),
+            duration_sec=duration_second,
+            subtitle_clips=subtitle_clips,
+            background_volume=theme_config.music_volume
+        )
+    finally:
+        clean_temp_audio()
+
+
+def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
+    """Handles the generation of multi-part story videos."""
+    json_series_str = generate_formatter_script_json(
+        time_limit=request.duration_seconds,
+        theme_config=theme_config,
+        context_story=request.context_story
+    )
+
+    try:
+        multi_part_scripts_data = json.loads(json_series_str)
+    except json.JSONDecodeError as e:
+        print(f"Fatal error: The JSON returned by Gemini is not valid. {e}")
+        return
+
+    if not multi_part_scripts_data:
+        print("ERROR: Multi-part story segmentation failed.")
+        return
+
+    for part_data in multi_part_scripts_data:
+        part_number = part_data.get("part_number", 1)
+        script_lines = part_data.get('script_lines', [])
+        single_script_json_str = json.dumps(script_lines) if script_lines else "[]"
+
+        _run_av_pipeline(single_script_json_str, request.topic, theme_config, video_path, output_suffix=f"_part_{part_number}")
+
+
+def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
+    """Handles the generation of standard Monologue or Debate videos."""
+    if request.is_monologue:
+        final_prompt = refine_base_prompt(request.topic, theme_config, False)
+        script_json_str = generate_monolog_script_json(
+            final_script_prompt=final_prompt,
+            time_limit=request.duration_seconds,
+            theme_config=theme_config,
+            context=request.context_story
+        )
+    else:
+        script_json_str = generate_debate_script_json(
+            topic=request.topic,
+            time_limit=request.duration_seconds,
+            theme_config=theme_config,
+            use_template=request.use_template,
+            context=request.context_story
+        )
+
+    _run_av_pipeline(script_json_str, request.topic, theme_config, video_path)
+
+
 def create_complete_short(topic: str, duration_seconds: int, theme: str = "default", use_template: bool = False,
-                          is_monologue: bool = False, context_story: str = ""):
+                          is_monologue: bool = False, context_story: str = "", video_index: int = None):
     """
     Creates a complete short video from start to finish.
     
@@ -45,161 +185,133 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         :param topic:
         :param duration_seconds:
         :param theme:
+        :param video_index: Optional index to select a specific video from the theme's list.
         :param use_template:
         :param is_monologue:
     """
 
-    print(f"-> Starting short video creation for topic: {topic}")
-    print(f"-> Using theme: {theme}")
+    # Structure input data into a Request Object
+    request = VideoRequest(
+        topic=topic,
+        duration_seconds=duration_seconds,
+        theme=theme,
+        use_template=use_template,
+        is_monologue=is_monologue,
+        context_story=context_story,
+        video_index=video_index
+    )
+
+    print(f"-> Starting short video creation for topic: {request.topic}")
+    print(f"-> Using theme: {request.theme}")
 
     # Load theme config
     theme_manager = ThemeManager()
-    theme_config = theme_manager.get_theme_config(theme)
-
-    script_prompt = refine_base_prompt(
-        base_topic_or_idea=topic,
-        theme_config=theme_config,
-        pro_enabled=False
-    )
+    theme_config = theme_manager.get_theme_config(request.theme)
 
     if theme_config is None:
-        print(f"Error: Could not load theme configuration for '{theme}'")
+        print(f"Error: Could not load theme configuration for '{request.theme}'")
         return
 
     print(f"-> Theme configuration loaded:")
-    print(f"   Video path: {theme_config.video_path}")
+    video_path = _select_video_resource(theme_config, request.video_index)
     print(f"   Music path: {theme_config.music_path}")
     print(f"   Voice settings: {theme_config.voice_settings}")
 
-    # 1. Generate the script. Here we need to validate if it is a monologue or a debate.
-    # If the theme is horror or reddit, we use monologue; otherwise, default (which will change to debate).
     print("-> Generating script...")
-
-    def generate_audio_video(script_json_input: str, output_suffix: str = "_"):
-        # 2. Generate audio chunks in memory.
-        print("-> Converting script to audio...")
-        audio_chunks = generate_dialogue_audio(script_json_input, theme_config)
-
-        if not audio_chunks:
-            print("ERROR: Failed to generate audio chunks")
-            return
-
-        duration_sum = sum(a.duration for a in audio_chunks)
-        duration_second = round(duration_sum)
-        print(f"-> Total audio duration: {duration_second} seconds")
-
-        if duration_second > 200:
-            print(f"⚠️ Warning: The duration ({duration_second:.2f}s) exceeds 120s")
-
-        # 3. Assemble audio chunks.
-        print("-> Assembling audio chunks...")
-        temp_audio_path = "temp_dialogue.mp3"
-        final_audio_path = assemble_dialogue_pydub(audio_chunks, temp_audio_path)
-
-        if not final_audio_path:
-            print("ERROR: Failed to assemble audio")
-            return
-
-        try:
-            subtitle_gen = SubtitleGenerator(config)
-            subtitle_clips = subtitle_gen.create_subtitle_clips(audio_chunks)
-
-            # 5. Create the final video with everything.
-            project_root = get_project_root()
-            create_final_video(
-                voice_path=final_audio_path,
-                music_path=theme_config.music_path,
-                video_background_path=theme_config.video_path,
-                output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower() + output_suffix}.mp4"),
-                duration_sec=duration_second,
-                subtitle_clips=subtitle_clips,
-                background_volume=theme_config.music_volume
-            )
-        finally:
-            from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio
-            clean_temp_audio()
-
-    def get_script_lines_json_str(_part_data: dict) -> str:
-        script_lines = _part_data.get('script_lines')
-        if script_lines:
-            return json.dumps(script_lines)
-        return "[]"
-
-    if theme == "story_formatter":
-        # --- SERIES LOGIC (Multi-Part) ---
-
-        json_series_str = generate_formatter_script_json(
-            time_limit=duration_seconds,
-            theme_config=theme_config,
-            context_story=context_story
-        )
-
-        try:
-            # multi_part_scripts_data is a LIST OF Python DICTIONARIES
-            multi_part_scripts_data = json.loads(json_series_str)
-
-        except json.JSONDecodeError as e:
-            print(f"Fatal error: The JSON returned by Gemini is not valid. {e}")
-            return  # Abort
-
-        if not multi_part_scripts_data:
-            print("ERROR: Multi-part story segmentation failed.")
-            return
-
-        # 2. ITERATE and RE-SERIALIZE for the Factory
-        for part_data in multi_part_scripts_data:
-            part_number = part_data.get("part_number", 1)
-
-            # 🚨 KEY CORRECTION: We pass ONLY the lines, serialized to a string.
-            single_script_json_str = get_script_lines_json_str(part_data)
-
-            # Execute the single video pipeline for this part
-            generate_audio_video(
-                script_json_input=single_script_json_str,
-                output_suffix=f"_part_{part_number}"
-            )
-
+    if request.theme == "story_formatter":
+        _handle_story_series_flow(request, theme_config, video_path)
     else:
-        # --- SINGLE VIDEO LOGIC (Monologue or Debate) ---
+        _handle_standard_flow(request, theme_config, video_path)
 
-        if is_monologue:
-            script_json_str = generate_monolog_script_json(
-                final_script_prompt=script_prompt,
-                time_limit=duration_seconds,
-                theme_config=theme_config,
-                context=context_story
-            )
-        else:
-            script_json_str = generate_debate_script_json(
-                topic=topic,
-                time_limit=duration_seconds,
-                theme_config=theme_config,
-                use_template=use_template,
-                context=context_story
-            )
 
-        generate_audio_video(script_json_input=script_json_str)
+def create_short_from_json(request_data: Union[dict, VideoRequest]):
+    """
+    Wrapper function that processes a video request.
+    Accepts either a dictionary (JSON) or a VideoRequest object.
+    """
+    if not request_data:
+        print("Error: No request data provided.")
+        return
 
+    # Convert dict to VideoRequest if necessary
+    if isinstance(request_data, dict):
+        video_request = VideoRequest.from_dict(request_data)
+    elif isinstance(request_data, VideoRequest):
+        video_request = request_data
+    else:
+        print("Error: Invalid data type. Expected dict or VideoRequest.")
+        return
+
+    # Extract values from the encapsulated object
+    create_complete_short(
+        topic=video_request.topic,
+        duration_seconds=video_request.duration_seconds,
+        theme=video_request.theme,
+        use_template=video_request.use_template,
+        is_monologue=video_request.is_monologue,
+        context_story=video_request.context_story,
+        video_index=video_request.video_index
+    )
+
+# Example usage, this will be move to an API endpoint later
 
 if __name__ == "__main__":
-    # _context_story = """
-    #  There is a lot of hype lately about AI tools, seems like the new gold fever, but how true is that?.
-    #  AI tools definitively are a new way to generate income, either you are a programmer, a content creator, even an accountant if you like, you can use AI tools for everything.
-    #  This, however, does not mean you will magically make money at the click of a button, you will need to think hard, work hard or and be creative.
-    #  This video, for example, it does uses AI tools, but behind it there is a complicated algorithm that put it all together, there is hard work behind this video.
-    #  You might think that is not really that impressive, and you are right, is not. However, the point is that because a lot of hard work behind it, it has been improving rapidly, and now it is capable to create very complex content with minimal effort.
-    #  Nothing is for free and just remember that AI tools are not magic, it is your mind what makes the magic.
-    #  Use AI tool, nothing wrong with that, but never forget that what you bring to the table is the most important part.
+#     _context_story = """
+#      Am I the a-hole For intentionally scary my neighbours kids
+#
+# My bedroom window faces the front yard. During the day I have the blinds half open, enough to let in some light and sunshine for my cats. From the street and even the front yard, it’s not possible to see clearly into my bedroom. Because of this, I do often walk through my bedroom in my underwear or just partly dressed to get to the bathroom. I don’t risk walking around naked though.
+#
+# Recently, my neighbour’s twin kids, both male and I’m guessing around 7 years old, have started looking in my bedroom window. I don’t just mean standing by the window in my yard, I’m talking faces and hands completely pressed up against the window looking in.
+#
+# I assume this started with them looking at my cats, but now I think they consider it some type of game with me. If they see me, they run back home laughing. I have caught them outside on a number of occasions and asked them directly not to do this, but again they just run away laughing like it’s a game.
+#
+# I’ve also spoken to their parents multiple times, and they refuse to do anything about it. The response I got was “they’re just kids being kids” and “if you don’t want someone looking in your window just keep it closed”. I think that teaching your kids that it’s ok to go onto someone’s property and peek in their window is kinda fucked up. I know they’re only young, but I still feel like my privacy is being invaded.
+#
+# This has been going on almost daily for months now, until last week. I walked in my bedroom and heard the kids outside playing, then spotted the terrifying demon like mask that my boyfriend wore to a Halloween party the night before. So I got an idea.
+#
+# I stood next to my window wearing the mask for almost 20 minutes. Finally I heard the footsteps approaching and waited until both kids had their noses pressed up against the window. At that moment I jumped out, mask right at their eye level, and let out the deepest and loudest roar I possibly could.
+#
+# In all the years living next to these neighbours I’ve never heard them scream as loudly as they did when they saw me. They ran home screaming and crying, and just minutes later their mother was at my door, calling me a monster for scaring her children. I simply told her that I do what I want in my own house, and if her kids don’t want to see that they should stay away from my window.
+#
+# It’s been a week now and I’m glad to say the kids have not even stepped foot on my front lawn. Not sure if it’s because they’re traumatised, or the parents have just told them not to do it anymore. Either way, I’m happy.
+#
+# I felt justified at the time, but everyone I’ve told has said that I took it too far for such young children. So I don’t know, Am I the a-hole?
+
+
     # """
-    _context_story = """
-    I use to work for a automatic carwash that originally charged $3 for a wash. One spring we had changed our prices from $3 to $5. I lived in a state that has a lot of winter visitors (old people). The next winter a man comes to purchase a wash during one of the busiest times of the day. He starts to get very angry tells me he is not paying $5 for a wash and demands I reduce the price to $3 for him. After explaining why I cannot do this he gets even more angry. He gets out of his car to yell at me for what felt like forever. At this point there are probably 15-20 cars behind him and no way to get him to leave. The woman behind him gets out of her car and starts yelling at him. I apologize and tell her to please get into her car as I resolved this. She ignores me and continues to bad mouth the guy. He gets angry and goes into his trunk and pulls out his gun. He starts waving it around and threatening the woman, my staff, and me. The woman dives into her car and starts to cry. It isn't my first time having someone pull a gun on me so I calmly tell him to put away his gun since we called the cops. He gets in his car and says he ain't leaving. Within 3 minutes he drives through our gate, drives through a non moving carwash, and makes a run for it. We get his license and when the cops arrive we give the description and plate number. The cop comes back about 45 mins later for more information and tells us that they arrested him and called CPS because he had been drinking and left his 3 yr old grandson at his house, alone, while he went to the carwash. Blew my mind!
+    _context_story = """This 5‑minute video would explore common sayings we use all the time, but whose backstories are quirky, 
+    unexpected, or downright weird. It’s fun, relatable, and sparks curiosity—ideal for short-form content.
+    
+    INSTRUCTIONS: 
+    Structure Outline
+    1. 	Intro (30 seconds)
+    • 	Hook: “We say these phrases every day, but do you know where they actually come from?”
+    • 	Quick montage of the phrases to tease the countdown.
+    2. 	Top 5 Countdown (4 minutes)
+    • 	#5: “Spill the Beans” – Originated from ancient voting systems where beans were used to cast votes; spilling them revealed the result.
+    • 	#4: “Caught Red-Handed” – Dates back to Scottish law in the 1400s, referring to being found with blood on your hands after a crime.
+    • 	#3: “Break the Ice” – Comes from ships breaking ice to open trade routes, later meaning to ease social tension.
+    • 	#2: “Saved by the Bell” – Not from boxing originally, but from safety coffins in the 18th century, where a bell was attached in case someone was buried alive.
+    • 	#1: “Kick the Bucket” – Likely from animals being slaughtered while hanging from a beam called a “bucket,” leading to the phrase for dying.
+    2. 	Each phrase gets about 40–50 seconds with visuals, playful animations, or stock footage to illustrate the origin.
+    3. 	Outro (30 seconds)
+    • 	Wrap-up: “Next time you use these phrases, you’ll know the bizarre stories behind them!”
+    • 	Call-to-action: “Which origin surprised you the most? Drop it in the comments!”
+    
+    This concept blends relatable language with fun historical trivia, keeping viewers entertained while learning something new.
+    
     """
 
-    create_complete_short(
-        topic="Instant Karma stories about Karen's getting what they deserve",
-        duration_seconds=75,
-        theme="reddit",
-        use_template=False,
-        is_monologue=True,
-        context_story=_context_story
+
+    # Example using the VideoRequest Data Class
+    video_request = VideoRequest(
+        topic="Put here your title",
+        duration_seconds=60, # Approx time duration, need to work on accuracy
+        theme="Default", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
+        use_template=True, # Template for monologue type
+        is_monologue=False, # Use monologue features such as the new prompt refiner
+        context_story=_context_story, # Your context
+        # video_index=0  # Optional # To select a video, this will be useful for web application
     )
+
+    create_short_from_json(video_request)

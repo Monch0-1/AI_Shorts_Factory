@@ -31,7 +31,7 @@ def generate_debate_script_json(
             TOPIC: {topic}
             CONTEXT: {context_generated}
     
-            DURATION: The total read time should aim for {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
+            DURATION: The total read time should aim for at least {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
     
             STYLE REQUIREMENTS:
             1. The entire script must be in **ENGLISH**.
@@ -68,7 +68,7 @@ def generate_debate_script_json(
                 3.  **ITEMS 2, 1:** Tina presents the final items, Nina expresses strong disagreement or surprise, and Tina delivers the final, witty defense.
                 4.  **CLOSING:** Nina acknowledges the list, and Tina delivers a casual farewell. (1-2 lines but consider more if the line had to broken in multiple lines as per the Json Format rule)
     
-                DURATION: The total read time should aim for {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
+                DURATION: The total read time should aim for at least 250 seconds aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
     
                 **CHARACTERS & TONE:**
                 * **Nina (The Skeptical Challenger):** Asks critical questions about the ranking or the drawbacks of an item. Must use contractions (e.g., "don't," "isn't that").

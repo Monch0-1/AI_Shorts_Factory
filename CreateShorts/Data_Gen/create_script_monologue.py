@@ -19,6 +19,7 @@ def generate_monolog_script_json(
 
     script_schema = theme_config.prompting.script_schema
     _system_instruction = theme_config.prompting.system_instruction
+    speaker = "Narrator_Male"
 
     # 1. FINAL PROMPT CONSTRUCTION
     # The refined prompt already includes the story, style and guidelines.
@@ -29,11 +30,13 @@ def generate_monolog_script_json(
 
         **PRIMARY INSTRUCTION (From Prompt Refiner):** {final_script_prompt}
 
-        **DURATION:** The total read time should aim for {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
+        **DURATION:** The total read time should aim for a minimum of {time_limit} seconds and can go as long as needed, consider this will be used for a TTS audio file so the duration could go higher than expected.
 
         **FINAL FORMAT:** Adhere strictly to the JSON schema provided.
         
         **CONTEXT:** {context}
+        
+        **SPEAKER:** {speaker}
         
         **STYLE REQUIREMENTS:**
                 1.  **Language:** ENTIRELY IN ENGLISH.
