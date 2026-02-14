@@ -21,6 +21,7 @@ class ThemeConfig:
     music_path: str
     music_volume: float
     prompting: PromptingConfig
+    resources: Dict = field(default_factory=dict)
     voice_settings: Optional[ElevenLabsVoiceSettings] = None
 
 
@@ -71,6 +72,24 @@ def _create_schema_from_dict(schema_dict: dict) -> types.Schema:
             description=description
         )
 
+
+def _get_default_schema() -> types.Schema:
+    """Retorna un esquema por defecto"""
+    return types.Schema(
+        type=types.Type.ARRAY,
+        description="List of turns in the dialogue.",
+        items=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
+                "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
+                "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
+            },
+            required=["speaker", "line", "topic"]
+        )
+    )
+
+
 class ThemeManager:
     def __init__(self, config_path: Optional[str] = None):
         if config_path is None:
@@ -103,6 +122,14 @@ class ThemeManager:
                     video_paths = [str(project_root / "CreateShorts" / p) for p in raw_paths]
                     music_path = str(project_root / "CreateShorts" / theme_data['music']['path'])
                     music_volume = theme_data['music'].get('volume', 0.10)
+                    resources_data = theme_data.get('resources', {})
+
+                    project_root = get_project_root()
+                    for h_type in resources_data:
+                        for h_context in resources_data[h_type]:
+                            for res in resources_data[h_type][h_context]:
+                                if 'path' in res:
+                                    res['path'] = str(project_root / "CreateShorts" / res['path'])
 
                     prompting_data = theme_data.get('prompting', {})
                     schema_dict = yaml.safe_load(prompting_data.get('script_schema', '{}'))
@@ -111,7 +138,7 @@ class ThemeManager:
                         script_schema_obj = _create_schema_from_dict(schema_dict)
                     except Exception as schema_error:
                         print(f"Error creando schema para {theme_name}: {schema_error}")
-                        script_schema_obj = self._get_default_schema()
+                        script_schema_obj = _get_default_schema()
 
                     prompting_config = PromptingConfig(
                         system_instruction=prompting_data.get('system_instruction', _get_default_system_instruction()),
@@ -143,7 +170,8 @@ class ThemeManager:
                         music_path=music_path,
                         music_volume=music_volume,
                         prompting=prompting_config,
-                        voice_settings=voice_settings
+                        voice_settings=voice_settings,
+                        resources = resources_data
                     )
 
                 except Exception as theme_error:
@@ -155,7 +183,6 @@ class ThemeManager:
             self._load_default_config()
 
     def _load_default_config(self):
-        """Carga una configuración por defecto si falla la carga del archivo"""
         project_root = get_project_root()
         default_prompting = PromptingConfig(
             system_instruction=_get_default_system_instruction(),
@@ -186,18 +213,3 @@ class ThemeManager:
         """Obtiene la configuración para un tema específico"""
         return self.themes.get(theme_name, self.themes['default'])
 
-    def _get_default_schema(self) -> types.Schema:
-        """Retorna un esquema por defecto"""
-        return types.Schema(
-            type=types.Type.ARRAY,
-            description="List of turns in the dialogue.",
-            items=types.Schema(
-                type=types.Type.OBJECT,
-                properties={
-                    "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
-                    "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
-                    "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
-                },
-                required=["speaker", "line", "topic"]
-            )
-        )

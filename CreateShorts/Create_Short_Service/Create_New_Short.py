@@ -4,11 +4,12 @@ from pathlib import Path
 from typing import Final, Optional, Union
 from dataclasses import dataclass
 
-from CreateShorts.Data_Gen.create_audio import assemble_dialogue_pydub
+from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
+from CreateShorts.Data_Gen.create_audio import assemble_dialogue_v2
 from CreateShorts.Data_Gen.create_script_debate import generate_debate_script_json
 from CreateShorts.Data_Gen.create_script_monologue import generate_monolog_script_json
 from CreateShorts.Data_Gen.mix_assets import create_final_video
-from CreateShorts.Data_Gen.text_to_speach import generate_dialogue_audio, clean_temp_audio
+from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio, generate_script_audio_v2
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
 from CreateShorts.Data_Gen.formatter_script import generate_formatter_script_json
 from CreateShorts.Prompt_Refinig_Service.refine_base_prompt import refine_base_prompt
@@ -59,6 +60,16 @@ def get_project_root():
     """Gets the project root path"""
     return Path(__file__).parent.parent
 
+def parse_script_to_dto(topic: str, script_json_str: str) -> Optional[ScriptDTO]:
+    try:
+        data = json.loads(script_json_str)
+        if isinstance(data, list):
+            return ScriptDTO(topic=topic, segments=data)
+        return ScriptDTO(**data)
+    except Exception as e:
+        print(f"❌ Error validando el guion con Pydantic: {e}")
+        return None
+
 
 def _select_video_resource(theme_config: ThemeConfig, video_index: Optional[int]) -> str:
     """Selects the background video path based on index or random choice."""
@@ -76,46 +87,27 @@ def _select_video_resource(theme_config: ThemeConfig, video_index: Optional[int]
     return selected
 
 
-def _run_av_pipeline(script_json: str, topic: str, theme_config: ThemeConfig, video_path: str, output_suffix: str = "_"):
-    """
-    Executes the Audio/Video generation pipeline:
-    TTS -> Audio Assembly -> Subtitles -> Final Video Rendering.
-    """
-    print("-> Converting script to audio...")
-    audio_chunks = generate_dialogue_audio(script_json, theme_config)
+def _run_av_pipeline(script_dto: ScriptDTO, theme_config: ThemeConfig, video_path: str, topic: str):
 
-    if not audio_chunks:
-        print("ERROR: Failed to generate audio chunks")
-        return
+    print("-> Generating audio and capturing durations...")
+    script_dto = generate_script_audio_v2(script_dto, theme_config)
 
-    duration_sum = sum(a.duration for a in audio_chunks)
-    duration_second = round(duration_sum)
-    print(f"-> Total audio duration: {duration_second} seconds")
+    total_duration = sum(seg.duration for seg in script_dto.segments)
+    print(f"-> Total duration: {total_duration:.2f}s")
 
-    if duration_second > 200:
-        print(f"⚠️ Warning: The duration ({duration_second:.2f}s) exceeds 120s")
-
-    # Assembling audio chunks
-    print("-> Assembling audio chunks...")
     temp_audio_path = "temp_dialogue.mp3"
-    final_audio_path = assemble_dialogue_pydub(audio_chunks, temp_audio_path)
-
-    if not final_audio_path:
-        print("ERROR: Failed to assemble audio")
-        return
+    final_audio_path = assemble_dialogue_v2(script_dto, temp_audio_path)
 
     try:
         subtitle_gen = SubtitleGenerator(config)
-        subtitle_clips = subtitle_gen.create_subtitle_clips(audio_chunks)
+        subtitle_clips = subtitle_gen.create_subtitle_clips_v2(script_dto)
 
-        # Create the final video
-        project_root = get_project_root()
         create_final_video(
             voice_path=final_audio_path,
             music_path=theme_config.music_path,
             video_background_path=video_path,
-            output_path=str(project_root / "output" / f"{topic.replace(' ', '_').lower() + output_suffix}.mp4"),
-            duration_sec=duration_second,
+            output_path=str(get_project_root() / "output" / f"{topic.replace(' ', '_').lower()}.mp4"),
+            duration_sec=round(total_duration),
             subtitle_clips=subtitle_clips,
             background_volume=theme_config.music_volume
         )
@@ -146,7 +138,59 @@ def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, 
         script_lines = part_data.get('script_lines', [])
         single_script_json_str = json.dumps(script_lines) if script_lines else "[]"
 
-        _run_av_pipeline(single_script_json_str, request.topic, theme_config, video_path, output_suffix=f"_part_{part_number}")
+        print("-> Validating Script with Pydantic DTO...")
+        try:
+            script_data = json.loads(script_json_str)
+            script_dto = ScriptDTO(topic=request.topic, segments=script_data)
+        except Exception as e:
+            print(f"❌ Error al mapear el DTO: {e}")
+            return
+
+        _run_av_pipeline(script_dto, theme_config, video_path, request.topic)
+
+
+# def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
+#     """Handles the generation of multi-part story videos."""
+#     json_series_str = generate_formatter_script_json(
+#         time_limit=request.duration_seconds,
+#         theme_config=theme_config,
+#         context_story=request.context_story
+#     )
+#
+#     try:
+#         multi_part_scripts_data = json.loads(json_series_str)
+#     except json.JSONDecodeError as e:
+#         print(f"Fatal error: The JSON returned by Gemini is not valid. {e}")
+#         return
+#
+#     if not multi_part_scripts_data:
+#         print("ERROR: Multi-part story segmentation failed.")
+#         return
+#
+#     # Iteramos sobre cada parte (Part 1, Part 2, etc.)
+#     for part_data in multi_part_scripts_data:
+#         part_number = part_data.get("part_number", 1)
+#         script_lines = part_data.get('script_lines', [])
+#
+#         # --- MAPEO A DTO (Super_Edits) ---
+#         try:
+#             # Creamos un ScriptDTO para esta parte específica
+#             script_dto = ScriptDTO(
+#                 topic=f"{request.topic} - Part {part_number}",
+#                 segments=script_lines
+#             )
+#
+#             # Enviamos el DTO al pipeline
+#             _run_av_pipeline(
+#                 script_dto=script_dto,
+#                 theme_config=theme_config,
+#                 video_path=video_path,
+#                 topic=request.topic,
+#                 output_suffix=f"_part_{part_number}"  # Asegúrate que _run_av_pipeline acepte este kwarg
+#             )
+#         except Exception as e:
+#             print(f"❌ Error validando la parte {part_number}: {e}")
+#             continue
 
 
 def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
@@ -168,8 +212,19 @@ def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, vide
             context=request.context_story
         )
 
-    _run_av_pipeline(script_json_str, request.topic, theme_config, video_path)
+    try:
+        script_data = json.loads(script_json_str)
+        script_dto = ScriptDTO(
+            topic=request.topic,
+            segments=script_data
+        )
 
+        _run_av_pipeline(script_dto, theme_config, video_path, request.topic)
+
+    except Exception as e:
+        print(f"Critical Error when validating with Pydantic: {e}")
+        print(f"Json Content failed: {script_json_str[:200]}...")
+        return
 
 def create_complete_short(topic: str, duration_seconds: int, theme: str = "default", use_template: bool = False,
                           is_monologue: bool = False, context_story: str = "", video_index: int = None):
@@ -256,60 +311,49 @@ def create_short_from_json(request_data: Union[dict, VideoRequest]):
 # Example usage, this will be move to an API endpoint later
 
 if __name__ == "__main__":
-#     _context_story = """
-#      Am I the a-hole For intentionally scary my neighbours kids
-#
-# My bedroom window faces the front yard. During the day I have the blinds half open, enough to let in some light and sunshine for my cats. From the street and even the front yard, it’s not possible to see clearly into my bedroom. Because of this, I do often walk through my bedroom in my underwear or just partly dressed to get to the bathroom. I don’t risk walking around naked though.
-#
-# Recently, my neighbour’s twin kids, both male and I’m guessing around 7 years old, have started looking in my bedroom window. I don’t just mean standing by the window in my yard, I’m talking faces and hands completely pressed up against the window looking in.
-#
-# I assume this started with them looking at my cats, but now I think they consider it some type of game with me. If they see me, they run back home laughing. I have caught them outside on a number of occasions and asked them directly not to do this, but again they just run away laughing like it’s a game.
-#
-# I’ve also spoken to their parents multiple times, and they refuse to do anything about it. The response I got was “they’re just kids being kids” and “if you don’t want someone looking in your window just keep it closed”. I think that teaching your kids that it’s ok to go onto someone’s property and peek in their window is kinda fucked up. I know they’re only young, but I still feel like my privacy is being invaded.
-#
-# This has been going on almost daily for months now, until last week. I walked in my bedroom and heard the kids outside playing, then spotted the terrifying demon like mask that my boyfriend wore to a Halloween party the night before. So I got an idea.
-#
-# I stood next to my window wearing the mask for almost 20 minutes. Finally I heard the footsteps approaching and waited until both kids had their noses pressed up against the window. At that moment I jumped out, mask right at their eye level, and let out the deepest and loudest roar I possibly could.
-#
-# In all the years living next to these neighbours I’ve never heard them scream as loudly as they did when they saw me. They ran home screaming and crying, and just minutes later their mother was at my door, calling me a monster for scaring her children. I simply told her that I do what I want in my own house, and if her kids don’t want to see that they should stay away from my window.
-#
-# It’s been a week now and I’m glad to say the kids have not even stepped foot on my front lawn. Not sure if it’s because they’re traumatised, or the parents have just told them not to do it anymore. Either way, I’m happy.
-#
-# I felt justified at the time, but everyone I’ve told has said that I took it too far for such young children. So I don’t know, Am I the a-hole?
 
-
-    # """
-    _context_story = """This 5‑minute video would explore common sayings we use all the time, but whose backstories are quirky, 
-    unexpected, or downright weird. It’s fun, relatable, and sparks curiosity—ideal for short-form content.
+    _context_story = """This 5‑minute video would create a eerie unsettling and dwon right terrifying story about the shadow people as a creepypasta monologue.
     
     INSTRUCTIONS: 
-    Structure Outline
-    1. 	Intro (30 seconds)
-    • 	Hook: “We say these phrases every day, but do you know where they actually come from?”
-    • 	Quick montage of the phrases to tease the countdown.
-    2. 	Top 5 Countdown (4 minutes)
-    • 	#5: “Spill the Beans” – Originated from ancient voting systems where beans were used to cast votes; spilling them revealed the result.
-    • 	#4: “Caught Red-Handed” – Dates back to Scottish law in the 1400s, referring to being found with blood on your hands after a crime.
-    • 	#3: “Break the Ice” – Comes from ships breaking ice to open trade routes, later meaning to ease social tension.
-    • 	#2: “Saved by the Bell” – Not from boxing originally, but from safety coffins in the 18th century, where a bell was attached in case someone was buried alive.
-    • 	#1: “Kick the Bucket” – Likely from animals being slaughtered while hanging from a beam called a “bucket,” leading to the phrase for dying.
-    2. 	Each phrase gets about 40–50 seconds with visuals, playful animations, or stock footage to illustrate the origin.
-    3. 	Outro (30 seconds)
-    • 	Wrap-up: “Next time you use these phrases, you’ll know the bizarre stories behind them!”
-    • 	Call-to-action: “Which origin surprised you the most? Drop it in the comments!”
+    Narration should be slow and serious toned
+    Should emphasise in the fact that the shadow people can be anywhere and its presence is unnatural.
     
-    This concept blends relatable language with fun historical trivia, keeping viewers entertained while learning something new.
+    IMPORTANT: Use the following story as baseline but create a more terrifying version, this should leave the viewer thinking if the really saw something through the corner of their eye
+    
+    Those little flickers of darkness you see out of the corner of your eye? Those aren’t just spots, or dust, or a trick of light. Maybe they’re ghosts, as some people believe, but I’m convinced they’re the Shadow People – beings from a dimension close to our own, but not able to be seen when we focus fully on them.
+
+    I have always been able to see the Shadow People. When I was young, my mother had my eyes checked by several different optometrists because I complained about the things I saw. I learned to keep quiet about them, but it took a while.
+    
+    My first encounter with them took place when I was three or four years old. We lived in a high rise flat with a sweeping view of the hills and the city below us. My best friend at the time, Michelle, was over on a playdate; her family lived across the landing and we spent more time together than apart. That day, she greeted me by running into my room, fueled by a ridiculous burst of enthusiasm.
+    
+    “We have to play with my new dolls!” she screeched at me. I was much more into dinosaurs and bugs, and that sounded like a terrible way to spend an afternoon.
+    
+    “No,” I insisted. “We have to play imagination! Godzilla vs. the killer wasps!” I tried to stomp around the room and look menacing.
+    
+    Michelle huffed and disappeared. She was much faster than I was, and I wasn’t very good at finding hiding people, but for all that, I should have seen her when I turned the corner — and I didn’t.
+    
+    Then I saw a shadow lurking at the corner of my vision. Thinking it must be Michelle, I turned towards it, calling her name. There was no answer, and the shadow continued to dance and dart out of range of my direct stare, as if it were avoiding making eye contact with me.
+    
+    As the years went by, I began to believe that the Shadow People were my friends, or even my protectors, like guardian angels. But then the nights became terrifying. I started to see the Shadow People in the real shadows of my room. Many of them darted away when I tried to stare at them, but others hung around in the corners, clustering like cobwebs.
+    
+    Then the noise started.
+    
+    It was like wind caressing leaves until they whispered. It was a language I couldn’t comprehend, words I knew I would never understand unless I was somehow in their dimension. As the whispering grew more frenetic, the Shadow People began to come together and move towards me.
+    
+    I bolted to my parents and shook them awake. Of course, they didn’t believe me, trying to coax me into believing it was just a dream or my imagination.
+    
+    I know it was the Shadow People. And if you see a shadow within the shadows, or a shape flitting at the edge of your vision, you may not be alone.
     
     """
 
 
     # Example using the VideoRequest Data Class
     video_request = VideoRequest(
-        topic="Put here your title",
-        duration_seconds=60, # Approx time duration, need to work on accuracy
-        theme="Default", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
+        topic="The shadow people (creepypasta)",
+        duration_seconds=100, # Approx time duration, need to work on accuracy
+        theme="horror", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
         use_template=True, # Template for monologue type
-        is_monologue=False, # Use monologue features such as the new prompt refiner
+        is_monologue=True, # Use monologue features such as the new prompt refiner
         context_story=_context_story, # Your context
         # video_index=0  # Optional # To select a video, this will be useful for web application
     )

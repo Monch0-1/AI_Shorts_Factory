@@ -1,7 +1,9 @@
 from typing import List
 from dataclasses import dataclass
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
-from CreateShorts.Data_Gen.text_to_speach import AudioChunkInfo
+
+from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
+# from CreateShorts.Data_Gen.text_to_speach import AudioChunkInfo
 from CreateShorts.Data_Gen.moviepy_config import *
 
 @dataclass
@@ -20,81 +22,155 @@ class SubtitleConfig:
 class SubtitleGenerator:
     def __init__(self, config: SubtitleConfig = None):
         self.config = config or SubtitleConfig()
-    
-    def create_subtitle_clips(self, audio_chunks: List[AudioChunkInfo]) -> List[TextClip]:
-        """Creates and returns subtitle clips without rendering the video."""
-        return self._create_subtitle_clips(audio_chunks)
-    
-    def _create_subtitle_clips(self, audio_chunks: List[AudioChunkInfo]) -> List[TextClip]:
-        """Creates subtitle clips from audio chunks."""
+
+    def create_subtitle_clips_v2(self, script_dto: ScriptDTO) -> List[TextClip]:
         subtitle_clips = []
-        current_time = 0
-        
-        for chunk in audio_chunks:
-            # Split text into shorter phrases if necessary
-            text = self._optimize_text(chunk.text)
-            
+        current_time = 0.0
+
+        print("-> Creating subtitle clips from DTO...")
+
+        for segment in script_dto.segments:
+            # Optimizamos el texto (usando tu lógica de 6 palabras)
+            text = self._optimize_text(segment.line)
+
+            # Crear el clip de texto
             txt_clip = (TextClip(text,
-                               fontsize=self.config.fontsize,
-                               font=self.config.font,
-                               color=self.config.color,
-                               stroke_color=self.config.stroke_color,
-                               stroke_width=self.config.stroke_width,
-                               method=self.config.method,
-                               size=self.config.size,
-                               align=self.config.align,
-                               interline=self.config.interline) # Adjusted for better position
-                       .set_position(('center', 'center'), relative=True)
-                       .set_start(current_time)
-                       .set_duration(chunk.duration))
-            
+                                 fontsize=self.config.fontsize,
+                                 font=self.config.font,
+                                 color=self.config.color,
+                                 stroke_color=self.config.stroke_color,
+                                 stroke_width=self.config.stroke_width,
+                                 method=self.config.method,
+                                 size=self.config.size,
+                                 align=self.config.align,
+                                 interline=self.config.interline)
+                        .set_position(('center', 'center'))  # Ajustado a tu centro
+                        .set_start(current_time)
+                        .set_duration(segment.duration))
+
             subtitle_clips.append(txt_clip)
-            current_time += chunk.duration
-            
+
+            current_time += segment.duration
+
         return subtitle_clips
 
     def _optimize_text(self, text: str) -> str:
-        """Optimizes text for better readability."""
-        # Remove extra spaces
         text = ' '.join(text.split())
-
-        # Split into shorter lines if necessary
         words = text.split()
-        if len(words) > 6:  # If there are more than 6 words
+        if len(words) > 6:
             mid = len(words) // 2
             return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
-
         return text
+    
+    # def create_subtitle_clips(self, audio_chunks: List[AudioChunkInfo]) -> List[TextClip]:
+    #     """Creates and returns subtitle clips without rendering the video."""
+    #     return self._create_subtitle_clips(audio_chunks)
+    #
+    # def _create_subtitle_clips(self, audio_chunks: List[AudioChunkInfo]) -> List[TextClip]:
+    #     """Creates subtitle clips from audio chunks."""
+    #     subtitle_clips = []
+    #     current_time = 0
+    #
+    #     for chunk in audio_chunks:
+    #         # Split text into shorter phrases if necessary
+    #         text = self._optimize_text(chunk.text)
+    #
+    #         txt_clip = (TextClip(text,
+    #                            fontsize=self.config.fontsize,
+    #                            font=self.config.font,
+    #                            color=self.config.color,
+    #                            stroke_color=self.config.stroke_color,
+    #                            stroke_width=self.config.stroke_width,
+    #                            method=self.config.method,
+    #                            size=self.config.size,
+    #                            align=self.config.align,
+    #                            interline=self.config.interline) # Adjusted for better position
+    #                    .set_position(('center', 'center'), relative=True)
+    #                    .set_start(current_time)
+    #                    .set_duration(chunk.duration))
+    #
+    #         subtitle_clips.append(txt_clip)
+    #         current_time += chunk.duration
+    #
+    #     return subtitle_clips
 
-    def add_subtitles(self, video_path: str, audio_chunks: List[AudioChunkInfo],
-                     output_path: str) -> None:
-        """Adds subtitles to the video based on audio chunks."""
+    # def _optimize_text(self, text: str) -> str:
+    #     """Optimizes text for better readability."""
+    #     # Remove extra spaces
+    #     text = ' '.join(text.split())
+    #
+    #     # Split into shorter lines if necessary
+    #     words = text.split()
+    #     if len(words) > 6:  # If there are more than 6 words
+    #         mid = len(words) // 2
+    #         return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
+    #
+    #     return text
+
+    def add_subtitles_v2(self, video_path: str, script_dto: ScriptDTO,
+                         output_path: str) -> None:
+
+        global video, final_video, subtitle_clips
         try:
             print("-> Loading video to add subtitles...")
             video = VideoFileClip(video_path)
-            
-            print("-> Creating subtitle clips...")
-            subtitle_clips = self._create_subtitle_clips(audio_chunks)
-            
+
+            print("-> Creating subtitle clips from DTO...")
+            subtitle_clips = self.create_subtitle_clips_v2(script_dto)
+
             print("-> Composing final video with subtitles...")
             final_video = CompositeVideoClip([video] + subtitle_clips)
-            
+
             print("-> Rendering video with subtitles...")
             final_video.write_videofile(
                 output_path,
                 fps=video.fps,
                 codec='libx264',
                 audio_codec='aac',
-                threads=4
+                threads=4,
+                logger=None
             )
             print(f"-> Video with subtitles completed: {output_path}")
-            
-            # Close clips to free up resources
-            video.close()
-            final_video.close()
-            for clip in subtitle_clips:
-                clip.close()
-            
+
         except Exception as e:
-            print(f"Error adding subtitles: {str(e)}")
+            print(f"❌ Error adding subtitles: {str(e)}")
             raise
+        finally:
+            if 'video' in locals(): video.close()
+            if 'final_video' in locals(): final_video.close()
+            if 'subtitle_clips' in locals():
+                for clip in subtitle_clips:
+                    clip.close()
+
+    # def add_subtitles(self, video_path: str, audio_chunks: List[AudioChunkInfo],
+    #                  output_path: str) -> None:
+    #     """Adds subtitles to the video based on audio chunks."""
+    #     try:
+    #         print("-> Loading video to add subtitles...")
+    #         video = VideoFileClip(video_path)
+    #
+    #         print("-> Creating subtitle clips...")
+    #         subtitle_clips = self._create_subtitle_clips(audio_chunks)
+    #
+    #         print("-> Composing final video with subtitles...")
+    #         final_video = CompositeVideoClip([video] + subtitle_clips)
+    #
+    #         print("-> Rendering video with subtitles...")
+    #         final_video.write_videofile(
+    #             output_path,
+    #             fps=video.fps,
+    #             codec='libx264',
+    #             audio_codec='aac',
+    #             threads=4
+    #         )
+    #         print(f"-> Video with subtitles completed: {output_path}")
+    #
+    #         # Close clips to free up resources
+    #         video.close()
+    #         final_video.close()
+    #         for clip in subtitle_clips:
+    #             clip.close()
+    #
+    #     except Exception as e:
+    #         print(f"Error adding subtitles: {str(e)}")
+    #         raise

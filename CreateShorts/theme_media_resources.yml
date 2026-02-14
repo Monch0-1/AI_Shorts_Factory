@@ -11,6 +11,16 @@ themes:
     music:
       path: "resources/audio/2_23_AM.mp3"
       volume: 0.10
+
+    resources:
+      funny:
+        confused:
+          - { name: "what", path: "resources/audio/sfx/what.mp3" }
+          - { name: "huh", path: "resources/audio/sfx/huh.mp3" }
+      shock:
+        reveal:
+          - { name: "boom", path: "resources/audio/sfx/boom.mp3" }
+
     prompting:
       refinement_goal: "The dialogue must maintain a 1:1 question-answer ratio and prioritize humor over technical detail."
       target_quality_rules:
@@ -46,11 +56,20 @@ themes:
               "topic": {
                 "type": "string",
                 "description": "The discussed subtopic."
+              },
+              "highlight": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "description": "horror, shock, or funny" },
+                  "context": { "type": "string", "description": "e.g., jump_scare, reveal" }
+                },
+                "required": ["type", "context"]
               }
             },
             "required": ["speaker", "line", "topic"]
           }
         }
+
     voice_settings:
       stability: 0.75
       similarity_boost: 0.90
@@ -62,16 +81,34 @@ themes:
     name: horror
     video:
       paths:
-        - "resources/video/horror_background.mp4"
+        - "resources/video/HorrorVid_Drs.mp4"
     music:
-      path: "resources/audio/horror.mp3"
-      volume: 0.20
+      path: "resources/audio/stale.mp3"
+      volume: 0.35
+
+    resources:
+      horror:
+        jump_scare:
+          - { name: "scary_hit", path: "resources/audio/sfx/scary_hit_01.mp3" }
+          - { name: "ghost_whisper", path: "resources/audio/sfx/ghost_whisper.mp3" }
+      shock:
+        reveal:
+          - { name: "dramatic_boom", path: "resources/audio/sfx/boom.mp3" }
+
     prompting:
       system_instruction: |
-        You are a horror storyteller creating eerie, suspenseful content.
-        Your goal is to build tension through dialogue between two distinct voices.
-        Nina represents the voice of reason and skepticism.
-        Tina represents the mysterious, knowing voice that reveals disturbing truths.
+        You are a master of psychological horror and suspense. Your goal is to adapt the user's story into a high-retention script.
+
+        STRATEGY:
+        1. Use short, punchy sentences to build anxiety.
+        2. Identify "Beats of Terror": moments where a sound effect (SFX) will maximize the impact.
+
+        HIGHLIGHT RULES:
+        - Use 'type: horror, context: jump_scare' only at the climax of a revelation or a sudden noise in the story.
+        - Use 'type: horror, context: reveal' when the narrator discovers something unsettling but not yet aggressive.
+        - Use 'type: shock, context: reveal' for dramatic plot twists.
+
+        CRITICAL: Every highlight must be logically placed *after* the buildup. Never use more than 3 highlights in a 60-second script to avoid cluttering.
       script_schema: |
         {
           "type": "array",
@@ -79,17 +116,16 @@ themes:
           "items": {
             "type": "object",
             "properties": {
-              "speaker": {
-                "type": "string",
-                "description": "The narrator's name (e.g., Anon, Survivor)."
-              },
-              "line": {
-                "type": "string",
-                "description": "The concise line of the monologue."
-              },
-              "mood": {
-                "type": "string",
-                "description": "The emotional state of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked)."
+              "speaker": { "type": "string" },
+              "line": { "type": "string" },
+              "mood": { "type": "string" },
+              "highlight": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "description": "horror, shock, or funny" },
+                  "context": { "type": "string", "description": "e.g., jump_scare, reveal" }
+                },
+                "required": ["type", "context"]
               }
             },
             "required": ["speaker", "line", "mood"]

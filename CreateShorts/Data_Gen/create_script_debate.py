@@ -48,7 +48,11 @@ def generate_debate_script_json(
                 2.  **Content:** Include at least one **humorous or simple analogy** from Tina.
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
-        
+                5. **EDITION HIGHLIGHTS (NUEVO):** Identifica momentos clave de la interacción.
+                   - Si Nina hace una pregunta especialmente escéptica: Inserta un highlight 'shock'.
+                   - Si Tina remata una analogía graciosa: Inserta un highlight 'funny'.
+                   - Si hay un silencio dramático o revelación: Inserta un highlight 'horror'.
+                        
             Strictly adhere to the established character roles and return ONLY the JSON array structure.
             """
     else:
