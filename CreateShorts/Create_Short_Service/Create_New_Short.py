@@ -6,14 +6,13 @@ from dataclasses import dataclass
 
 from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
 from CreateShorts.Data_Gen.create_audio import assemble_dialogue_v2
-from CreateShorts.Data_Gen.create_script_debate import generate_debate_script_json
-from CreateShorts.Data_Gen.create_script_monologue import generate_monolog_script_json
 from CreateShorts.Data_Gen.mix_assets import create_final_video
 from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio, generate_script_audio_v2
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
 from CreateShorts.Data_Gen.formatter_script import generate_formatter_script_json
-from CreateShorts.Prompt_Refinig_Service.refine_base_prompt import refine_base_prompt
+from CreateShorts.Create_Short_Service.Factory.factory import get_script_provider, get_audio_provider
 from CreateShorts.theme_config import ThemeManager, ThemeConfig
+from CreateShorts.utils import sanitize_filename
 
 MAX_TIME_LIMIT: Final[int] = 120
 
@@ -67,7 +66,7 @@ def parse_script_to_dto(topic: str, script_json_str: str) -> Optional[ScriptDTO]
             return ScriptDTO(topic=topic, segments=data)
         return ScriptDTO(**data)
     except Exception as e:
-        print(f"❌ Error validando el guion con Pydantic: {e}")
+        print(f"❌ Error validating script with Pydantic: {e}")
         return None
 
 
@@ -88,30 +87,35 @@ def _select_video_resource(theme_config: ThemeConfig, video_index: Optional[int]
 
 
 def _run_av_pipeline(script_dto: ScriptDTO, theme_config: ThemeConfig, video_path: str, topic: str):
-
-    print("-> Generating audio and capturing durations...")
-    script_dto = generate_script_audio_v2(script_dto, theme_config)
-
+    """
+    Final assembly pipeline. 
+    Receives a DTO that ALREADY has loaded audios and durations.
+    """
+    # 1. Calculate total duration (already comes in the DTO thanks to the audio service)
     total_duration = sum(seg.duration for seg in script_dto.segments)
     print(f"-> Total duration: {total_duration:.2f}s")
 
     temp_audio_path = "temp_dialogue.mp3"
-    final_audio_path = assemble_dialogue_v2(script_dto, temp_audio_path)
+
+    final_audio_path = assemble_dialogue_v2(script_dto, theme_config, temp_audio_path)
 
     try:
+        # 3. Generate Subtitles
         subtitle_gen = SubtitleGenerator(config)
         subtitle_clips = subtitle_gen.create_subtitle_clips_v2(script_dto)
 
+        # 4. Final Rendering
         create_final_video(
             voice_path=final_audio_path,
             music_path=theme_config.music_path,
             video_background_path=video_path,
-            output_path=str(get_project_root() / "output" / f"{topic.replace(' ', '_').lower()}.mp4"),
+            output_path=str(get_project_root() / "output" / f"{sanitize_filename(topic)}.mp4"),
             duration_sec=round(total_duration),
             subtitle_clips=subtitle_clips,
             background_volume=theme_config.music_volume
         )
     finally:
+        # Cleanup of temporary .mp3 files
         clean_temp_audio()
 
 
@@ -143,88 +147,34 @@ def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, 
             script_data = json.loads(script_json_str)
             script_dto = ScriptDTO(topic=request.topic, segments=script_data)
         except Exception as e:
-            print(f"❌ Error al mapear el DTO: {e}")
+            print(f"❌ Error mapping the DTO: {e}")
             return
 
         _run_av_pipeline(script_dto, theme_config, video_path, request.topic)
 
-
-# def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
-#     """Handles the generation of multi-part story videos."""
-#     json_series_str = generate_formatter_script_json(
-#         time_limit=request.duration_seconds,
-#         theme_config=theme_config,
-#         context_story=request.context_story
-#     )
-#
-#     try:
-#         multi_part_scripts_data = json.loads(json_series_str)
-#     except json.JSONDecodeError as e:
-#         print(f"Fatal error: The JSON returned by Gemini is not valid. {e}")
-#         return
-#
-#     if not multi_part_scripts_data:
-#         print("ERROR: Multi-part story segmentation failed.")
-#         return
-#
-#     # Iteramos sobre cada parte (Part 1, Part 2, etc.)
-#     for part_data in multi_part_scripts_data:
-#         part_number = part_data.get("part_number", 1)
-#         script_lines = part_data.get('script_lines', [])
-#
-#         # --- MAPEO A DTO (Super_Edits) ---
-#         try:
-#             # Creamos un ScriptDTO para esta parte específica
-#             script_dto = ScriptDTO(
-#                 topic=f"{request.topic} - Part {part_number}",
-#                 segments=script_lines
-#             )
-#
-#             # Enviamos el DTO al pipeline
-#             _run_av_pipeline(
-#                 script_dto=script_dto,
-#                 theme_config=theme_config,
-#                 video_path=video_path,
-#                 topic=request.topic,
-#                 output_suffix=f"_part_{part_number}"  # Asegúrate que _run_av_pipeline acepte este kwarg
-#             )
-#         except Exception as e:
-#             print(f"❌ Error validando la parte {part_number}: {e}")
-#             continue
-
-
 def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
-    """Handles the generation of standard Monologue or Debate videos."""
-    if request.is_monologue:
-        final_prompt = refine_base_prompt(request.topic, theme_config, False)
-        script_json_str = generate_monolog_script_json(
-            final_script_prompt=final_prompt,
-            time_limit=request.duration_seconds,
-            theme_config=theme_config,
-            context=request.context_story
-        )
-    else:
-        script_json_str = generate_debate_script_json(
-            topic=request.topic,
-            time_limit=request.duration_seconds,
-            theme_config=theme_config,
-            use_template=request.use_template,
-            context=request.context_story
-        )
+    """Handles standard videos using injected services."""
 
-    try:
-        script_data = json.loads(script_json_str)
-        script_dto = ScriptDTO(
-            topic=request.topic,
-            segments=script_data
-        )
+    # 1. Get providers according to environment (.env)
+    script_service = get_script_provider()
+    audio_service = get_audio_provider()
 
+    # 2. Generate the script (The service decides if it's Real or Mock internally)
+    script_json_str = script_service.generate(
+        topic=request.topic,
+        time_limit=request.duration_seconds,
+        theme_config=theme_config,
+        context=request.context_story,
+        use_template=request.use_template,
+        is_monologue=request.is_monologue
+    )
+
+    # 3. DTO mapping and Pipeline
+    script_dto = parse_script_to_dto(request.topic, script_json_str)
+    if script_dto:
+        # The audio_service will also detect if it's Mock or Real
+        script_dto = audio_service.synthesize(script_dto, theme_config)
         _run_av_pipeline(script_dto, theme_config, video_path, request.topic)
-
-    except Exception as e:
-        print(f"Critical Error when validating with Pydantic: {e}")
-        print(f"Json Content failed: {script_json_str[:200]}...")
-        return
 
 def create_complete_short(topic: str, duration_seconds: int, theme: str = "default", use_template: bool = False,
                           is_monologue: bool = False, context_story: str = "", video_index: int = None):
