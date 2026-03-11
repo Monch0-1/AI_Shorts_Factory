@@ -107,81 +107,82 @@ class ThemeManager:
                 print("Contenido del YAML cargado:")
                 print(yaml.dump(config))
 
-        project_root = get_project_root()
+            project_root = get_project_root()
 
-        for theme_name, theme_data in config['themes'].items():
-            try:
-                name = theme_data['name']
-
-                video_data = theme_data.get('video', {})
-                if 'paths' in video_data:
-                    raw_paths = video_data['paths']
-                else:
-                    raw_paths = [video_data.get('path')] if 'path' in video_data else []
-
-                # CAMBIO: Remover la concatenación de "CreateShorts" ya que resources está en la raíz
-                video_paths = [str(project_root / p) for p in raw_paths]
-                music_path = str(project_root / theme_data['music']['path'])
-                music_volume = theme_data['music'].get('volume', 0.10)
-                resources_data = theme_data.get('resources', {})
-
-                # CAMBIO: Actualizar también las rutas de recursos SFX
-                for h_type in resources_data:
-                    for h_context in resources_data[h_type]:
-                        for res in resources_data[h_type][h_context]:
-                            if 'path' in res:
-                                res['path'] = str(project_root / res['path'])
-
-                prompting_data = theme_data.get('prompting', {})
-                schema_dict = yaml.safe_load(prompting_data.get('script_schema', '{}'))
-                
+            for theme_name, theme_data in config['themes'].items():
                 try:
-                    script_schema_obj = _create_schema_from_dict(schema_dict)
-                except Exception as schema_error:
-                    print(f"Error creando schema para {theme_name}: {schema_error}")
-                    script_schema_obj = _get_default_schema()
+                    name = theme_data['name']
 
-                prompting_config = PromptingConfig(
-                    system_instruction=prompting_data.get('system_instruction', _get_default_system_instruction()),
-                    script_schema=script_schema_obj,
-                    refinement_goal=prompting_data.get('refinement_goal', ''),
-                    target_quality_rules=prompting_data.get('target_quality_rules', []),
-                    best_examples=prompting_data.get('best_examples', [])
-                )
+                    video_data = theme_data.get('video', {})
+                    if 'paths' in video_data:
+                        raw_paths = video_data['paths']
+                    else:
+                        raw_paths = [video_data.get('path')] if 'path' in video_data else []
 
-                # Cargar voice settings
-                voice_settings_data = theme_data.get('voice_settings', {})
-                if voice_settings_data:
-                    voice_settings = ElevenLabsVoiceSettings(
-                        stability=float(voice_settings_data.get('stability', 0.5)),
-                        similarity_boost=float(voice_settings_data.get('similarity_boost', 0.75)),
-                        style=float(voice_settings_data.get('style', 0.0)),
-                        speed=float(voice_settings_data.get('speed', 1.0)),
-                        use_speaker_boost=bool(voice_settings_data.get('use_speaker_boost', True))
+                    # CAMBIO: Remover la concatenación de "CreateShorts" ya que resources está en la raíz
+                    video_paths = [str(project_root / p) for p in raw_paths]
+                    music_path = str(project_root / theme_data['music']['path'])
+                    music_volume = theme_data['music'].get('volume', 0.10)
+                    resources_data = theme_data.get('resources', {})
+
+                    # CAMBIO: Actualizar también las rutas de recursos SFX
+                    for h_type in resources_data:
+                        for h_context in resources_data[h_type]:
+                            for res in resources_data[h_type][h_context]:
+                                if 'path' in res:
+                                    res['path'] = str(project_root / res['path'])
+
+                    prompting_data = theme_data.get('prompting', {})
+                    schema_dict = yaml.safe_load(prompting_data.get('script_schema', '{}'))
+                    
+                    try:
+                        script_schema_obj = _create_schema_from_dict(schema_dict)
+                    except Exception as schema_error:
+                        print(f"Error creando schema para {theme_name}: {schema_error}")
+                        script_schema_obj = _get_default_schema()
+
+                    prompting_config = PromptingConfig(
+                        system_instruction=prompting_data.get('system_instruction', _get_default_system_instruction()),
+                        script_schema=script_schema_obj,
+                        refinement_goal=prompting_data.get('refinement_goal', ''),
+                        target_quality_rules=prompting_data.get('target_quality_rules', []),
+                        best_examples=prompting_data.get('best_examples', [])
                     )
-                else:
-                    voice_settings = None
 
-                print(f"Cargando tema '{theme_name}':")
-                print(f"Voice Settings: {voice_settings}")
+                    # Cargar voice settings
+                    voice_settings_data = theme_data.get('voice_settings', {})
+                    if voice_settings_data:
+                        voice_settings = ElevenLabsVoiceSettings(
+                            stability=float(voice_settings_data.get('stability', 0.5)),
+                            similarity_boost=float(voice_settings_data.get('similarity_boost', 0.75)),
 
-                self.themes[theme_name] = ThemeConfig(
-                    name=name,
-                    video_paths=video_paths,
-                    music_path=music_path,
-                    music_volume=music_volume,
-                    prompting=prompting_config,
-                    voice_settings=voice_settings,
-                    resources = resources_data
-                )
+                            style=float(voice_settings_data.get('style', 0.0)),
+                            speed=float(voice_settings_data.get('speed', 1.0)),
+                            use_speaker_boost=bool(voice_settings_data.get('use_speaker_boost', True))
+                        )
+                    else:
+                        voice_settings = None
 
-            except Exception as theme_error:
-                print(f"Error cargando tema {theme_name}: {theme_error}")
-                continue
+                    print(f"Cargando tema '{theme_name}':")
+                    print(f"Voice Settings: {voice_settings}")
 
-    except Exception as e:
-        print(f"Error cargando la configuración: {e}")
-        self._load_default_config()
+                    self.themes[theme_name] = ThemeConfig(
+                        name=name,
+                        video_paths=video_paths,
+                        music_path=music_path,
+                        music_volume=music_volume,
+                        prompting=prompting_config,
+                        voice_settings=voice_settings,
+                        resources = resources_data
+                    )
+
+                except Exception as theme_error:
+                    print(f"Error cargando tema {theme_name}: {theme_error}")
+                    continue
+
+        except Exception as e:
+            print(f"Error cargando la configuración: {e}")
+            self._load_default_config()
 
     def _load_default_config(self):
         project_root = get_project_root()
