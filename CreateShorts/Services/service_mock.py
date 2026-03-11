@@ -86,7 +86,8 @@ class MockAudioService(IAudioService):
 
 class MockScriptService(IScriptService):
     def generate(self, topic: str, time_limit: int, theme_config: ThemeConfig,
-                 context: str = None, use_template: bool = False, is_monologue: bool = False) -> str:
+                 context: str = None, use_template: bool = False, is_monologue: bool = False,
+                 enable_refiner: bool = False) -> str:
         # Usar rutas absolutas también aquí
         debug_scripts_dir = PROJECT_ROOT / "MockScriptFiles"
         

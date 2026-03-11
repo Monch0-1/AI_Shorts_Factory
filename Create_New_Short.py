@@ -6,6 +6,7 @@ from typing import Final, Optional, Union
 from dataclasses import dataclass
 
 from CreateShorts.Models.script_models import ScriptDTO
+from CreateShorts.Models.video_models import VideoRequest, VideoOptions
 from CreateShorts.Data_Gen.create_audio import assemble_dialogue_v2
 from CreateShorts.Data_Gen.mix_assets import create_final_video
 from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio
@@ -34,33 +35,6 @@ config = SubtitleConfig(
     stroke_color='black',
     stroke_width=2
 )
-
-@dataclass
-class VideoRequest:
-    """
-    Encapsulates the parameters required to create a short video.
-    Acts as a Data Transfer Object (DTO) for video generation requests.
-    """
-    topic: str
-    duration_seconds: int
-    theme: str = "default"
-    use_template: bool = False
-    is_monologue: bool = False
-    context_story: str = ""
-    video_index: Optional[int] = None
-
-    @classmethod
-    def from_dict(cls, data: dict) -> 'VideoRequest':
-        """Creates a VideoRequest instance from a dictionary, handling defaults."""
-        return cls(
-            topic=data.get("topic", "Untitled"),
-            duration_seconds=data.get("duration_seconds", 60),
-            theme=data.get("theme", "default"),
-            use_template=data.get("use_template", False),
-            is_monologue=data.get("is_monologue", False),
-            context_story=data.get("context_story", ""),
-            video_index=data.get("video_index")
-        )
 
 
 def parse_script_to_dto(topic: str, script_json_str: str) -> Optional[ScriptDTO]:
@@ -152,7 +126,7 @@ def _run_av_pipeline(script_dto: ScriptDTO, theme_config: ThemeConfig, video_pat
 def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, video_path: str):
     """Handles the generation of multi-part story videos."""
     json_series_str = generate_formatter_script_json(
-        time_limit=request.duration_seconds,
+        time_limit=request.options.duration_seconds,
         theme_config=theme_config,
         context_story=request.context_story
     )
@@ -192,11 +166,12 @@ def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, vide
     # 2. Generate the script (The service decides if it's Real or Mock internally)
     script_json_str = script_service.generate(
         topic=request.topic,
-        time_limit=request.duration_seconds,
+        time_limit=request.options.duration_seconds,
         theme_config=theme_config,
         context=request.context_story,
-        use_template=request.use_template,
-        is_monologue=request.is_monologue
+        use_template=request.options.use_script_template,
+        is_monologue=request.is_monologue,
+        enable_refiner=request.options.enable_refiner
     )
 
     # 3. DTO mapping and Pipeline
@@ -206,8 +181,9 @@ def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, vide
         script_dto = audio_service.synthesize(script_dto, theme_config)
         _run_av_pipeline(script_dto, theme_config, video_path, request.topic)
 
-def create_complete_short(topic: str, duration_seconds: int, theme: str = "default", use_template: bool = False,
-                          is_monologue: bool = False, context_story: str = "", video_index: int = None):
+def create_complete_short(topic: str, duration_seconds: int, theme: str = "default", use_script_template: bool = False,
+                          is_monologue: bool = False, context_story: str = "", video_index: int = None,
+                          enable_refiner: bool = False):
     """
     Creates a complete short video from start to finish.
     
@@ -215,24 +191,31 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         topic (str): Topic for the video content
         duration_seconds (int): Desired duration in seconds
         theme (str): Theme name to use for video configuration
-        use_template (bool): Whether to use a template
+        use_script_template (bool): Whether to use a script template
         context_story (str): Context story for the video
         video_index (int): Optional index to select a specific video
         is_monologue (bool): Whether this is a monologue
+        enable_refiner (bool): Whether to use the prompt refiner
     """
+
+    options = VideoOptions(
+        duration_seconds=duration_seconds,
+        video_index=video_index,
+        enable_refiner=enable_refiner,
+        use_script_template=use_script_template
+    )
 
     # Structure input data into a Request Object
     request = VideoRequest(
         topic=topic,
-        duration_seconds=duration_seconds,
         theme=theme,
-        use_template=use_template,
         is_monologue=is_monologue,
         context_story=context_story,
-        video_index=video_index
+        options=options
     )
 
     print(f"-> Starting short video creation for topic: {request.topic}")
+    print(f"-> Prompt Refiner: {'ENABLED' if request.options.enable_refiner else 'DISABLED'}")
     print(f"-> Using theme: {request.theme}")
 
     # Load theme config
@@ -244,7 +227,7 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         return
 
     print(f"-> Theme configuration loaded:")
-    video_path = _select_video_resource(theme_config, request.video_index)
+    video_path = _select_video_resource(theme_config, request.options.video_index)
     print(f"   Music path: {theme_config.music_path}")
     print(f"   Voice settings: {theme_config.voice_settings}")
 
@@ -276,60 +259,35 @@ def create_short_from_json(request_data: Union[dict, VideoRequest]):
     # Extract values from the encapsulated object
     create_complete_short(
         topic=video_request.topic,
-        duration_seconds=video_request.duration_seconds,
+        duration_seconds=video_request.options.duration_seconds,
         theme=video_request.theme,
-        use_template=video_request.use_template,
+        use_script_template=video_request.options.use_script_template,
         is_monologue=video_request.is_monologue,
         context_story=video_request.context_story,
-        video_index=video_request.video_index
+        video_index=video_request.options.video_index,
+        enable_refiner=video_request.options.enable_refiner
     )
 
 # Example usage, this will be moved to an API endpoint later
 if __name__ == "__main__":
 
-    _context_story = """This 5‑minute video would create a eerie unsettling and dwon right terrifying story about the shadow people as a creepypasta monologue.
-    
-    INSTRUCTIONS: 
-    Narration should be slow and serious toned
-    Should emphasise in the fact that the shadow people can be anywhere and its presence is unnatural.
-    
-    IMPORTANT: Use the following story as baseline but create a more terrifying version, this should leave the viewer thinking if the really saw something through the corner of their eye
-    
-    Those little flickers of darkness you see out of the corner of your eye? Those aren't just spots, or dust, or a trick of light. Maybe they're ghosts, as some people believe, but I'm convinced they're the Shadow People – beings from a dimension close to our own, but not able to be seen when we focus fully on them.
-
-    I have always been able to see the Shadow People. When I was young, my mother had my eyes checked by several different optometrists because I complained about the things I saw. I learned to keep quiet about them, but it took a while.
-    
-    My first encounter with them took place when I was three or four years old. We lived in a high rise flat with a sweeping view of the hills and the city below us. My best friend at the time, Michelle, was over on a playdate; her family lived across the landing and we spent more time together than apart. That day, she greeted me by running into my room, fueled by a ridiculous burst of enthusiasm.
-    
-    "We have to play with my new dolls!" she screeched at me. I was much more into dinosaurs and bugs, and that sounded like a terrible way to spend an afternoon.
-    
-    "No," I insisted. "We have to play imagination! Godzilla vs. the killer wasps!" I tried to stomp around the room and look menacing.
-    
-    Michelle huffed and disappeared. She was much faster than I was, and I wasn't very good at finding hiding people, but for all that, I should have seen her when I turned the corner — and I didn't.
-    
-    Then I saw a shadow lurking at the corner of my vision. Thinking it must be Michelle, I turned towards it, calling her name. There was no answer, and the shadow continued to dance and dart out of range of my direct stare, as if it were avoiding making eye contact with me.
-    
-    As the years went by, I began to believe that the Shadow People were my friends, or even my protectors, like guardian angels. But then the nights became terrifying. I started to see the Shadow People in the real shadows of my room. Many of them darted away when I tried to stare at them, but others hung around in the corners, clustering like cobwebs.
-    
-    Then the noise started.
-    
-    It was like wind caressing leaves until they whispered. It was a language I couldn't comprehend, words I knew I would never understand unless I was somehow in their dimension. As the whispering grew more frenetic, the Shadow People began to come together and move towards me.
-    
-    I bolted to my parents and shook them awake. Of course, they didn't believe me, trying to coax me into believing it was just a dream or my imagination.
-    
-    I know it was the Shadow People. And if you see a shadow within the shadows, or a shape flitting at the edge of your vision, you may not be alone.
-    
+    _context_story = """
     """
 
-    # Example using the VideoRequest Data Class
+    # Example using the new nested structure
+    video_options = VideoOptions(
+        duration_seconds=60,
+        video_index=None,
+        enable_refiner=False, 
+        use_script_template=False
+    )
+
     video_request = VideoRequest(
-        topic="The shadow people (creepypasta)",
-        duration_seconds=100, # Approx time duration, need to work on accuracy
-        theme="horror", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
-        use_template=True, # Template for monologue type
-        is_monologue=True, # Use monologue features such as the new prompt refiner
+        topic="Software engineer and AI partner, best duo or impending doom?",
+        theme="default", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
+        is_monologue=False, # Use monologue features such as the new prompt refiner
         context_story=_context_story, # Your context
-        # video_index=0  # Optional # To select a video, this will be useful for web application
+        options=video_options
     )
 
     create_short_from_json(video_request)

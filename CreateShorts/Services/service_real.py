@@ -14,13 +14,20 @@ class RealAudioService(IAudioService):
 
 class RealScriptService(IScriptService):
     def generate(self, topic: str, time_limit: int, theme_config: ThemeConfig,
-                 context: str = None, use_template: bool = False, is_monologue: bool = False) -> str:
+                 context: str = None, use_template: bool = False, is_monologue: bool = False,
+                 enable_refiner: bool = False) -> str:
 
         print("💰 [REAL MODE] Calling Gemini API...")
 
         if is_monologue:
-            # Tu lógica del Main movida aquí para limpieza
-            final_prompt = refine_base_prompt(topic, theme_config, False)
+            # Only use the refiner if explicitly enabled
+            if enable_refiner:
+                print("✨ [PROMPT REFINER] Refining base prompt...")
+                final_prompt = refine_base_prompt(topic, theme_config, False)
+            else:
+                print("⏩ [PROMPT REFINER] Skipped. Using topic directly.")
+                final_prompt = topic
+
             return generate_monolog_script_json(
                 final_script_prompt=final_prompt,
                 time_limit=time_limit,
