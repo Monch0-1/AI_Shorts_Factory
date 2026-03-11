@@ -1,13 +1,10 @@
 # CreateShorts/Data_Context_Service/ContextualDataService.py
-import json
-from google import genai
 from google.genai import types
-import os
 from googleapiclient.discovery import build  # Example for Google Search API
 from typing import List
 
 # Assume load_env_data provides necessary API keys and IDs
-from ..Create_Short_Service.loadEnvData import load_env_data, load_unified_assets
+from CreateShorts.loadEnvData import load_unified_assets
 
 api_assets = load_unified_assets()
 SEARCH_API_KEY = api_assets.get("SEARCH_API_KEY")

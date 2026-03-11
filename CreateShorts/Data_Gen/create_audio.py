@@ -1,52 +1,22 @@
 import os
-import tempfile
-from typing import List
-# from CreateShorts.Data_Gen.text_to_speach import AudioChunkInfo
-
-from moviepy.editor import AudioFileClip, concatenate_audioclips, CompositeAudioClip
-from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
+import random
+from moviepy.editor import AudioFileClip, CompositeAudioClip
+from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.theme_config import ThemeConfig
 
-
-# def assemble_dialogue_pydub(audio_chunks: List[AudioChunkInfo], output_filename: str):
-#     global temp_dir
-#     audio_clips = []
-#     temp_files = []
-#
-#     try:
-#         temp_dir = tempfile.mkdtemp()
-#
-#         for i, chunk_info in enumerate(audio_chunks):
-#             temp_path = os.path.join(temp_dir, f'temp_chunk_{i}.mp3')
-#             with open(temp_path, 'wb') as f:
-#                 f.write(chunk_info.content)
-#             temp_files.append(temp_path)
-#
-#             audio_clip = AudioFileClip(temp_path)
-#             audio_clips.append(audio_clip)
-#
-#         if audio_clips:
-#             final_audio = concatenate_audioclips(audio_clips)
-#             final_audio.write_audiofile(output_filename)
-#             print(f"-> Audio assembly finished: {output_filename}")
-#
-#     finally:
-#         # Clean up clips and temporary files
-#         for clip in audio_clips:
-#             clip.close()
-#
-#         for temp_file in temp_files:
-#             if os.path.exists(temp_file):
-#                 os.remove(temp_file)
-#
-#         if os.path.exists(temp_dir):
-#             os.rmdir(temp_dir)
-#
-#     return output_filename
-
+# Configurar FFmpeg al inicio del módulo
+try:
+    import imageio_ffmpeg
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_exe
+    print(f"🔧 [CONFIG] FFmpeg configured at: {ffmpeg_exe}")
+except ImportError:
+    print("⚠️ [WARNING] imageio-ffmpeg not found, FFmpeg auto-detection may fail")
+except Exception as e:
+    print(f"⚠️ [WARNING] FFmpeg configuration failed: {e}")
 
 def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, output_filename: str):
-
+    
     voice_clips = []
     sfx_clips = []
     current_time = 0.0
@@ -54,12 +24,29 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
     print(f"-> Starting Advanced Audio Assembly for topic: {script_dto.topic}")
 
     try:
+        # Validar que tenemos segmentos
+        if not script_dto.segments:
+            print("❌ ERROR: No segments found in script_dto")
+            return None
+            
+        segments_with_audio = 0
+        
         for segment in script_dto.segments:
-            if not segment.audio_path or not os.path.exists(segment.audio_path):
+            if not segment.audio_path:
+                print(f"⚠️ WARNING: Segment has no audio_path: {segment}")
+                continue
+                
+            if not os.path.exists(segment.audio_path):
+                print(f"❌ ERROR: Audio file does not exist: {segment.audio_path}")
                 continue
 
-            v_clip = AudioFileClip(segment.audio_path).set_start(current_time)
-            voice_clips.append(v_clip)
+            try:
+                v_clip = AudioFileClip(segment.audio_path).set_start(current_time)
+                voice_clips.append(v_clip)
+                segments_with_audio += 1
+            except Exception as e:
+                print(f"❌ ERROR: Failed to load audio segment '{segment.audio_path}': {e}")
+                continue
 
             # 2. Lógica de Highlights (SFX)
             if segment.highlight:
@@ -70,30 +57,56 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
                 options = resources.get(h_type, {}).get(h_context, [])
 
                 if options:
-                    selected_sfx = random.choice(options)
-                    sfx_path = selected_sfx.get('path')
+                    try:
+                        selected_sfx = random.choice(options)
+                        sfx_path = selected_sfx.get('path')
 
-                    if sfx_path and os.path.exists(sfx_path):
-                        print(f"   [Highlight] Inserting {selected_sfx['name']} at {current_time:.2f}s")
+                        if sfx_path and os.path.exists(sfx_path):
+                            print(f"   [Highlight] Inserting {selected_sfx['name']} at {current_time:.2f}s")
 
-                        sfx_clip = AudioFileClip(sfx_path).set_start(current_time)
-
-                        sfx_clip = sfx_clip.volumex(0.8)
-                        sfx_clips.append(sfx_clip)
+                            sfx_clip = AudioFileClip(sfx_path).set_start(current_time)
+                            sfx_clip = sfx_clip.volumex(0.8)
+                            sfx_clips.append(sfx_clip)
+                    except Exception as e:
+                        print(f"⚠️ WARNING: Failed to add SFX: {e}")
 
             current_time += segment.duration
 
+        # Verificar que tenemos al menos un clip de audio válido
+        if segments_with_audio == 0:
+            print("❌ ERROR: No valid audio segments found")
+            return None
+
+        # Crear directorio de salida si no existe
+        output_dir = os.path.dirname(output_filename)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+
+        # Crear composición final
         final_composition = CompositeAudioClip(voice_clips + sfx_clips)
 
         print(f"-> Exporting Master Audio with {len(sfx_clips)} effects...")
+        print(f"-> Total segments processed: {segments_with_audio}")
+        
         final_composition.write_audiofile(output_filename, fps=44100, logger=None)
-
+        
+        # Verificar que el archivo se creó correctamente
+        if not os.path.exists(output_filename):
+            print(f"❌ ERROR: Failed to create output file: {output_filename}")
+            return None
+            
+        print(f"✅ SUCCESS: Audio assembly completed: {output_filename}")
         return output_filename
 
     except Exception as e:
-        print(f"❌ ERROR in Highlight Mixer: {e}")
+        print(f"❌ CRITICAL ERROR in Audio Assembly: {e}")
+        import traceback
+        traceback.print_exc()
         return None
     finally:
         # Limpieza de memoria (Crucial en Windows)
         for clip in voice_clips + sfx_clips:
-            clip.close()
+            try:
+                clip.close()
+            except:
+                pass

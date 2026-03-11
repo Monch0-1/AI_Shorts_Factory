@@ -1,10 +1,9 @@
-import os
 from typing import Final
 
 from google import genai
 from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
-from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.loadEnvData import load_env_data
 
 WORDS_PER_MINUTE: Final[int] = 250
 SECONDS: Final[int] = 60

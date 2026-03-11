@@ -1,10 +1,11 @@
 from typing import List
 from dataclasses import dataclass
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
+from PIL import Image, ImageDraw, ImageFont
+import tempfile
+import os
 
-from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
-# from CreateShorts.Data_Gen.text_to_speach import AudioChunkInfo
-from CreateShorts.Data_Gen.moviepy_config import *
+from CreateShorts.Models.script_models import ScriptDTO
 
 @dataclass
 class SubtitleConfig:
@@ -22,33 +23,103 @@ class SubtitleConfig:
 class SubtitleGenerator:
     def __init__(self, config: SubtitleConfig = None):
         self.config = config or SubtitleConfig()
+        self.temp_images = []  # Para limpiar archivos temporales
 
-    def create_subtitle_clips_v2(self, script_dto: ScriptDTO) -> List[TextClip]:
+    def _create_text_image(self, text: str) -> str:
+        """Creates a text image using PIL and returns the temporary file path"""
+        try:
+            # Configuración de imagen
+            img_width = 1080
+            img_height = 200
+            
+            # Crear imagen transparente
+            img = Image.new('RGBA', (img_width, img_height), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(img)
+            
+            # Intentar cargar fuente, con fallback
+            try:
+                # Buscar fuente del sistema
+                if os.name == 'nt':  # Windows
+                    font_path = "C:/Windows/Fonts/arialbd.ttf"  # Arial Bold
+                    if not os.path.exists(font_path):
+                        font_path = "C:/Windows/Fonts/arial.ttf"  # Arial regular
+                else:  # Linux/Mac
+                    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+                
+                if os.path.exists(font_path):
+                    font = ImageFont.truetype(font_path, self.config.fontsize // 4)  # Ajustar tamaño
+                else:
+                    font = ImageFont.load_default()
+            except:
+                font = ImageFont.load_default()
+            
+            # Calcular posición del texto (centrado)
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            x = (img_width - text_width) // 2
+            y = (img_height - text_height) // 2
+            
+            # Dibujar contorno (stroke)
+            if self.config.stroke_width > 0:
+                for adj_x in range(-self.config.stroke_width, self.config.stroke_width + 1):
+                    for adj_y in range(-self.config.stroke_width, self.config.stroke_width + 1):
+                        if adj_x != 0 or adj_y != 0:
+                            draw.text((x + adj_x, y + adj_y), text, font=font, fill=self.config.stroke_color)
+            
+            # Dibujar texto principal
+            draw.text((x, y), text, font=font, fill=self.config.color)
+            
+            # Guardar imagen temporal
+            temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            temp_path = temp_file.name
+            temp_file.close()
+            
+            img.save(temp_path, 'PNG')
+            self.temp_images.append(temp_path)  # Para limpieza posterior
+            
+            return temp_path
+            
+        except Exception as e:
+            print(f"❌ Error creating text image: {e}")
+            # Crear imagen simple como fallback
+            img = Image.new('RGBA', (800, 100), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(img)
+            draw.text((50, 25), text[:50], fill='white')  # Texto simple
+            
+            temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            temp_path = temp_file.name
+            temp_file.close()
+            img.save(temp_path, 'PNG')
+            self.temp_images.append(temp_path)
+            
+            return temp_path
+
+    def create_subtitle_clips_v2(self, script_dto: ScriptDTO) -> List[ImageClip]:
         subtitle_clips = []
         current_time = 0.0
 
-        print("-> Creating subtitle clips from DTO...")
+        print("-> Creating subtitle clips from DTO using PIL...")
 
         for segment in script_dto.segments:
-            # Optimizamos el texto (usando tu lógica de 6 palabras)
+            # Optimizar el texto
             text = self._optimize_text(segment.line)
 
-            # Crear el clip de texto
-            txt_clip = (TextClip(text,
-                                 fontsize=self.config.fontsize,
-                                 font=self.config.font,
-                                 color=self.config.color,
-                                 stroke_color=self.config.stroke_color,
-                                 stroke_width=self.config.stroke_width,
-                                 method=self.config.method,
-                                 size=self.config.size,
-                                 align=self.config.align,
-                                 interline=self.config.interline)
-                        .set_position(('center', 'center'))  # Ajustado a tu centro
-                        .set_start(current_time)
-                        .set_duration(segment.duration))
+            try:
+                # Crear imagen de texto
+                image_path = self._create_text_image(text)
+                
+                # Crear clip de imagen
+                img_clip = (ImageClip(image_path)
+                          .set_position(('center', 'center'))
+                          .set_start(current_time)
+                          .set_duration(segment.duration))
 
-            subtitle_clips.append(txt_clip)
+                subtitle_clips.append(img_clip)
+                
+            except Exception as e:
+                print(f"❌ Error creating subtitle clip: {e}")
+                continue
 
             current_time += segment.duration
 
@@ -61,55 +132,18 @@ class SubtitleGenerator:
             mid = len(words) // 2
             return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
         return text
-    
-    # def create_subtitle_clips(self, audio_chunks: List[AudioChunkInfo]) -> List[TextClip]:
-    #     """Creates and returns subtitle clips without rendering the video."""
-    #     return self._create_subtitle_clips(audio_chunks)
-    #
-    # def _create_subtitle_clips(self, audio_chunks: List[AudioChunkInfo]) -> List[TextClip]:
-    #     """Creates subtitle clips from audio chunks."""
-    #     subtitle_clips = []
-    #     current_time = 0
-    #
-    #     for chunk in audio_chunks:
-    #         # Split text into shorter phrases if necessary
-    #         text = self._optimize_text(chunk.text)
-    #
-    #         txt_clip = (TextClip(text,
-    #                            fontsize=self.config.fontsize,
-    #                            font=self.config.font,
-    #                            color=self.config.color,
-    #                            stroke_color=self.config.stroke_color,
-    #                            stroke_width=self.config.stroke_width,
-    #                            method=self.config.method,
-    #                            size=self.config.size,
-    #                            align=self.config.align,
-    #                            interline=self.config.interline) # Adjusted for better position
-    #                    .set_position(('center', 'center'), relative=True)
-    #                    .set_start(current_time)
-    #                    .set_duration(chunk.duration))
-    #
-    #         subtitle_clips.append(txt_clip)
-    #         current_time += chunk.duration
-    #
-    #     return subtitle_clips
 
-    # def _optimize_text(self, text: str) -> str:
-    #     """Optimizes text for better readability."""
-    #     # Remove extra spaces
-    #     text = ' '.join(text.split())
-    #
-    #     # Split into shorter lines if necessary
-    #     words = text.split()
-    #     if len(words) > 6:  # If there are more than 6 words
-    #         mid = len(words) // 2
-    #         return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
-    #
-    #     return text
+    def cleanup_temp_files(self):
+        """Limpia archivos temporales creados"""
+        for temp_path in self.temp_images:
+            try:
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
+            except Exception as e:
+                print(f"⚠️ Warning: Could not delete temp file {temp_path}: {e}")
+        self.temp_images.clear()
 
-    def add_subtitles_v2(self, video_path: str, script_dto: ScriptDTO,
-                         output_path: str) -> None:
-
+    def add_subtitles_v2(self, video_path: str, script_dto: ScriptDTO, output_path: str) -> None:
         global video, final_video, subtitle_clips
         try:
             print("-> Loading video to add subtitles...")
@@ -141,36 +175,5 @@ class SubtitleGenerator:
             if 'subtitle_clips' in locals():
                 for clip in subtitle_clips:
                     clip.close()
-
-    # def add_subtitles(self, video_path: str, audio_chunks: List[AudioChunkInfo],
-    #                  output_path: str) -> None:
-    #     """Adds subtitles to the video based on audio chunks."""
-    #     try:
-    #         print("-> Loading video to add subtitles...")
-    #         video = VideoFileClip(video_path)
-    #
-    #         print("-> Creating subtitle clips...")
-    #         subtitle_clips = self._create_subtitle_clips(audio_chunks)
-    #
-    #         print("-> Composing final video with subtitles...")
-    #         final_video = CompositeVideoClip([video] + subtitle_clips)
-    #
-    #         print("-> Rendering video with subtitles...")
-    #         final_video.write_videofile(
-    #             output_path,
-    #             fps=video.fps,
-    #             codec='libx264',
-    #             audio_codec='aac',
-    #             threads=4
-    #         )
-    #         print(f"-> Video with subtitles completed: {output_path}")
-    #
-    #         # Close clips to free up resources
-    #         video.close()
-    #         final_video.close()
-    #         for clip in subtitle_clips:
-    #             clip.close()
-    #
-    #     except Exception as e:
-    #         print(f"Error adding subtitles: {str(e)}")
-    #         raise
+            # Limpiar archivos temporales
+            self.cleanup_temp_files()

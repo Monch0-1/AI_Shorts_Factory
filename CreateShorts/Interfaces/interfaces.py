@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
+from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.theme_config import ThemeConfig
 
 class IScriptService(ABC):

@@ -1,25 +1,25 @@
-import json
 import os
-from dataclasses import dataclass
 from moviepy.editor import AudioFileClip
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
-from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.loadEnvData import load_env_data
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
-from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
+from CreateShorts.Models.script_models import ScriptDTO
 from typing import Optional
 import uuid
 
 
-# @dataclass
-# class AudioChunkInfo:
-#     """Class to store information about each audio chunk"""
-#     content: bytes
-#     duration: float
-#     speaker: str
-#     text: str
-#     filename: str
+# Configurar FFmpeg al inicio del módulo
+try:
+    import imageio_ffmpeg
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_exe
+    print(f"🔧 [CONFIG] FFmpeg configured at: {ffmpeg_exe}")
+except ImportError:
+    print("⚠️ [WARNING] imageio-ffmpeg not found, FFmpeg auto-detection may fail")
+except Exception as e:
+    print(f"⚠️ [WARNING] FFmpeg configuration failed: {e}")
 
 VOICE_IDS = {
     "Nina": "kv829HVkmQ1fOJX1MjSN",
@@ -30,7 +30,7 @@ VOICE_IDS = {
 }
 MODEL_ID = "eleven_multilingual_v2"
 client = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
-TEMP_DIR = os.path.join("TempFiles", "CreateShorts", "resources", "audio", "temp_audio")
+TEMP_DIR = os.path.join("MockAudioFiles", "CreateShorts", "resources", "audio", "temp_audio")
 
 
 def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) -> Optional[VoiceSettings]:

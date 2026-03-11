@@ -1,10 +1,9 @@
-import os
 from typing import Final
 from pathlib import Path
 from google import genai
 from google.genai import types
 from CreateShorts.theme_config import ThemeConfig
-from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.loadEnvData import load_env_data
 from CreateShorts.ContextualDataService.ContextualDataGenerator import get_fresh_context
 
 WORDS_PER_MINUTE: Final[int] = 250
@@ -101,7 +100,7 @@ def generate_debate_script_json(
         # The response text will be a valid JSON string
 
         # Save the response to a file for debugging purposes
-        debug_dir = Path(__file__).parent.parent / "debug_scripts"
+        debug_dir = Path(__file__).parent.parent / "MockScriptFiles"
         debug_dir.mkdir(exist_ok=True)
         sanitized_topic = "".join(c for c in topic if c.isalnum() or c in (' ', '_')).rstrip()
         debug_file_path = debug_dir / f"{sanitized_topic.replace(' ', '_')}.json"

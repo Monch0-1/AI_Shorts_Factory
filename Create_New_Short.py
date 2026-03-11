@@ -1,23 +1,31 @@
 import json
 import random
+import os
 from pathlib import Path
 from typing import Final, Optional, Union
 from dataclasses import dataclass
 
-from CreateShorts.Create_Short_Service.Models.script_models import ScriptDTO
+from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.Data_Gen.create_audio import assemble_dialogue_v2
 from CreateShorts.Data_Gen.mix_assets import create_final_video
-from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio, generate_script_audio_v2
+from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
 from CreateShorts.Data_Gen.formatter_script import generate_formatter_script_json
-from CreateShorts.Create_Short_Service.Factory.factory import get_script_provider, get_audio_provider
+from CreateShorts.Factory.factory import get_script_provider, get_audio_provider
 from CreateShorts.theme_config import ThemeManager, ThemeConfig
-from CreateShorts.utils import sanitize_filename
+from CreateShorts.utils import sanitize_filename, get_project_root
 
 MAX_TIME_LIMIT: Final[int] = 120
 
 # Future update Skyreels.ai
 # Create custom configuration (optional)
+
+try:
+    import imageio_ffmpeg
+    os.environ["IMAGEIO_FFMPEG_EXE"] = imageio_ffmpeg.get_ffmpeg_exe()
+    print("✅ FFmpeg configured successfully")
+except Exception as e:
+    print(f"⚠️ FFmpeg configuration warning: {e}")
 
 config = SubtitleConfig(
     fontsize=45,
@@ -55,10 +63,6 @@ class VideoRequest:
         )
 
 
-def get_project_root():
-    """Gets the project root path"""
-    return Path(__file__).parent.parent
-
 def parse_script_to_dto(topic: str, script_json_str: str) -> Optional[ScriptDTO]:
     try:
         data = json.loads(script_json_str)
@@ -95,25 +99,51 @@ def _run_av_pipeline(script_dto: ScriptDTO, theme_config: ThemeConfig, video_pat
     total_duration = sum(seg.duration for seg in script_dto.segments)
     print(f"-> Total duration: {total_duration:.2f}s")
 
-    temp_audio_path = "temp_dialogue.mp3"
+    # Usar ruta relativa más flexible para Docker
+    project_root = get_project_root()
+    temp_dir = project_root / "temp"
+    temp_dir.mkdir(exist_ok=True)
+    temp_audio_path = temp_dir / "temp_dialogue.mp3"
 
-    final_audio_path = assemble_dialogue_v2(script_dto, theme_config, temp_audio_path)
+    final_audio_path = assemble_dialogue_v2(script_dto, theme_config, str(temp_audio_path))
+    
+    # Validación crítica antes de continuar
+    if not final_audio_path:
+        print("❌ CRITICAL ERROR: Audio assembly failed, cannot proceed with video creation")
+        return
+        
+    if not os.path.exists(final_audio_path):
+        print(f"❌ CRITICAL ERROR: Final audio file not found: {final_audio_path}")
+        return
 
     try:
         # 3. Generate Subtitles
         subtitle_gen = SubtitleGenerator(config)
         subtitle_clips = subtitle_gen.create_subtitle_clips_v2(script_dto)
 
-        # 4. Final Rendering
+        # 4. Crear directorio de salida
+        output_dir = get_project_root() / "output"
+        output_dir.mkdir(exist_ok=True)
+        
+        output_path = output_dir / f"{sanitize_filename(topic)}.mp4"
+
+        # 5. Final Rendering
         create_final_video(
             voice_path=final_audio_path,
             music_path=theme_config.music_path,
             video_background_path=video_path,
-            output_path=str(get_project_root() / "output" / f"{sanitize_filename(topic)}.mp4"),
+            output_path=str(output_path),
             duration_sec=round(total_duration),
             subtitle_clips=subtitle_clips,
             background_volume=theme_config.music_volume
         )
+        
+        print("✅ SUCCESS: Video creation pipeline completed successfully")
+        
+    except Exception as e:
+        print(f"❌ ERROR in video creation pipeline: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         # Cleanup of temporary .mp3 files
         clean_temp_audio()
@@ -144,7 +174,7 @@ def _handle_story_series_flow(request: VideoRequest, theme_config: ThemeConfig, 
 
         print("-> Validating Script with Pydantic DTO...")
         try:
-            script_data = json.loads(script_json_str)
+            script_data = json.loads(single_script_json_str)  # Fixed variable name
             script_dto = ScriptDTO(topic=request.topic, segments=script_data)
         except Exception as e:
             print(f"❌ Error mapping the DTO: {e}")
@@ -186,13 +216,9 @@ def create_complete_short(topic: str, duration_seconds: int, theme: str = "defau
         duration_seconds (int): Desired duration in seconds
         theme (str): Theme name to use for video configuration
         use_template (bool): Whether to use a template
-        :param context_story:
-        :param topic:
-        :param duration_seconds:
-        :param theme:
-        :param video_index: Optional index to select a specific video from the theme's list.
-        :param use_template:
-        :param is_monologue:
+        context_story (str): Context story for the video
+        video_index (int): Optional index to select a specific video
+        is_monologue (bool): Whether this is a monologue
     """
 
     # Structure input data into a Request Object
@@ -258,8 +284,7 @@ def create_short_from_json(request_data: Union[dict, VideoRequest]):
         video_index=video_request.video_index
     )
 
-# Example usage, this will be move to an API endpoint later
-
+# Example usage, this will be moved to an API endpoint later
 if __name__ == "__main__":
 
     _context_story = """This 5‑minute video would create a eerie unsettling and dwon right terrifying story about the shadow people as a creepypasta monologue.
@@ -270,17 +295,17 @@ if __name__ == "__main__":
     
     IMPORTANT: Use the following story as baseline but create a more terrifying version, this should leave the viewer thinking if the really saw something through the corner of their eye
     
-    Those little flickers of darkness you see out of the corner of your eye? Those aren’t just spots, or dust, or a trick of light. Maybe they’re ghosts, as some people believe, but I’m convinced they’re the Shadow People – beings from a dimension close to our own, but not able to be seen when we focus fully on them.
+    Those little flickers of darkness you see out of the corner of your eye? Those aren't just spots, or dust, or a trick of light. Maybe they're ghosts, as some people believe, but I'm convinced they're the Shadow People – beings from a dimension close to our own, but not able to be seen when we focus fully on them.
 
     I have always been able to see the Shadow People. When I was young, my mother had my eyes checked by several different optometrists because I complained about the things I saw. I learned to keep quiet about them, but it took a while.
     
     My first encounter with them took place when I was three or four years old. We lived in a high rise flat with a sweeping view of the hills and the city below us. My best friend at the time, Michelle, was over on a playdate; her family lived across the landing and we spent more time together than apart. That day, she greeted me by running into my room, fueled by a ridiculous burst of enthusiasm.
     
-    “We have to play with my new dolls!” she screeched at me. I was much more into dinosaurs and bugs, and that sounded like a terrible way to spend an afternoon.
+    "We have to play with my new dolls!" she screeched at me. I was much more into dinosaurs and bugs, and that sounded like a terrible way to spend an afternoon.
     
-    “No,” I insisted. “We have to play imagination! Godzilla vs. the killer wasps!” I tried to stomp around the room and look menacing.
+    "No," I insisted. "We have to play imagination! Godzilla vs. the killer wasps!" I tried to stomp around the room and look menacing.
     
-    Michelle huffed and disappeared. She was much faster than I was, and I wasn’t very good at finding hiding people, but for all that, I should have seen her when I turned the corner — and I didn’t.
+    Michelle huffed and disappeared. She was much faster than I was, and I wasn't very good at finding hiding people, but for all that, I should have seen her when I turned the corner — and I didn't.
     
     Then I saw a shadow lurking at the corner of my vision. Thinking it must be Michelle, I turned towards it, calling her name. There was no answer, and the shadow continued to dance and dart out of range of my direct stare, as if it were avoiding making eye contact with me.
     
@@ -288,14 +313,13 @@ if __name__ == "__main__":
     
     Then the noise started.
     
-    It was like wind caressing leaves until they whispered. It was a language I couldn’t comprehend, words I knew I would never understand unless I was somehow in their dimension. As the whispering grew more frenetic, the Shadow People began to come together and move towards me.
+    It was like wind caressing leaves until they whispered. It was a language I couldn't comprehend, words I knew I would never understand unless I was somehow in their dimension. As the whispering grew more frenetic, the Shadow People began to come together and move towards me.
     
-    I bolted to my parents and shook them awake. Of course, they didn’t believe me, trying to coax me into believing it was just a dream or my imagination.
+    I bolted to my parents and shook them awake. Of course, they didn't believe me, trying to coax me into believing it was just a dream or my imagination.
     
     I know it was the Shadow People. And if you see a shadow within the shadows, or a shape flitting at the edge of your vision, you may not be alone.
     
     """
-
 
     # Example using the VideoRequest Data Class
     video_request = VideoRequest(

@@ -1,8 +1,8 @@
 import os
 
 from dotenv import load_dotenv
-from CreateShorts.Create_Short_Service.Services.service_real import RealScriptService, RealAudioService
-from CreateShorts.Create_Short_Service.Services.service_mock import MockScriptService, MockAudioService
+from CreateShorts.Services.service_real import RealScriptService, RealAudioService
+from CreateShorts.Services.service_mock import MockScriptService, MockAudioService
 
 load_dotenv()
 
