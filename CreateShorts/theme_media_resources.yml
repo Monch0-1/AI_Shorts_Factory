@@ -1,3 +1,14 @@
+resources:
+  sfx_audio:
+    horror:
+      - jump_scare
+      - reveal
+    comedy:
+      - punchline
+      - laugh
+    neutral:
+      - transition
+
 themes:
   default:
     name: default

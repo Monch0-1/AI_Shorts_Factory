@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Set
 from google.genai import types
 from CreateShorts.utils import get_project_root
 from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
@@ -97,6 +97,7 @@ class ThemeManager:
 
         self.config_path = config_path
         self.themes: Dict[str, ThemeConfig] = {}
+        self.global_resources: Dict = {}
         self._load_config()
 
     def _load_config(self):
@@ -104,12 +105,15 @@ class ThemeManager:
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
-                print("Contenido del YAML cargado:")
-                print(yaml.dump(config))
 
             project_root = get_project_root()
 
-            for theme_name, theme_data in config['themes'].items():
+            # Load Global Resources
+            self.global_resources = config.get('resources', {})
+            # No path resolution needed for global resources as they are just tag lists
+
+            # Load Themes
+            for theme_name, theme_data in config.get('themes', {}).items():
                 try:
                     name = theme_data['name']
 
@@ -119,18 +123,11 @@ class ThemeManager:
                     else:
                         raw_paths = [video_data.get('path')] if 'path' in video_data else []
 
-                    # CAMBIO: Remover la concatenación de "CreateShorts" ya que resources está en la raíz
                     video_paths = [str(project_root / p) for p in raw_paths]
                     music_path = str(project_root / theme_data['music']['path'])
                     music_volume = theme_data['music'].get('volume', 0.10)
                     resources_data = theme_data.get('resources', {})
-
-                    # CAMBIO: Actualizar también las rutas de recursos SFX
-                    for h_type in resources_data:
-                        for h_context in resources_data[h_type]:
-                            for res in resources_data[h_type][h_context]:
-                                if 'path' in res:
-                                    res['path'] = str(project_root / res['path'])
+                    self._resolve_resource_paths(resources_data, project_root)
 
                     prompting_data = theme_data.get('prompting', {})
                     schema_dict = yaml.safe_load(prompting_data.get('script_schema', '{}'))
@@ -155,16 +152,12 @@ class ThemeManager:
                         voice_settings = ElevenLabsVoiceSettings(
                             stability=float(voice_settings_data.get('stability', 0.5)),
                             similarity_boost=float(voice_settings_data.get('similarity_boost', 0.75)),
-
                             style=float(voice_settings_data.get('style', 0.0)),
                             speed=float(voice_settings_data.get('speed', 1.0)),
                             use_speaker_boost=bool(voice_settings_data.get('use_speaker_boost', True))
                         )
                     else:
                         voice_settings = None
-
-                    print(f"Cargando tema '{theme_name}':")
-                    print(f"Voice Settings: {voice_settings}")
 
                     self.themes[theme_name] = ThemeConfig(
                         name=name,
@@ -184,30 +177,42 @@ class ThemeManager:
             print(f"Error cargando la configuración: {e}")
             self._load_default_config()
 
+    def _resolve_resource_paths(self, resource_dict: Dict, project_root: Path):
+        """Recursively resolve 'path' keys in a dictionary against project_root"""
+        for key, value in resource_dict.items():
+            if isinstance(value, dict):
+                self._resolve_resource_paths(value, project_root)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict) and 'path' in item:
+                        item['path'] = str(project_root / item['path'])
+
+    def get_all_available_tags(self) -> List[str]:
+        """
+        Flattens the global sfx_audio hierarchy to return all unique tags (intents).
+        Hierarchy: resources -> sfx_audio -> category -> [tags]
+        """
+        tags: Set[str] = set()
+        sfx_audio = self.global_resources.get('sfx_audio', {})
+        
+        for category, tag_list in sfx_audio.items():
+            if isinstance(tag_list, list):
+                for tag in tag_list:
+                    tags.add(tag)
+        
+        return sorted(list(tags))
+
     def _load_default_config(self):
         project_root = get_project_root()
         default_prompting = PromptingConfig(
             system_instruction=_get_default_system_instruction(),
-            script_schema=types.Schema(
-                type=types.Type.ARRAY,
-                description="List of turns in the dialogue.",
-                items=types.Schema(
-                    type=types.Type.OBJECT,
-                    properties={
-                        "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
-                        "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
-                        "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
-                    },
-                    required=["speaker", "line", "topic"]
-                )
-            )
+            script_schema=_get_default_schema()
         )
 
-        # CAMBIO: Actualizar también la configuración por defecto
         self.themes['default'] = ThemeConfig(
             name="default",
-            video_paths=[str(project_root / "resources/video/4.mp4")],  # Cambio aquí
-            music_path=str(project_root / "resources/audio/2_23_AM.mp3"),  # Y aquí
+            video_paths=[str(project_root / "resources/video/4.mp4")],
+            music_path=str(project_root / "resources/audio/2_23_AM.mp3"),
             music_volume=0.10,
             prompting=default_prompting
         )

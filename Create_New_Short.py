@@ -279,11 +279,11 @@ if __name__ == "__main__":
         duration_seconds=60,
         video_index=None,
         enable_refiner=False, 
-        use_script_template=False
+        use_script_template=True
     )
 
     video_request = VideoRequest(
-        topic="Software engineer and AI partner, best duo or impending doom?",
+        topic="Showdown, Best AI tools for developers 2026 edition",
         theme="default", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
         is_monologue=False, # Use monologue features such as the new prompt refiner
         context_story=_context_story, # Your context
