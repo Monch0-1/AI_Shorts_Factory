@@ -1,10 +1,9 @@
-import os
 from typing import Final
 from pathlib import Path
 from google import genai
 from google.genai import types
-from CreateShorts.theme_config import ThemeConfig
-from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.theme_config import ThemeConfig, ThemeManager
+from CreateShorts.loadEnvData import load_env_data
 from CreateShorts.ContextualDataService.ContextualDataGenerator import get_fresh_context
 
 WORDS_PER_MINUTE: Final[int] = 250
@@ -18,10 +17,12 @@ def generate_debate_script_json(
         context: str = None
 ):
     client = load_env_data(genai.Client, 'GEMINI_API_KEY')
+    theme_manager = ThemeManager()
 
     # Get the configuration correctly from theme_config
     script_schema = theme_config.prompting.script_schema
     _system_instruction = theme_config.prompting.system_instruction
+    available_tags = theme_manager.get_all_available_tags()
 
     if not use_template:
         context_generated = get_fresh_context(topic)
@@ -33,11 +34,6 @@ def generate_debate_script_json(
     
             DURATION: The total read time should aim for at least {int(time_limit * WORDS_PER_MINUTE / SECONDS)} words for the time limit given aproximatedly withing range of plus 20%, consider this will be used for a TTS audio file so the duration could go higher than expected.
     
-            STYLE REQUIREMENTS:
-            1. The entire script must be in **ENGLISH**.
-            2. Ensure Narrator A challenges Narrator B directly.
-            3. Include at least one **humorous or simple analogy** from Narrator B.
-            
             **CHARACTERS & TONE:**
             * **Nina (The Skeptical Beginner):** Speaks casually, uses contractions (e.g., "gonna," "don't"), and asks simple, common-sense questions to expose flaws or complexities. Must sound slightly frustrated or confused.
             * **Tina (The Witty Expert):** Speaks clearly, uses humor, and provides simple, fun analogies to explain complex solutions. Must have a friendly, lighthearted tone.
@@ -48,7 +44,10 @@ def generate_debate_script_json(
                 2.  **Content:** Include at least one **humorous or simple analogy** from Tina.
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
-        
+                5. **EDITION HIGHLIGHTS:** Identify key moments and tag them.
+                   - You MUST use one of these tags: {", ".join(available_tags)}.
+                   - Apply 'shock' for skeptical turns, 'funny' for punchlines, and 'horror' for grim reveals.
+                        
             Strictly adhere to the established character roles and return ONLY the JSON array structure.
             """
     else:
@@ -78,6 +77,10 @@ def generate_debate_script_json(
                 1.  **Language:** ENTIRELY IN ENGLISH.
                 2.  **Content:** Include at least one **humorous or simple analogy** from Tina per challenged item.
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
+                4. **End**: Finish with a nice casual farewell
+                5. **EDITION HIGHLIGHTS:** Identify key moments and tag them.
+                   - You MUST use one of these tags: {", ".join(available_tags)}.
+                   - Apply 'shock' for skeptical turns, 'funny' for punchlines, and 'horror' for grim reveals.
 
     
                 Return **ONLY** the JSON array structure.
@@ -97,7 +100,7 @@ def generate_debate_script_json(
         # The response text will be a valid JSON string
 
         # Save the response to a file for debugging purposes
-        debug_dir = Path(__file__).parent.parent / "debug_scripts"
+        debug_dir = Path(__file__).parent.parent / "MockScriptFiles"
         debug_dir.mkdir(exist_ok=True)
         sanitized_topic = "".join(c for c in topic if c.isalnum() or c in (' ', '_')).rstrip()
         debug_file_path = debug_dir / f"{sanitized_topic.replace(' ', '_')}.json"

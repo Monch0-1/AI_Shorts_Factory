@@ -1,10 +1,9 @@
-import os
 from typing import Final
 
 from google import genai
 from google.genai import types
-from CreateShorts.theme_config import ThemeConfig
-from CreateShorts.Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.theme_config import ThemeConfig, ThemeManager
+from CreateShorts.loadEnvData import load_env_data
 
 WORDS_PER_MINUTE: Final[int] = 250
 SECONDS: Final[int] = 60
@@ -16,10 +15,12 @@ def generate_monolog_script_json(
         context: str = None
 ) -> str:
     client = load_env_data(genai.Client, 'GEMINI_API_KEY')
+    theme_manager = ThemeManager()
 
     script_schema = theme_config.prompting.script_schema
     _system_instruction = theme_config.prompting.system_instruction
     speaker = "Narrator_Male"
+    available_tags = theme_manager.get_all_available_tags()
 
     # 1. FINAL PROMPT CONSTRUCTION
     # The refined prompt already includes the story, style and guidelines.
@@ -40,9 +41,12 @@ def generate_monolog_script_json(
         
         **STYLE REQUIREMENTS:**
                 1.  **Language:** ENTIRELY IN ENGLISH.
-                3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consistency, 
+                2.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consistency, 
                       the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
-                4.  **End**: Finish with a nice casual farewell
+                3.  **End**: Finish with a nice casual farewell
+                4.  **EDITION HIGHLIGHTS:** Identify key moments and tag them.
+                   - You MUST use one of these tags: {", ".join(available_tags)}.
+                   - Apply 'shock' for skeptical turns, 'funny' for punchlines, and 'horror' for grim reveals.
 
         Use the context given by the user to guide the script.
 

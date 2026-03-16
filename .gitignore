@@ -26,6 +26,9 @@ resources/audio/temp_audio/
 .idea/
 .vscode/
 
+# Project Instructions & AI Management
+project_instructions.md
+
 # Archivos de sistema
 .DS_Store
 Thumbs.db

@@ -7,7 +7,7 @@ from CreateShorts.theme_config import ThemeConfig
 # We assume you have a function to load data from the Knowledge Base.
 # In production, this would call MongoDB.
 
-from ..Create_Short_Service.loadEnvData import load_env_data
+from CreateShorts.loadEnvData import load_env_data
 
 
 def refine_base_prompt(base_topic_or_idea: str, theme_config: ThemeConfig, pro_enabled: bool = False) -> str:

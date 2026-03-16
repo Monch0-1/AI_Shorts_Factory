@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Set
 from google.genai import types
 from CreateShorts.utils import get_project_root
 from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
@@ -21,6 +21,7 @@ class ThemeConfig:
     music_path: str
     music_volume: float
     prompting: PromptingConfig
+    resources: Dict = field(default_factory=dict)
     voice_settings: Optional[ElevenLabsVoiceSettings] = None
 
 
@@ -71,6 +72,24 @@ def _create_schema_from_dict(schema_dict: dict) -> types.Schema:
             description=description
         )
 
+
+def _get_default_schema() -> types.Schema:
+    """Retorna un esquema por defecto"""
+    return types.Schema(
+        type=types.Type.ARRAY,
+        description="List of turns in the dialogue.",
+        items=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
+                "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
+                "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
+            },
+            required=["speaker", "line", "topic"]
+        )
+    )
+
+
 class ThemeManager:
     def __init__(self, config_path: Optional[str] = None):
         if config_path is None:
@@ -78,6 +97,7 @@ class ThemeManager:
 
         self.config_path = config_path
         self.themes: Dict[str, ThemeConfig] = {}
+        self.global_resources: Dict = {}
         self._load_config()
 
     def _load_config(self):
@@ -85,12 +105,15 @@ class ThemeManager:
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
-                print("Contenido del YAML cargado:")
-                print(yaml.dump(config))
 
             project_root = get_project_root()
 
-            for theme_name, theme_data in config['themes'].items():
+            # Load Global Resources
+            self.global_resources = config.get('resources', {})
+            # No path resolution needed for global resources as they are just tag lists
+
+            # Load Themes
+            for theme_name, theme_data in config.get('themes', {}).items():
                 try:
                     name = theme_data['name']
 
@@ -100,9 +123,11 @@ class ThemeManager:
                     else:
                         raw_paths = [video_data.get('path')] if 'path' in video_data else []
 
-                    video_paths = [str(project_root / "CreateShorts" / p) for p in raw_paths]
-                    music_path = str(project_root / "CreateShorts" / theme_data['music']['path'])
+                    video_paths = [str(project_root / p) for p in raw_paths]
+                    music_path = str(project_root / theme_data['music']['path'])
                     music_volume = theme_data['music'].get('volume', 0.10)
+                    resources_data = theme_data.get('resources', {})
+                    self._resolve_resource_paths(resources_data, project_root)
 
                     prompting_data = theme_data.get('prompting', {})
                     schema_dict = yaml.safe_load(prompting_data.get('script_schema', '{}'))
@@ -111,7 +136,7 @@ class ThemeManager:
                         script_schema_obj = _create_schema_from_dict(schema_dict)
                     except Exception as schema_error:
                         print(f"Error creando schema para {theme_name}: {schema_error}")
-                        script_schema_obj = self._get_default_schema()
+                        script_schema_obj = _get_default_schema()
 
                     prompting_config = PromptingConfig(
                         system_instruction=prompting_data.get('system_instruction', _get_default_system_instruction()),
@@ -134,16 +159,14 @@ class ThemeManager:
                     else:
                         voice_settings = None
 
-                    print(f"Cargando tema '{theme_name}':")
-                    print(f"Voice Settings: {voice_settings}")
-
                     self.themes[theme_name] = ThemeConfig(
                         name=name,
                         video_paths=video_paths,
                         music_path=music_path,
                         music_volume=music_volume,
                         prompting=prompting_config,
-                        voice_settings=voice_settings
+                        voice_settings=voice_settings,
+                        resources = resources_data
                     )
 
                 except Exception as theme_error:
@@ -154,30 +177,42 @@ class ThemeManager:
             print(f"Error cargando la configuración: {e}")
             self._load_default_config()
 
+    def _resolve_resource_paths(self, resource_dict: Dict, project_root: Path):
+        """Recursively resolve 'path' keys in a dictionary against project_root"""
+        for key, value in resource_dict.items():
+            if isinstance(value, dict):
+                self._resolve_resource_paths(value, project_root)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict) and 'path' in item:
+                        item['path'] = str(project_root / item['path'])
+
+    def get_all_available_tags(self) -> List[str]:
+        """
+        Flattens the global sfx_audio hierarchy to return all unique tags (intents).
+        Hierarchy: resources -> sfx_audio -> category -> [tags]
+        """
+        tags: Set[str] = set()
+        sfx_audio = self.global_resources.get('sfx_audio', {})
+        
+        for category, tag_list in sfx_audio.items():
+            if isinstance(tag_list, list):
+                for tag in tag_list:
+                    tags.add(tag)
+        
+        return sorted(list(tags))
+
     def _load_default_config(self):
-        """Carga una configuración por defecto si falla la carga del archivo"""
         project_root = get_project_root()
         default_prompting = PromptingConfig(
             system_instruction=_get_default_system_instruction(),
-            script_schema=types.Schema(
-                type=types.Type.ARRAY,
-                description="List of turns in the dialogue.",
-                items=types.Schema(
-                    type=types.Type.OBJECT,
-                    properties={
-                        "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
-                        "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
-                        "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
-                    },
-                    required=["speaker", "line", "topic"]
-                )
-            )
+            script_schema=_get_default_schema()
         )
 
         self.themes['default'] = ThemeConfig(
             name="default",
-            video_paths=[str(project_root / "CreateShorts/resources/video/4.mp4")],
-            music_path=str(project_root / "CreateShorts/resources/audio/2_23_AM.mp3"),
+            video_paths=[str(project_root / "resources/video/4.mp4")],
+            music_path=str(project_root / "resources/audio/2_23_AM.mp3"),
             music_volume=0.10,
             prompting=default_prompting
         )
@@ -185,19 +220,3 @@ class ThemeManager:
     def get_theme_config(self, theme_name: str) -> ThemeConfig:
         """Obtiene la configuración para un tema específico"""
         return self.themes.get(theme_name, self.themes['default'])
-
-    def _get_default_schema(self) -> types.Schema:
-        """Retorna un esquema por defecto"""
-        return types.Schema(
-            type=types.Type.ARRAY,
-            description="List of turns in the dialogue.",
-            items=types.Schema(
-                type=types.Type.OBJECT,
-                properties={
-                    "speaker": types.Schema(type=types.Type.STRING, description="Nina or Tina"),
-                    "line": types.Schema(type=types.Type.STRING, description="The concise line text."),
-                    "topic": types.Schema(type=types.Type.STRING, description="The discussed subtopic.")
-                },
-                required=["speaker", "line", "topic"]
-            )
-        )

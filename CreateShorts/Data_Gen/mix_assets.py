@@ -31,6 +31,12 @@ class VideoMixingError(Exception):
 def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: float,
                             background_volume: float = 0.10) -> CompositeAudioClip:
     try:
+        # Validar archivos de entrada
+        if not voice_path or not os.path.exists(voice_path):
+            raise ValueError(f"Voice file not found: {voice_path}")
+        if not music_path or not os.path.exists(music_path):
+            raise ValueError(f"Music file not found: {music_path}")
+            
         voice_clip = AudioFileClip(voice_path)
         music_clip = AudioFileClip(music_path)
 
@@ -112,16 +118,35 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
                        output_path: str, duration_sec: float,
                        subtitle_clips: List[TextClip] = None,
                        background_volume: float = 0.10) -> None:
+    
+    # Validación de entrada crítica
+    if not voice_path or not os.path.exists(voice_path):
+        raise ValueError(f"Voice file not found or invalid path: {voice_path}")
+    
+    if not video_background_path or not os.path.exists(video_background_path):
+        raise ValueError(f"Background video file not found: {video_background_path}")
+    
+    # Crear directorio de salida si no existe
+    output_dir = os.path.dirname(output_path)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+    
     # 1. Get the REAL duration of the dialogue.
-    voice_clip_temp = AudioFileClip(voice_path)
-    dialogue_duration = voice_clip_temp.duration
-    voice_clip_temp.close()  # Release the temporary clip.
+    try:
+        voice_clip_temp = AudioFileClip(voice_path)
+        dialogue_duration = voice_clip_temp.duration
+        voice_clip_temp.close()  # Release the temporary clip.
+    except Exception as e:
+        raise ValueError(f"Failed to load voice file '{voice_path}': {str(e)}")
 
     # 2. CALCULATE FINAL DURATION: Dialogue + 0.5s Buffer.
     final_video_duration = dialogue_duration + AUDIO_BUFFER_SEC
 
     # 3. The cut and loop logic now uses the FINAL duration.
-    background_clip = VideoFileClip(video_background_path)
+    try:
+        background_clip = VideoFileClip(video_background_path)
+    except Exception as e:
+        raise ValueError(f"Failed to load background video '{video_background_path}': {str(e)}")
 
     if background_clip.duration < final_video_duration:
         video_clip_final = create_looped_clip(background_clip, final_video_duration)
@@ -156,6 +181,20 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
         )
         print(f"-> Video completed: {output_path}")
 
-
     except Exception as e:
         raise VideoMixingError(f"Failed to create final video: {str(e)}")
+    finally:
+        # Cleanup resources
+        try:
+            if 'background_clip' in locals():
+                background_clip.close()
+            if 'video_clip_final' in locals():
+                video_clip_final.close()
+            if 'formatted_video' in locals():
+                formatted_video.close()
+            if 'final_clip' in locals():
+                final_clip.close()
+            if 'master_audio' in locals():
+                master_audio.close()
+        except Exception as cleanup_error:
+            print(f"⚠️ WARNING: Error during cleanup: {cleanup_error}")

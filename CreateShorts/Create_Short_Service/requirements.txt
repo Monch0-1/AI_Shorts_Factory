@@ -1,7 +1,0 @@
-moviepy
-google-genai
-google-api-python-client
-python-dotenv
-pydub
-pyyaml
-requests
