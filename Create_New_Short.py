@@ -1,6 +1,7 @@
 import json
 import random
 import os
+import time
 from pathlib import Path
 from typing import Final, Optional, Union
 from dataclasses import dataclass
@@ -270,6 +271,7 @@ def create_short_from_json(request_data: Union[dict, VideoRequest]):
 
 # Example usage, this will be moved to an API endpoint later
 if __name__ == "__main__":
+    start_time = time.time()
 
     _context_story = """
     """
@@ -291,3 +293,11 @@ if __name__ == "__main__":
     )
 
     create_short_from_json(video_request)
+
+    end_time = time.time()
+    total_time = end_time - start_time
+    
+    print("\n" + "="*60)
+    print(f"⏱️  TOTAL EXECUTION TIME: {total_time:.2f} seconds")
+    print(f"📅 FINISHED AT: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print("="*60 + "\n")

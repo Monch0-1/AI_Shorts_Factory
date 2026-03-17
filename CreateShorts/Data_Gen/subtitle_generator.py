@@ -6,16 +6,17 @@ import tempfile
 import os
 
 from CreateShorts.Models.script_models import ScriptDTO
+from CreateShorts.Data_Gen.moviepy_config import get_render_params
 
 @dataclass
 class SubtitleConfig:
     """Configuration for the subtitle style"""
-    fontsize: int = 170  # Increased for better visibility
-    font: str = 'Arial-Bold'
+    fontsize: int = 150  # Balanced size for readability
+    font: str = 'Impact'
     color: str = 'white'
     stroke_color: str = 'black'
-    stroke_width: int = 4  # Increased for better readability
-    size: tuple = (700, None)  # Reduced max width for shorter lines
+    stroke_width: int = 6  # Thicker stroke for better contrast
+    size: tuple = (800, None)  # Max width
     method: str = 'caption'
     align: str = 'center'
     interline: int = -1
@@ -28,9 +29,9 @@ class SubtitleGenerator:
     def _create_text_image(self, text: str) -> str:
         """Creates a text image using PIL and returns the temporary file path"""
         try:
-            # Configuración de imagen
+            # Configuración de imagen - Increased height for larger fonts
             img_width = 1080
-            img_height = 200
+            img_height = 500
             
             # Crear imagen transparente
             img = Image.new('RGBA', (img_width, img_height), (0, 0, 0, 0))
@@ -38,16 +39,17 @@ class SubtitleGenerator:
             
             # Intentar cargar fuente, con fallback
             try:
-                # Buscar fuente del sistema
+                # Buscar fuente del sistema (Impact is preferred for shorts)
                 if os.name == 'nt':  # Windows
-                    font_path = "C:/Windows/Fonts/arialbd.ttf"  # Arial Bold
+                    font_path = "C:/Windows/Fonts/impact.ttf"
                     if not os.path.exists(font_path):
-                        font_path = "C:/Windows/Fonts/arial.ttf"  # Arial regular
+                        font_path = "C:/Windows/Fonts/arialbd.ttf"
                 else:  # Linux/Mac
                     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
                 
                 if os.path.exists(font_path):
-                    font = ImageFont.truetype(font_path, self.config.fontsize // 4)  # Ajustar tamaño
+                    # Use full fontsize
+                    font = ImageFont.truetype(font_path, self.config.fontsize)
                 else:
                     font = ImageFont.load_default()
             except:
@@ -155,14 +157,17 @@ class SubtitleGenerator:
             print("-> Composing final video with subtitles...")
             final_video = CompositeVideoClip([video] + subtitle_clips)
 
-            print("-> Rendering video with subtitles...")
+            # Get dynamic render params based on hardware availability
+            render_params = get_render_params()
+
+            print(f"-> Rendering video with subtitles using {render_params['codec']}...")
             final_video.write_videofile(
                 output_path,
                 fps=video.fps,
-                codec='libx264',
                 audio_codec='aac',
                 threads=4,
-                logger=None
+                logger=None,
+                **render_params
             )
             print(f"-> Video with subtitles completed: {output_path}")
 

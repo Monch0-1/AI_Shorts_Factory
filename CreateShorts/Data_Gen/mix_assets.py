@@ -10,6 +10,7 @@ from PIL import Image
 import os
 from typing import Optional, List
 from moviepy.editor import concatenate_videoclips, concatenate_audioclips
+from CreateShorts.Data_Gen.moviepy_config import get_render_params
 
 # --- Video Format Constants ---
 VERTICAL_WIDTH = 1080    # Width for vertical video format (9:16).
@@ -159,7 +160,6 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
         master_audio = create_mixed_audio_clip(voice_path, music_path, final_video_duration, background_volume)
 
         # Load and format background video
-        # CORRECTION: Use the adjusted clip (video_clip_final) for vertical formatting.
         formatted_video = format_video_vertical(video_clip_final, final_video_duration)
 
         # Combine with subtitles if provided
@@ -169,15 +169,18 @@ def create_final_video(voice_path: str, music_path: str, video_background_path: 
         # Add audio
         final_clip = formatted_video.set_audio(master_audio)
 
+        # Get dynamic render params based on hardware availability
+        render_params = get_render_params()
+
         # Render final video
-        print("-> Rendering final video with subtitles (9:16 Optimized)...")
+        print(f"-> Rendering final video with subtitles (9:16 Optimized) using {render_params['codec']}...")
         final_clip.write_videofile(
             output_path,
             fps=FPS,
-            codec=VIDEO_CODEC,
             audio_codec=AUDIO_CODEC,
             logger=None,
-            threads=4
+            threads=4,
+            **render_params
         )
         print(f"-> Video completed: {output_path}")
 
