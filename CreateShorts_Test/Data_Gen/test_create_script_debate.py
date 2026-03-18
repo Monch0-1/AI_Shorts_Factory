@@ -1,3 +1,4 @@
+import json
 import pytest
 from unittest.mock import MagicMock, patch, mock_open
 from google.genai import types
@@ -36,7 +37,7 @@ def test_generate_debate_script_json_no_template_success(mock_load_env, mock_the
     mock_load_env.return_value = mock_client
     
     mock_theme_manager = mock_theme_manager_class.return_value
-    mock_theme_manager.get_all_available_tags.return_value = ["shock", "funny"]
+    mock_theme_manager.get_sfx_mapping.return_value = {"shock": ["skeptical"], "funny": ["punchline"]}
     
     mock_get_context.return_value = "Mocked Context Data"
     
@@ -63,7 +64,8 @@ def test_generate_debate_script_json_no_template_success(mock_load_env, mock_the
     assert "AI Ethics" in prompt
     assert "Mocked Context Data" in prompt
     assert "250" in prompt # 60 * 250 / 60 = 250
-    assert "shock, funny" in prompt
+    assert "shock" in prompt
+    assert "skeptical" in prompt
 
 @patch('CreateShorts.Data_Gen.create_script_debate.get_fresh_context')
 @patch('CreateShorts.Data_Gen.create_script_debate.ThemeManager')
@@ -74,7 +76,7 @@ def test_generate_debate_script_json_use_template_success(mock_load_env, mock_th
     mock_load_env.return_value = mock_client
     
     mock_theme_manager = mock_theme_manager_class.return_value
-    mock_theme_manager.get_all_available_tags.return_value = ["shock", "funny"]
+    mock_theme_manager.get_sfx_mapping.return_value = {"shock": ["skeptical"], "funny": ["punchline"]}
     
     mock_get_context.return_value = "Mocked Context Data"
     
@@ -100,6 +102,7 @@ def test_generate_debate_script_json_use_template_success(mock_load_env, mock_th
     prompt = kwargs['contents']
     assert "The Top 5 Programming Languages" in prompt
     assert "STRUCTURED DEBATE FLOW" in prompt
+    assert "shock" in prompt
 
 @patch('CreateShorts.Data_Gen.create_script_debate.load_env_data')
 def test_generate_debate_script_json_error(mock_load_env, mock_theme_config):
@@ -110,8 +113,9 @@ def test_generate_debate_script_json_error(mock_load_env, mock_theme_config):
     
     # Execute
     # We don't need to patch ThemeManager here because it's initialized after load_env_data
-    # but before the try-except. To be safe, let's patch it or just let it run if it doesn't fail.
-    with patch('CreateShorts.Data_Gen.create_script_debate.ThemeManager'):
+    # but before the try-except. To be safe, let's patch it and provide mapping.
+    with patch('CreateShorts.Data_Gen.create_script_debate.ThemeManager') as mock_tm_class:
+        mock_tm_class.return_value.get_sfx_mapping.return_value = {"test": ["tag"]}
         result = generate_debate_script_json(
             topic="Error Test",
             time_limit=60,

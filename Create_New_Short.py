@@ -175,6 +175,8 @@ def _handle_standard_flow(request: VideoRequest, theme_config: ThemeConfig, vide
         enable_refiner=request.options.enable_refiner
     )
 
+    print(script_json_str)
+
     # 3. DTO mapping and Pipeline
     script_dto = parse_script_to_dto(request.topic, script_json_str)
     if script_dto:
@@ -278,14 +280,14 @@ if __name__ == "__main__":
 
     # Example using the new nested structure
     video_options = VideoOptions(
-        duration_seconds=60,
+        duration_seconds=90,
         video_index=None,
         enable_refiner=False, 
-        use_script_template=True
+        use_script_template=False
     )
 
     video_request = VideoRequest(
-        topic="Showdown, Best AI tools for developers 2026 edition",
+        topic="what is spring and spring boot?",
         theme="default", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
         is_monologue=False, # Use monologue features such as the new prompt refiner
         context_story=_context_story, # Your context

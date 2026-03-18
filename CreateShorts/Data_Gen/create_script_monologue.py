@@ -1,3 +1,4 @@
+import json
 from typing import Final
 
 from google import genai
@@ -20,7 +21,7 @@ def generate_monolog_script_json(
     script_schema = theme_config.prompting.script_schema
     _system_instruction = theme_config.prompting.system_instruction
     speaker = "Narrator_Male"
-    available_tags = theme_manager.get_all_available_tags()
+    sfx_mapping = theme_manager.get_sfx_mapping()
 
     # 1. FINAL PROMPT CONSTRUCTION
     # The refined prompt already includes the story, style and guidelines.
@@ -45,8 +46,10 @@ def generate_monolog_script_json(
                       the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 3.  **End**: Finish with a nice casual farewell
                 4.  **EDITION HIGHLIGHTS:** Identify key moments and tag them.
-                   - You MUST use one of these tags: {", ".join(available_tags)}.
-                   - Apply 'shock' for skeptical turns, 'funny' for punchlines, and 'horror' for grim reveals.
+                   - Use this mapping to select highlights (Category: [Tags]):
+                     {json.dumps(sfx_mapping, indent=4)}
+                   - The 'type' property MUST be one of the Categories (keys).
+                   - The 'context' property MUST be one of the Tags (values) associated with that Category.
 
         Use the context given by the user to guide the script.
 

@@ -1,3 +1,4 @@
+import json
 from typing import Final
 from pathlib import Path
 from google import genai
@@ -22,7 +23,7 @@ def generate_debate_script_json(
     # Get the configuration correctly from theme_config
     script_schema = theme_config.prompting.script_schema
     _system_instruction = theme_config.prompting.system_instruction
-    available_tags = theme_manager.get_all_available_tags()
+    sfx_mapping = theme_manager.get_sfx_mapping()
 
     if not use_template:
         context_generated = get_fresh_context(topic)
@@ -45,8 +46,10 @@ def generate_debate_script_json(
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
                 5. **EDITION HIGHLIGHTS:** Identify key moments and tag them.
-                   - You MUST use one of these tags: {", ".join(available_tags)}.
-                   - Apply 'shock' for skeptical turns, 'funny' for punchlines, and 'horror' for grim reveals.
+                   - Use this mapping to select highlights (Category: [Tags]):
+                     {json.dumps(sfx_mapping, indent=4)}
+                   - The 'type' property MUST be one of the Categories (keys).
+                   - The 'context' property MUST be one of the Tags (values) associated with that Category.
                         
             Strictly adhere to the established character roles and return ONLY the JSON array structure.
             """
@@ -79,8 +82,10 @@ def generate_debate_script_json(
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
                 5. **EDITION HIGHLIGHTS:** Identify key moments and tag them.
-                   - You MUST use one of these tags: {", ".join(available_tags)}.
-                   - Apply 'shock' for skeptical turns, 'funny' for punchlines, and 'horror' for grim reveals.
+                   - Use this mapping to select highlights (Category: [Tags]):
+                     {json.dumps(sfx_mapping, indent=4)}
+                   - The 'type' property MUST be one of the Categories (keys).
+                   - The 'context' property MUST be one of the Tags (values) associated with that Category.
 
     
                 Return **ONLY** the JSON array structure.

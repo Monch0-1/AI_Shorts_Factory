@@ -3,9 +3,12 @@ resources:
     horror:
       - jump_scare
       - reveal
+      - whisper
+      - hit
     comedy:
-      - punchline
       - laugh
+      - punchline
+      - funny_mistake
     neutral:
       - transition
 
@@ -22,15 +25,6 @@ themes:
     music:
       path: "resources/audio/2_23_AM.mp3"
       volume: 0.10
-
-    resources:
-      funny:
-        confused:
-          - { name: "what", path: "resources/audio/sfx/what.mp3" }
-          - { name: "huh", path: "resources/audio/sfx/huh.mp3" }
-      shock:
-        reveal:
-          - { name: "boom", path: "resources/audio/sfx/boom.mp3" }
 
     prompting:
       refinement_goal: "The dialogue must maintain a 1:1 question-answer ratio and prioritize humor over technical detail."
@@ -71,8 +65,8 @@ themes:
               "highlight": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "description": "horror, shock, or funny" },
-                  "context": { "type": "string", "description": "e.g., jump_scare, reveal" }
+                  "type": { "type": "string", "description": "The SFX Category (e.g., horror, comedy, neutral)" },
+                  "context": { "type": "string", "description": "The specific Intent Tag (e.g., jump_scare, punchline, transition)" }
                 },
                 "required": ["type", "context"]
               }
@@ -96,15 +90,6 @@ themes:
     music:
       path: "resources/audio/stale.mp3"
       volume: 0.35
-
-    resources:
-      horror:
-        jump_scare:
-          - { name: "scary_hit", path: "resources/audio/sfx/scary_hit_01.mp3" }
-          - { name: "ghost_whisper", path: "resources/audio/sfx/ghost_whisper.mp3" }
-      shock:
-        reveal:
-          - { name: "dramatic_boom", path: "resources/audio/sfx/boom.mp3" }
 
     prompting:
       system_instruction: |
@@ -133,8 +118,8 @@ themes:
               "highlight": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "description": "horror, shock, or funny" },
-                  "context": { "type": "string", "description": "e.g., jump_scare, reveal" }
+                  "type": { "type": "string", "description": "The SFX Category (e.g., horror, comedy, neutral)" },
+                  "context": { "type": "string", "description": "The specific Intent Tag (e.g., jump_scare, punchline, transition)" }
                 },
                 "required": ["type", "context"]
               }

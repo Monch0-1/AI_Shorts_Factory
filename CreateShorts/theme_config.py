@@ -187,15 +187,22 @@ class ThemeManager:
                     if isinstance(item, dict) and 'path' in item:
                         item['path'] = str(project_root / item['path'])
 
+    def get_sfx_mapping(self) -> Dict[str, List[str]]:
+        """
+        Returns the mapping of categories to their associated tags.
+        Example: {"horror": ["jump_scare", "reveal"], "comedy": ["punchline", "laugh"]}
+        """
+        return self.global_resources.get('sfx_audio', {})
+
     def get_all_available_tags(self) -> List[str]:
         """
         Flattens the global sfx_audio hierarchy to return all unique tags (intents).
         Hierarchy: resources -> sfx_audio -> category -> [tags]
         """
         tags: Set[str] = set()
-        sfx_audio = self.global_resources.get('sfx_audio', {})
+        sfx_mapping = self.get_sfx_mapping()
         
-        for category, tag_list in sfx_audio.items():
+        for category, tag_list in sfx_mapping.items():
             if isinstance(tag_list, list):
                 for tag in tag_list:
                     tags.add(tag)

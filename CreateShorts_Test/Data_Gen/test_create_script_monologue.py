@@ -1,3 +1,4 @@
+import json
 import pytest
 from unittest.mock import MagicMock, patch
 from google.genai import types
@@ -35,7 +36,7 @@ def test_generate_monolog_script_json_success(mock_load_env, mock_theme_manager_
     mock_load_env.return_value = mock_client
     
     mock_theme_manager = mock_theme_manager_class.return_value
-    mock_theme_manager.get_all_available_tags.return_value = ["shock", "funny", "horror"]
+    mock_theme_manager.get_sfx_mapping.return_value = {"horror": ["jump_scare"], "comedy": ["punchline"]}
     
     mock_response = MagicMock()
     mock_response.text = '[{"speaker": "Narrator_Male", "line": "Test line", "tag": "funny"}]'
@@ -58,8 +59,9 @@ def test_generate_monolog_script_json_success(mock_load_env, mock_theme_manager_
     prompt = kwargs['contents']
     assert "Write a story about a cat." in prompt
     assert "60" in prompt
-    assert "shock, funny, horror" in prompt
+    assert '"horror": [\n                     "jump_scare"\n                   ]' in prompt or "horror" in prompt
     assert "Narrator_Male" in prompt
+    assert "The 'type' property MUST be one of the Categories" in prompt
 
 @patch('CreateShorts.Data_Gen.create_script_monologue.ThemeManager')
 @patch('CreateShorts.Data_Gen.create_script_monologue.load_env_data')
@@ -68,6 +70,9 @@ def test_generate_monolog_script_json_error(mock_load_env, mock_theme_manager_cl
     mock_client = MagicMock()
     mock_load_env.return_value = mock_client
     mock_client.models.generate_content.side_effect = Exception("API Error")
+    
+    mock_theme_manager = mock_theme_manager_class.return_value
+    mock_theme_manager.get_sfx_mapping.return_value = {"test": ["tag"]}
     
     # Execute
     result = generate_monolog_script_json(

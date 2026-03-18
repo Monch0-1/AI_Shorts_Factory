@@ -23,6 +23,20 @@ def test_get_all_available_tags():
     
     assert len(tags) == len(expected_tags), "The number of tags found does not match expected"
 
+def test_get_sfx_mapping():
+    """
+    Verifies that get_sfx_mapping returns the correct dictionary.
+    """
+    manager = ThemeManager()
+    mapping = manager.get_sfx_mapping()
+    
+    assert "horror" in mapping
+    assert "comedy" in mapping
+    assert "neutral" in mapping
+    assert mapping["horror"] == ["jump_scare", "reveal"]
+    assert mapping["comedy"] == ["punchline", "laugh"]
+    assert mapping["neutral"] == ["transition"]
+
 def test_global_resources_loaded_correctly():
     """
     Verifies that the global resources dictionary is loaded as expected.

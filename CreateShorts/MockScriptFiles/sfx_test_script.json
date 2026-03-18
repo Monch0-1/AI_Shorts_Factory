@@ -1,0 +1,29 @@
+[
+  {
+    "speaker": "Tina",
+    "line": "This is the first test line with a jump scare.",
+    "topic": "SFX Testing",
+    "highlight": {
+      "type": "horror",
+      "context": "jump_scare"
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "And this is a second line that should trigger FAHHH.",
+    "topic": "SFX Testing",
+    "highlight": {
+      "type": "comedy",
+      "context": "funny_mistake"
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "Finally, a third line with a scary hit.",
+    "topic": "SFX Testing",
+    "highlight": {
+      "type": "horror",
+      "context": "hit"
+    }
+  }
+]

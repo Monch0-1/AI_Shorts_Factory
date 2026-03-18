@@ -8,7 +8,7 @@ def list_sfx():
         results = session.exec(statement).all()
         print(f"Total entries in SFXLibrary: {len(results)}")
         for item in results:
-            print(f"- {item.sfx_name} ({item.category}/{item.intent_tag}): {item.file_path}")
+            print(f"- {item.sfx_name} ({item.category}/{item.intent_tag}): {item.file_path} | Count: {item.usage_count} | Source: {item.source} | Last Used: {item.last_used}")
 
 if __name__ == "__main__":
     list_sfx()

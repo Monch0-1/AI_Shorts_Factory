@@ -3,6 +3,7 @@ import random
 from moviepy.editor import AudioFileClip, CompositeAudioClip
 from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.theme_config import ThemeConfig
+from CreateShorts.Services.SFXService import SFXService
 
 # Configurar FFmpeg al inicio del módulo
 try:
@@ -20,6 +21,7 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
     voice_clips = []
     sfx_clips = []
     current_time = 0.0
+    sfx_service = SFXService()
 
     print(f"-> Starting Advanced Audio Assembly for topic: {script_dto.topic}")
 
@@ -44,33 +46,35 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
                 v_clip = AudioFileClip(segment.audio_path).set_start(current_time)
                 voice_clips.append(v_clip)
                 segments_with_audio += 1
-            except Exception as e:
-                print(f"❌ ERROR: Failed to load audio segment '{segment.audio_path}': {e}")
-                continue
+                
+                # Increment time BEFORE potentially adding SFX at the END of current segment
+                current_time += segment.duration
 
-            # 2. Lógica de Highlights (SFX)
-            if segment.highlight:
-                h_type = segment.highlight.type  # ej: "funny"
-                h_context = segment.highlight.context  # ej: "counter"
+                # 2. Lógica de Highlights (SFX) via Database
+                if segment.highlight:
+                    h_type = segment.highlight.type  # e.g., "horror" (category)
+                    h_context = segment.highlight.context  # e.g., "jump_scare" (intent_tag)
 
-                resources = getattr(theme_config, 'resources', {})
-                options = resources.get(h_type, {}).get(h_context, [])
+                    print(f"   [Highlight] Searching SFX for Type: {h_type}, Context: {h_context}")
+                    sfx_path = sfx_service.get_sfx_path(h_type, h_context)
 
-                if options:
-                    try:
-                        selected_sfx = random.choice(options)
-                        sfx_path = selected_sfx.get('path')
+                    if sfx_path and os.path.exists(sfx_path):
+                        # Add a small offset (e.g., -0.2s) if we want it to hit exactly at the end 
+                        # or slightly overlapping. For now, exactly at current_time.
+                        print(f"   [Highlight] Inserting SFX at {current_time:.2f}s | Path: {sfx_path}")
 
-                        if sfx_path and os.path.exists(sfx_path):
-                            print(f"   [Highlight] Inserting {selected_sfx['name']} at {current_time:.2f}s")
-
+                        try:
                             sfx_clip = AudioFileClip(sfx_path).set_start(current_time)
                             sfx_clip = sfx_clip.volumex(0.8)
                             sfx_clips.append(sfx_clip)
-                    except Exception as e:
-                        print(f"⚠️ WARNING: Failed to add SFX: {e}")
+                        except Exception as inner_e:
+                            print(f"⚠️ WARNING: Failed to load SFX file '{sfx_path}': {inner_e}")
+                    else:
+                        print(f"⚠️ SKIP: No SFX found in DB for {h_type}/{h_context}")
 
-            current_time += segment.duration
+            except Exception as e:
+                print(f"❌ ERROR: Failed to process segment: {e}")
+                continue
 
         # Verificar que tenemos al menos un clip de audio válido
         if segments_with_audio == 0:

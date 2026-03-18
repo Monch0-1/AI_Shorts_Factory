@@ -39,9 +39,9 @@ class MockAudioService(IAudioService):
             # Buscamos un audio que se llame igual que el speaker (Nina.mp3, Tina.mp3)
             mock_source = MOCK_DIR / f"{segment.speaker}.mp3"
 
-            # Si no existe, usamos un "fallback.mp3" que tengas ahí
+            # Si no existe, usamos un "fahhh_original.mp3" que tengas ahí
             if not mock_source.exists():
-                mock_source = MOCK_DIR / "fallback.mp3"
+                mock_source = MOCK_DIR / "fahhh_original.mp3"
                 print(f"🛡️ [DEBUG] Using fallback: {mock_source}")
                 print(f"🛡️ [DEBUG] Fallback exists: {mock_source.exists()}")
 
