@@ -43,7 +43,7 @@ def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) ->
             stability=0.5,
             similarity_boost=0.75,
             style=0.0,
-            speed=1.0,
+            speed=1.4,
             use_speaker_boost=True
         )
 

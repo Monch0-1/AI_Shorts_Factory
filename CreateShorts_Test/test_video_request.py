@@ -16,6 +16,7 @@ def test_video_request_defaults():
     assert request.options.use_script_template is False
     assert request.options.enable_refiner is False
     assert request.options.video_index is None
+    assert request.options.include_sfx is True
 
 def test_video_request_custom_values():
     """Test that VideoRequest correctly stores custom values in nested options."""
@@ -23,7 +24,8 @@ def test_video_request_custom_values():
         duration_seconds=120,
         video_index=5,
         enable_refiner=True,
-        use_script_template=True
+        use_script_template=True,
+        include_sfx=False
     )
     request = VideoRequest(
         topic="Custom Topic",
@@ -42,6 +44,7 @@ def test_video_request_custom_values():
     assert request.options.video_index == 5
     assert request.options.enable_refiner is True
     assert request.options.use_script_template is True
+    assert request.options.include_sfx is False
 
 def test_video_request_from_dict_nested():
     """Test that VideoRequest.from_dict correctly parses a nested dictionary."""
@@ -51,7 +54,8 @@ def test_video_request_from_dict_nested():
         "options": {
             "duration_seconds": 30,
             "enable_refiner": True,
-            "use_script_template": True
+            "use_script_template": True,
+            "include_sfx": False
         }
     }
     
@@ -62,6 +66,7 @@ def test_video_request_from_dict_nested():
     assert request.options.duration_seconds == 30
     assert request.options.enable_refiner is True
     assert request.options.use_script_template is True
+    assert request.options.include_sfx is False
 
 def test_video_request_from_dict_flat_compat():
     """Test that VideoRequest.from_dict still works with flat dictionaries for compatibility."""

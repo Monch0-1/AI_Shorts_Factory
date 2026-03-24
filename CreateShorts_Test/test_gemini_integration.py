@@ -47,7 +47,15 @@ class TestGeminiScriptGeneration:
                 highlight = segment["highlight"]
                 assert "type" in highlight
                 assert "context" in highlight
-                assert highlight["type"] in ["horror", "shock", "funny"]
+                # New fields from Professional SFX Editor Mode
+                assert "placement" in highlight
+                assert highlight["placement"] in ["start", "end"]
+                assert "offset_seconds" in highlight
+                assert isinstance(highlight["offset_seconds"], (int, float))
+                assert "volume_modifier" in highlight
+                assert isinstance(highlight["volume_modifier"], (int, float))
+                
+                assert highlight["type"] in ["horror", "shock", "funny", "neutral", "comedy"]
                 has_highlight = True
         
         assert has_highlight, "Horror script should contain at least one highlight/SFX marker"
@@ -57,7 +65,7 @@ class TestGeminiScriptGeneration:
         Validates that the debate generator (Nina vs Tina) returns valid JSON
         and includes highlights for 'shock' or 'funny' moments.
         """
-        theme = theme_manager.get_theme_config("default") # nina_tina usually uses default or has its own
+        theme = theme_manager.get_theme_config("default") 
         topic = "Why you shouldn't use production as a test environment"
         
         # Calling the real Gemini API
@@ -86,6 +94,9 @@ class TestGeminiScriptGeneration:
                 highlight = segment["highlight"]
                 assert "type" in highlight
                 assert "context" in highlight
+                assert "placement" in highlight
+                assert "offset_seconds" in highlight
+                assert "volume_modifier" in highlight
                 has_highlight = True
                 
         assert has_highlight, "Debate script should contain at least one highlight marker (funny/shock)"

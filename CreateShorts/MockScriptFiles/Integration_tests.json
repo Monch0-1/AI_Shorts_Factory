@@ -1,0 +1,101 @@
+[
+  {
+    "speaker": "Nina",
+    "line": "Integration tests? What are those?",
+    "topic": "Defining integration tests",
+    "highlight": {
+      "type": "shock",
+      "context": "reveal"
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Sounds like my IKEA furniture needs them to, you know, integrate.",
+    "topic": "Defining integration tests"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Imagine your smart fridge and coffee maker. An integration test ensures they actually talk,",
+    "topic": "Explaining integration tests",
+    "highlight": {
+      "type": "funny",
+      "context": "punchline"
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "so your fridge doesn't order kale when you wanted coffee beans. Teamwork!",
+    "topic": "Explaining integration tests"
+  },
+  {
+    "speaker": "Nina",
+    "line": "But we test each part individually, right?",
+    "topic": "Necessity of integration tests",
+    "highlight": {
+      "type": "shock",
+      "context": "reveal"
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Fridge chills, coffee brews. Why care if they 'chat'?",
+    "topic": "Necessity of integration tests"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Individually great, but together? Chaos!",
+    "topic": "Importance of integration tests",
+    "highlight": {
+      "type": "funny",
+      "context": "punchline"
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "Like a party where the DJ and caterer clash. Everything works, just not *together*.",
+    "topic": "Importance of integration tests"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Ugh, so every connection needs a test?",
+    "topic": "Complexity of integration tests",
+    "highlight": {
+      "type": "shock",
+      "context": "horror"
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "My brain's gonna explode thinking about it.",
+    "topic": "Complexity of integration tests"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Not every single one, but critical ones. Meta uses AI!",
+    "topic": "Automated integration tests / Meta's approach",
+    "highlight": {
+      "type": "reveal",
+      "context": "transition"
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's a super-smart party planner anticipating guest clashes.",
+    "topic": "Automated integration tests / Meta's approach"
+  },
+  {
+    "speaker": "Nina",
+    "line": "AI party planners? Okay, cool.",
+    "topic": "Understanding integration tests"
+  },
+  {
+    "speaker": "Nina",
+    "line": "I get the 'no kale with coffee' thing now. Thanks, Tina!",
+    "topic": "Understanding integration tests"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Anytime, Nina! Keep those smart appliances talking nicely!",
+    "topic": "Farewell"
+  }
+]

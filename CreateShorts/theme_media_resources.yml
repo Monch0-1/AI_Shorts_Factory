@@ -1,289 +1,331 @@
 resources:
   sfx_audio:
-    horror:
-      - jump_scare
-      - reveal
-      - whisper
-      - hit
     comedy:
-      - laugh
-      - punchline
-      - funny_mistake
+    - audience_laugh
+    - bonk
+    - cartoon_voice
+    - confused
+    - funny_mistake
+    - laugh
+    - punchline
+    - shocked
+    - suspicious
+    - thinking
+    - transition
+    horror:
+    - ambiance
+    - creacking
+    - heartbeat
+    - hit
+    - jump_scare
+    - loud_scream
+    - screach
+    - thud
+    - violin
+    - whisper
     neutral:
-      - transition
-
+    - bell
+    - shock
+    - short_tap_ding
+    - transition
 themes:
   default:
     name: default
     video:
       paths:
-        - "resources/video/4.mp4"
-        - "resources/video/5.mp4"
-        - "resources/video/6.mp4"
-        - "resources/video/7.mp4"
-        - "resources/video/8.mp4"
+      - resources/video/4.mp4
+      - resources/video/5.mp4
+      - resources/video/6.mp4
+      - resources/video/7.mp4
+      - resources/video/8.mp4
     music:
-      path: "resources/audio/2_23_AM.mp3"
-      volume: 0.10
-
+      path: resources/audio/2_23_AM.mp3
+      volume: 0.1
     prompting:
-      refinement_goal: "The dialogue must maintain a 1:1 question-answer ratio and prioritize humor over technical detail."
+      refinement_goal: The dialogue must maintain a 1:1 question-answer ratio and
+        prioritize humor over technical detail.
       target_quality_rules:
-        - "Funny"
-        - "Witty"
-        - "Use modern lingo"
-        - "Engaging"
-        - "Relatable"
+      - Funny
+      - Witty
+      - Use modern lingo
+      - Engaging
+      - Relatable
       best_examples:
-        - "Example 1: (Tina uses the 'universal coffee recipe' analogy.)"
-        - "Example 2: (Nina's question uses a common, frustrated developer phrase.)"
-      system_instruction: |
-        You are a highly skilled scriptwriter for short-form social media comedy and tech debates.
-        Your primary goal is to write a casual, witty, and engaging dialogue strictly between two characters.
-        Nina must pose skeptical, common-sense questions to expose flaws.
-        Tina must provide clear, witty, and often funny analogies to explain complex concepts simply.
-        The conversation must flow naturally without lecturing the audience.
-      script_schema: |
-        {
-          "type": "array",
-          "description": "List of turns in the dialogue.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "speaker": {
-                "type": "string",
-                "description": "Nina or Tina"
-              },
-              "line": {
-                "type": "string",
-                "description": "The concise line text."
-              },
-              "topic": {
-                "type": "string",
-                "description": "The discussed subtopic."
-              },
-              "highlight": {
-                "type": "object",
-                "properties": {
-                  "type": { "type": "string", "description": "The SFX Category (e.g., horror, comedy, neutral)" },
-                  "context": { "type": "string", "description": "The specific Intent Tag (e.g., jump_scare, punchline, transition)" }
-                },
-                "required": ["type", "context"]
-              }
-            },
-            "required": ["speaker", "line", "topic"]
-          }
-        }
+      - 'Example 1: (Tina uses the ''universal coffee recipe'' analogy.)'
+      - 'Example 2: (Nina''s question uses a common, frustrated developer phrase.)'
+      system_instruction: 'You are a highly skilled scriptwriter for short-form social
+        media comedy and tech debates.
 
+        Your primary goal is to write a casual, witty, and engaging dialogue strictly
+        between two characters.
+
+        Nina must pose skeptical, common-sense questions to expose flaws.
+
+        Tina must provide clear, witty, and often funny analogies to explain complex
+        concepts simply.
+
+        The conversation must flow naturally without lecturing the audience.
+
+
+        **PROFESSIONAL SFX EDITOR MODE:**
+
+        Act as a professional audio editor. Use the ''highlight'' object to time SFX
+        for maximum impact:
+
+        1. **Anticipatory Hits (J-Cuts):** Use placement: "end" with offset_seconds:
+        -0.2 to start the sound just before the line finishes. Great for shockers
+        or sudden realizations.
+
+        2. **Comedic Beats:** Use placement: "end" with offset_seconds: 0.15 to let
+        a punchline land before triggering a laugh or rimshot.
+
+        3. **Atmospheric Bedding:** Use placement: "start" to trigger sounds right
+        as a speaker begins.
+
+        4. **Volume Control:** Use volume_modifier (in dB) to make background sounds
+        subtle (-5.0) or punchy stings stand out (+2.0).
+
+        '
+      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of turns\
+        \ in the dialogue.\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\"\
+        : {\n      \"speaker\": {\n        \"type\": \"string\",\n        \"description\"\
+        : \"Nina or Tina\"\n      },\n      \"line\": {\n        \"type\": \"string\"\
+        ,\n        \"description\": \"The concise line text.\"\n      },\n      \"\
+        topic\": {\n        \"type\": \"string\",\n        \"description\": \"The\
+        \ discussed subtopic.\"\n      },\n      \"highlight\": {\n        \"type\"\
+        : \"object\",\n        \"properties\": {\n          \"type\": { \"type\":\
+        \ \"string\", \"description\": \"The SFX Category (e.g., horror, comedy, neutral)\"\
+        \ },\n          \"context\": { \"type\": \"string\", \"description\": \"The\
+        \ specific Intent Tag (e.g., jump_scare, punchline, transition)\" },\n   \
+        \       \"placement\": { \"type\": \"string\", \"enum\": [\"start\", \"end\"\
+        ], \"description\": \"Trigger at 'start' or 'end' of dialogue segment.\" },\n\
+        \          \"offset_seconds\": { \"type\": \"number\", \"description\": \"\
+        Shift in seconds. Negative = Overlap, Positive = Delay. Range: -0.5 to 0.5.\"\
+        \ },\n          \"volume_modifier\": { \"type\": \"number\", \"description\"\
+        : \"dB adjustment. Negative for subtle, positive for loud. Range: -10 to 5.\"\
+        \ }\n        },\n        \"required\": [\"type\", \"context\", \"placement\"\
+        ]\n      }\n    },\n    \"required\": [\"speaker\", \"line\", \"topic\"]\n\
+        \  }\n}\n"
     voice_settings:
       stability: 0.75
-      similarity_boost: 0.90
-      speed: 1.00
+      similarity_boost: 0.9
+      speed: 1.0
       style: 0.0
-      use_speaker_boost: True
-  
+      use_speaker_boost: true
   horror:
     name: horror
     video:
       paths:
-        - "resources/video/HorrorVid_Drs.mp4"
+      - resources/video/HorrorVid_Drs.mp4
     music:
-      path: "resources/audio/stale.mp3"
+      path: resources/audio/stale.mp3
       volume: 0.35
-
     prompting:
-      system_instruction: |
-        You are a master of psychological horror and suspense. Your goal is to adapt the user's story into a high-retention script.
+      system_instruction: 'You are a master of psychological horror and suspense.
+        Your goal is to adapt the user''s story into a high-retention script.
+
 
         STRATEGY:
+
         1. Use short, punchy sentences to build anxiety.
-        2. Identify "Beats of Terror": moments where a sound effect (SFX) will maximize the impact.
+
+        2. Identify "Beats of Terror": moments where a sound effect (SFX) will maximize
+        the impact.
+
+
+        **PROFESSIONAL SFX EDITOR MODE:**
+
+        Act as a professional audio editor. Use the ''highlight'' object to time SFX
+        for maximum impact:
+
+        1. **Anticipatory Hits (J-Cuts):** Use placement: "end" with offset_seconds:
+        -0.2 to start a shocker just before a revelation line ends.
+
+        2. **Atmospheric Drones:** Use placement: "start" to trigger a whisper or
+        low hit right as a creepy segment begins.
+
+        3. **Volume Control:** Use volume_modifier (in dB) to make whispers subtle
+        (-8.0) or jump scares loud (+3.0).
+
 
         HIGHLIGHT RULES:
-        - Use 'type: horror, context: jump_scare' only at the climax of a revelation or a sudden noise in the story.
-        - Use 'type: horror, context: reveal' when the narrator discovers something unsettling but not yet aggressive.
-        - Use 'type: shock, context: reveal' for dramatic plot twists.
 
-        CRITICAL: Every highlight must be logically placed *after* the buildup. Never use more than 3 highlights in a 60-second script to avoid cluttering.
-      script_schema: |
-        {
-          "type": "array",
-          "description": "List of lines in the first-person monologue.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "speaker": { "type": "string" },
-              "line": { "type": "string" },
-              "mood": { "type": "string" },
-              "highlight": {
-                "type": "object",
-                "properties": {
-                  "type": { "type": "string", "description": "The SFX Category (e.g., horror, comedy, neutral)" },
-                  "context": { "type": "string", "description": "The specific Intent Tag (e.g., jump_scare, punchline, transition)" }
-                },
-                "required": ["type", "context"]
-              }
-            },
-            "required": ["speaker", "line", "mood"]
-          }
-        }
+        - Use ''type: horror, context: jump_scare'' only at the climax of a revelation
+        or a sudden noise in the story.
+
+        - Use ''type: horror, context: reveal'' when the narrator discovers something
+        unsettling but not yet aggressive.
+
+        - Use ''type: shock, context: reveal'' for dramatic plot twists.
+
+
+        CRITICAL: Every highlight must be logically placed. Never use more than 3
+        highlights in a 60-second script to avoid cluttering.
+
+        '
+      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of lines\
+        \ in the first-person monologue.\",\n  \"items\": {\n    \"type\": \"object\"\
+        ,\n    \"properties\": {\n      \"speaker\": { \"type\": \"string\" },\n \
+        \     \"line\": { \"type\": \"string\" },\n      \"mood\": { \"type\": \"\
+        string\" },\n      \"highlight\": {\n        \"type\": \"object\",\n     \
+        \   \"properties\": {\n          \"type\": { \"type\": \"string\", \"description\"\
+        : \"The SFX Category (e.g., horror, comedy, neutral)\" },\n          \"context\"\
+        : { \"type\": \"string\", \"description\": \"The specific Intent Tag (e.g.,\
+        \ jump_scare, punchline, transition)\" },\n          \"placement\": { \"type\"\
+        : \"string\", \"enum\": [\"start\", \"end\"], \"description\": \"Trigger at\
+        \ 'start' or 'end' of dialogue segment.\" },\n          \"offset_seconds\"\
+        : { \"type\": \"number\", \"description\": \"Shift in seconds. Negative =\
+        \ Overlap, Positive = Delay. Range: -0.5 to 0.5.\" },\n          \"volume_modifier\"\
+        : { \"type\": \"number\", \"description\": \"dB adjustment. Negative for subtle,\
+        \ positive for loud.\" }\n        },\n        \"required\": [\"type\", \"\
+        context\", \"placement\"]\n      }\n    },\n    \"required\": [\"speaker\"\
+        , \"line\", \"mood\"]\n  }\n}\n"
     voice_settings:
-      stability: 0.90
+      stability: 0.9
       similarity_boost: 0.85
       speed: 0.95
-      use_speaker_boost: False
-
+      use_speaker_boost: false
   reddit:
     name: reddit
     video:
       paths:
-        - "resources/video/reddit_bgv.mp4"
+      - resources/video/reddit_bgv.mp4
     music:
-      path: "resources/audio/reddit_bgm.mp3"
+      path: resources/audio/reddit_bgm.mp3
       volume: 0.15
     prompting:
-      refinement_goal: "The narrative must build suspense quickly and end with a definitive, satisfying twist."
+      refinement_goal: The narrative must build suspense quickly and end with a definitive,
+        satisfying twist.
       best_examples:
-        - "Example 1: The opening hook must occur within the first 10 words."
-        - "Example 2: The narrative must use visual metaphor keywords like 'cold dread' or 'unsettling silence'."
-      system_instruction: |
-        You are a master script editor and adapter for short-form social media narratives. Your primary goal is to convert a user-provided story concept into a compelling, first-person monologue designed for high retention.
-        The narrative must be reflective, engaging or amusing and build to a clear point of learning, unexpected twist or funny anecdote. The mood must be flexible (e.g., Amused, Vengeful, Thoughtful).
-      script_schema: |
-        {
-          "type": "array",
-          "description": "List of lines in the first-person monologue.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "speaker": {
-                "type": "string",
-                "description": "The narrator's name (e.g., Anon, Survivor)."
-              },
-              "line": {
-                "type": "string",
-                "description": "The concise line of the monologue."
-              },
-              "mood": {
-                "type": "string",
-                "description": "The emotional state of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked)."
-              }
-            },
-            "required": ["speaker", "line", "mood"]
-          }
-        }
+      - 'Example 1: The opening hook must occur within the first 10 words.'
+      - 'Example 2: The narrative must use visual metaphor keywords like ''cold dread''
+        or ''unsettling silence''.'
+      system_instruction: 'You are a master script editor and adapter for short-form
+        social media narratives. Your primary goal is to convert a user-provided story
+        concept into a compelling, first-person monologue designed for high retention.
+
+        The narrative must be reflective, engaging or amusing and build to a clear
+        point of learning, unexpected twist or funny anecdote. The mood must be flexible
+        (e.g., Amused, Vengeful, Thoughtful).
+
+
+        **PROFESSIONAL SFX EDITOR MODE:**
+
+        Use the ''highlight'' object to time SFX for maximum impact:
+
+        1. **Anticipatory Hits:** Use placement: "end" with offset_seconds: -0.2 for
+        sudden realizations.
+
+        2. **Atmospheric Bedding:** Use placement: "start" to trigger background elements
+        right as a speaker begins.
+
+        3. **Volume Control:** Use volume_modifier (in dB) to balance effects.
+
+        '
+      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of lines\
+        \ in the first-person monologue.\",\n  \"items\": {\n    \"type\": \"object\"\
+        ,\n    \"properties\": {\n      \"speaker\": {\n        \"type\": \"string\"\
+        ,\n        \"description\": \"The narrator's name (e.g., Anon, Survivor).\"\
+        \n      },\n      \"line\": {\n        \"type\": \"string\",\n        \"description\"\
+        : \"The concise line of the monologue.\"\n      },\n      \"mood\": {\n  \
+        \      \"type\": \"string\",\n        \"description\": \"The emotional state\
+        \ of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked).\"\n      },\n\
+        \      \"highlight\": {\n        \"type\": \"object\",\n        \"properties\"\
+        : {\n          \"type\": { \"type\": \"string\", \"description\": \"The SFX\
+        \ Category (e.g., horror, comedy, neutral)\" },\n          \"context\": {\
+        \ \"type\": \"string\", \"description\": \"The specific Intent Tag (e.g.,\
+        \ jump_scare, punchline, transition)\" },\n          \"placement\": { \"type\"\
+        : \"string\", \"enum\": [\"start\", \"end\"], \"description\": \"Trigger at\
+        \ 'start' or 'end' of dialogue segment.\" },\n          \"offset_seconds\"\
+        : { \"type\": \"number\", \"description\": \"Shift in seconds. Negative =\
+        \ Overlap, Positive = Delay. Range: -0.5 to 0.5.\" },\n          \"volume_modifier\"\
+        : { \"type\": \"number\", \"description\": \"dB adjustment. Negative for subtle,\
+        \ positive for loud.\" }\n        },\n        \"required\": [\"type\", \"\
+        context\", \"placement\"]\n      }\n    },\n    \"required\": [\"speaker\"\
+        , \"line\", \"mood\"]\n  }\n}\n"
     voice_settings:
       stability: 0.75
-      similarity_boost: 0.90
+      similarity_boost: 0.9
       speed: 1.05
       style: 0.0
-      use_speaker_boost: True
-
+      use_speaker_boost: true
   inspirational:
     name: inspirational
     video:
       paths:
-        - "resources/video/reddit_bgv.mp4" # Usar un fondo abstracto/motivational
+      - resources/video/reddit_bgv.mp4
     music:
-      path: "resources/audio/inspirational_music.mp3" # Usar una pista de música más épica/motivacional
+      path: resources/audio/inspirational_music.mp3
       volume: 0.18
     prompting:
-      refinement_goal: "The narrative must  connect with an audience through shared emotions and relatable stories, while also providing a clear, actionable message and a strong call to action."
+      refinement_goal: The narrative must  connect with an audience through shared
+        emotions and relatable stories, while also providing a clear, actionable message
+        and a strong call to action.
       best_examples:
-        - "Example 1: Organize the speech with an engaging introduction, a well-developed body, and a powerful conclusion. "
-        - "Example 2: The narrative must offer practical insights, strategies, or perspectives that the audience can use to make positive changes"
-      system_instruction: |
-        You are a highly articulate and authoritative life coach and software entrepreneur. 
-        Your primary goal is to adapt the user's core idea into a compelling, motivational monologue designed for personal and professional reflection. 
-        The speech must be delivered with clarity, conviction, and a friendly, reflective tone.
-      script_schema: |
-        {
-          "type": "array",
-          "description": "List of lines in the motivational monologue.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "speaker": {
-                "type": "string",
-                "description": "The speaker's name (e.g., Tina, Expert)."
-              },
-              "line": {
-                "type": "string",
-                "description": "The concise line of the monologue."
-              },
-              "mood": {
-                "type": "string",
-                "description": "The emotional state (e.g., Reflective, Assertive, Calming, Conclusive)."
-              }
-            },
-            "required": ["speaker", "line", "mood"]
-          }
-        }
+      - 'Example 1: Organize the speech with an engaging introduction, a well-developed
+        body, and a powerful conclusion. '
+      - 'Example 2: The narrative must offer practical insights, strategies, or perspectives
+        that the audience can use to make positive changes'
+      system_instruction: "You are a highly articulate and authoritative life coach\
+        \ and software entrepreneur. \nYour primary goal is to adapt the user's core\
+        \ idea into a compelling, motivational monologue designed for personal and\
+        \ professional reflection. \nThe speech must be delivered with clarity, conviction,\
+        \ and a friendly, reflective tone.\n"
+      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of lines\
+        \ in the motivational monologue.\",\n  \"items\": {\n    \"type\": \"object\"\
+        ,\n    \"properties\": {\n      \"speaker\": {\n        \"type\": \"string\"\
+        ,\n        \"description\": \"The speaker's name (e.g., Tina, Expert).\"\n\
+        \      },\n      \"line\": {\n        \"type\": \"string\",\n        \"description\"\
+        : \"The concise line of the monologue.\"\n      },\n      \"mood\": {\n  \
+        \      \"type\": \"string\",\n        \"description\": \"The emotional state\
+        \ (e.g., Reflective, Assertive, Calming, Conclusive).\"\n      }\n    },\n\
+        \    \"required\": [\"speaker\", \"line\", \"mood\"]\n  }\n}\n"
     voice_settings:
-      stability: 0.90
-      similarity_boost: 0.90
-      speed: 0.90
+      stability: 0.9
+      similarity_boost: 0.9
+      speed: 0.9
       style: 0.0
-      use_speaker_boost: True
-
+      use_speaker_boost: true
   story_formatter:
     name: story_formatter
     video:
       paths:
-        - "resources/video/reddit_bgv.mp4" # Fondo neutro y motivacional
+      - resources/video/reddit_bgv.mp4
     music:
-      path: "resources/audio/2_23_AM.mp3" # Música ambiental neutra
+      path: resources/audio/2_23_AM.mp3
       volume: 0.02
     prompting:
-      system_instruction: |
-        You are a meticulous script editor, your primary task is to adapt the user's raw text into a series of short, serialized video parts.
-      script_schema: |
-        {
-          "type": "array",
-          "description": "List of complete video parts. Each part contains a segment of the story.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "part_number": {
-                "type": "integer",
-                "description": "The index of the part (e.g., 1, 2, 3)."
-              },
-              "story_summary": {
-                "type": "string",
-                "description": "A brief summary of the content in this part (e.g., 'The discovery of the mystery door' or 'The aftermath of the fight')."
-              },
-              "script_lines": {
-                "type": "array",
-                "description": "The segmented script lines for this specific video part.",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "speaker": {
-                      "type": "string",
-                      "description": "The consistent narrator's name."
-                    },
-                    "line": {
-                      "type": "string",
-                      "description": "The concise line text (max 10 words)."
-                    },
-                    "mood": {
-                      "type": "string",
-                      "description": "The emotional tone for the line."
-                    }
-                  },
-                  "required": ["speaker", "line", "mood"]
-                }
-              }
-            },
-            "required": ["part_number", "story_summary", "script_lines"]
-          }
-        }
-      refinement_goal: "The output must be a faithful segment-by-segment retelling of the user's input, optimized for subtitle reading speed and clarity, without adding new commentary or opinion."
-      best_examples: [ ] # Vacío, ya que la fuente es externa
+      system_instruction: 'You are a meticulous script editor, your primary task is
+        to adapt the user''s raw text into a series of short, serialized video parts.
 
+        '
+      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of complete\
+        \ video parts. Each part contains a segment of the story.\",\n  \"items\"\
+        : {\n    \"type\": \"object\",\n    \"properties\": {\n      \"part_number\"\
+        : {\n        \"type\": \"integer\",\n        \"description\": \"The index\
+        \ of the part (e.g., 1, 2, 3).\"\n      },\n      \"story_summary\": {\n \
+        \       \"type\": \"string\",\n        \"description\": \"A brief summary\
+        \ of the content in this part (e.g., 'The discovery of the mystery door' or\
+        \ 'The aftermath of the fight').\"\n      },\n      \"script_lines\": {\n\
+        \        \"type\": \"array\",\n        \"description\": \"The segmented script\
+        \ lines for this specific video part.\",\n        \"items\": {\n         \
+        \ \"type\": \"object\",\n          \"properties\": {\n            \"speaker\"\
+        : {\n              \"type\": \"string\",\n              \"description\": \"\
+        The consistent narrator's name.\"\n            },\n            \"line\": {\n\
+        \              \"type\": \"string\",\n              \"description\": \"The\
+        \ concise line text (max 10 words).\"\n            },\n            \"mood\"\
+        : {\n              \"type\": \"string\",\n              \"description\": \"\
+        The emotional tone for the line.\"\n            }\n          },\n        \
+        \  \"required\": [\"speaker\", \"line\", \"mood\"]\n        }\n      }\n \
+        \   },\n    \"required\": [\"part_number\", \"story_summary\", \"script_lines\"\
+        ]\n  }\n}\n"
+      refinement_goal: The output must be a faithful segment-by-segment retelling
+        of the user's input, optimized for subtitle reading speed and clarity, without
+        adding new commentary or opinion.
+      best_examples: []
     voice_settings:
-      stability: 0.85 # Tono muy estable para la narración
+      stability: 0.85
       similarity_boost: 0.85
-      speed: 1.00 # Velocidad normal de lectura
+      speed: 1.0
       style: 0.0
-      use_speaker_boost: True
+      use_speaker_boost: true

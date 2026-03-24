@@ -1,0 +1,301 @@
+[
+  {
+    "speaker": "Nina",
+    "line": "Okay, Tina, serious question:",
+    "topic": "Online debate futility",
+    "highlight": {
+      "type": "comedy",
+      "context": "confused",
+      "placement": "start",
+      "offset_seconds": 0.0,
+      "volume_modifier": -2.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Do online debates ever actually convince anyone to change their mind,",
+    "topic": "Online debate futility"
+  },
+  {
+    "speaker": "Nina",
+    "line": "or do we just all end up yelling into the void and getting super mad?",
+    "topic": "Online debate futility"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Nina, you've perfectly articulated the modern human condition!",
+    "topic": "Debate as verbal wrestling"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's less about convincing and more about a verbal wrestling match.",
+    "topic": "Debate as verbal wrestling"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's like trying to teach a cat to fetch a political ideology.",
+    "topic": "Debate as verbal wrestling"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You try, but it just stares at you with disdain,",
+    "topic": "Debate as verbal wrestling"
+  },
+  {
+    "speaker": "Tina",
+    "line": "judges your life choices, and knocks something off the counter.",
+    "topic": "Debate as verbal wrestling",
+    "highlight": {
+      "type": "comedy",
+      "context": "punchline",
+      "placement": "end",
+      "offset_seconds": 0.15,
+      "volume_modifier": 1.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Right?! So then what's the point?",
+    "topic": "Purpose of debates",
+    "highlight": {
+      "type": "comedy",
+      "context": "suspicious",
+      "placement": "end",
+      "offset_seconds": -0.2,
+      "volume_modifier": -1.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Why bother if nobody's mind is actually getting changed,",
+    "topic": "Purpose of debates"
+  },
+  {
+    "speaker": "Nina",
+    "line": "and everyone just digs their heels in deeper?",
+    "topic": "Purpose of debates"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Ideally, it's not always about converting the person you're debating.",
+    "topic": "Debating for the audience",
+    "highlight": {
+      "type": "comedy",
+      "context": "thinking",
+      "placement": "start",
+      "offset_seconds": 0.0,
+      "volume_modifier": -3.0
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "Think of it like a public performance for an invisible jury: the silent audience.",
+    "topic": "Debating for the audience"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You're not trying to convince the opposing lawyer,",
+    "topic": "Debating for the audience"
+  },
+  {
+    "speaker": "Tina",
+    "line": "but to win over the *people watching* the trial.",
+    "topic": "Debating for the audience"
+  },
+  {
+    "speaker": "Tina",
+    "line": "The opponent is just a rhetorical punching bag that occasionally yells back.",
+    "topic": "Debating for the audience",
+    "highlight": {
+      "type": "comedy",
+      "context": "punchline",
+      "placement": "end",
+      "offset_seconds": 0.15,
+      "volume_modifier": 0.5
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "But what about when people just refuse to listen?",
+    "topic": "Ideological resistance",
+    "highlight": {
+      "type": "comedy",
+      "context": "shocked",
+      "placement": "start",
+      "offset_seconds": 0.0,
+      "volume_modifier": 0.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Some ideologies say it's 'unacceptable' to even engage with opposing views.",
+    "topic": "Ideological resistance"
+  },
+  {
+    "speaker": "Nina",
+    "line": "How do you win over an audience if half of them have already decided you're wrong,",
+    "topic": "Ideological resistance"
+  },
+  {
+    "speaker": "Nina",
+    "line": "before you even speak?",
+    "topic": "Ideological resistance"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Ah, the 'my mind is a fortress' crowd.",
+    "topic": "Debating the unconvincible"
+  },
+  {
+    "speaker": "Tina",
+    "line": "For them, you're not debating to change *their* mind.",
+    "topic": "Debating the unconvincible"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Instead, you're showing *everyone else* why their drawbridge might have structural issues.",
+    "topic": "Debating the unconvincible"
+  },
+  {
+    "speaker": "Tina",
+    "line": "It's like explaining quantum physics to a brick wall.",
+    "topic": "Debating the unconvincible"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You know the wall won't get it,",
+    "topic": "Debating the unconvincible"
+  },
+  {
+    "speaker": "Tina",
+    "line": "but you hope someone *else* overhearing finds it fascinating and enlightening.",
+    "topic": "Debating the unconvincible",
+    "highlight": {
+      "type": "comedy",
+      "context": "punchline",
+      "placement": "end",
+      "offset_seconds": 0.15,
+      "volume_modifier": 1.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Okay, that makes sense. But 'quality of arguments'?",
+    "topic": "Argument quality",
+    "highlight": {
+      "type": "comedy",
+      "context": "confused",
+      "placement": "start",
+      "offset_seconds": 0.0,
+      "volume_modifier": -1.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Everyone thinks *their* arguments are quality.",
+    "topic": "Argument quality"
+  },
+  {
+    "speaker": "Nina",
+    "line": "How do you tell good reasoning versus someone just being loud,",
+    "topic": "Argument quality"
+  },
+  {
+    "speaker": "Nina",
+    "line": "confidently incorrect, and good at meme-sharing?",
+    "topic": "Argument quality"
+  },
+  {
+    "speaker": "Tina",
+    "line": "That's the secret sauce! Good arguments are like a well-built house:",
+    "topic": "Logic vs. emotion"
+  },
+  {
+    "speaker": "Tina",
+    "line": "solid facts, sturdy logic, and a roof of evidence.",
+    "topic": "Logic vs. emotion"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Bad arguments? They're like a house made of Jenga blocks and wishes.",
+    "topic": "Logic vs. emotion"
+  },
+  {
+    "speaker": "Tina",
+    "line": "One poke, and it crashes down with dramatic yelling.",
+    "topic": "Logic vs. emotion",
+    "highlight": {
+      "type": "comedy",
+      "context": "punchline",
+      "placement": "end",
+      "offset_seconds": 0.15,
+      "volume_modifier": 1.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "So, it's less about a genuine quest for truth,",
+    "topic": "Debate as performance",
+    "highlight": {
+      "type": "comedy",
+      "context": "thinking",
+      "placement": "start",
+      "offset_seconds": 0.0,
+      "volume_modifier": -2.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "and more like a theatrical performance for a silent audience,",
+    "topic": "Debate as performance"
+  },
+  {
+    "speaker": "Nina",
+    "line": "even if the person you're talking to is just yelling back,",
+    "topic": "Debate as performance"
+  },
+  {
+    "speaker": "Nina",
+    "line": "about how you're a lizard person?",
+    "topic": "Debate as performance"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Sometimes, yes. Other times, it *can* be a rare, beautiful unicorn of intellectual discourse.",
+    "topic": "Nuance of debate"
+  },
+  {
+    "speaker": "Tina",
+    "line": "But mostly, online, it's a gladiatorial arena for opinions.",
+    "topic": "Nuance of debate"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Just make sure you've got good snacks!",
+    "topic": "Nuance of debate",
+    "highlight": {
+      "type": "comedy",
+      "context": "punchline",
+      "placement": "end",
+      "offset_seconds": 0.15,
+      "volume_modifier": 0.8
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Haha, good advice! Thanks for clearing that up, Tina!",
+    "topic": "Farewell"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Anytime, Nina! Keep those skeptical questions coming!",
+    "topic": "Farewell",
+    "highlight": {
+      "type": "neutral",
+      "context": "short_tap_ding",
+      "placement": "end",
+      "offset_seconds": 0.1,
+      "volume_modifier": 0.0
+    }
+  }
+]
