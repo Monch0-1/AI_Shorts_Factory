@@ -6,25 +6,15 @@ from CreateShorts.loadEnvData import load_env_data
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
 from CreateShorts.Models.script_models import ScriptDTO
+from CreateShorts.utils import setup_ffmpeg
 from typing import Optional
 import uuid
 
-
-# Configurar FFmpeg al inicio del módulo
-try:
-    import imageio_ffmpeg
-    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
-    os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_exe
-    print(f"🔧 [CONFIG] FFmpeg configured at: {ffmpeg_exe}")
-except ImportError:
-    print("⚠️ [WARNING] imageio-ffmpeg not found, FFmpeg auto-detection may fail")
-except Exception as e:
-    print(f"⚠️ [WARNING] FFmpeg configuration failed: {e}")
+setup_ffmpeg()
 
 VOICE_IDS = {
     "Nina": "kv829HVkmQ1fOJX1MjSN",
     "Tina": "GwUCiXil6qHfygWUJEwS",
-    "Anon": "GwUCiXil6qHfygWUJEwS",
     "Narrator_Female": "NDTYOmYEjbDIVCKB35i3",
     "Anon": "PIGsltMj3gFMR34aFDI3"
 }
@@ -108,92 +98,6 @@ def generate_script_audio_v2(script: ScriptDTO, theme_config: ThemeConfig) -> Sc
             continue
 
     return script
-
-# def generate_dialogue_audio(json_script_str: str, theme_config: Optional[ThemeConfig] = None) -> list[AudioChunkInfo]:
-#     """Generates and saves audio chunks for each line in the JSON dialogue.
-#
-#     Args:
-#         json_script_str (str): JSON string containing the dialogue script
-#         theme_config (Optional[ThemeConfig]): Theme configuration that includes voice_settings
-#
-#     Returns:
-#         list[AudioChunkInfo]: List of audio chunk information
-#     """
-#
-#     if client is None:
-#         return []
-#
-#     os.makedirs(TEMP_DIR, exist_ok=True)
-#
-#     try:
-#         script_data = json.loads(json_script_str)
-#     except json.JSONDecodeError as e:
-#         print(f"ERROR: Could not decode the script JSON. {e}")
-#         return []
-#
-#     audio_chunks_info = []
-#     voice_settings_obj = get_elevenlabs_settings(theme_config.voice_settings)
-#
-#     for i, turn in enumerate(script_data):
-#         speaker_name = turn['speaker']
-#         line_text = turn['line']
-#         voice_id = VOICE_IDS[speaker_name] if speaker_name in VOICE_IDS else VOICE_IDS["Anon"]
-#
-#         if not voice_id:
-#             print(f"ERROR: Voice ID not found for speaker: {speaker_name}")
-#             return []
-#
-#         try:
-#             # Get audio from the API
-#             audio_generator = client.text_to_speech.convert(
-#                 text=line_text,
-#                 voice_id=voice_id,
-#                 model_id=MODEL_ID,
-#                 output_format="mp3_44100_128",
-#                 voice_settings=voice_settings_obj
-#             )
-#
-#             # Convert the generator to bytes
-#             audio_content = b''.join(chunk for chunk in audio_generator)
-#
-#             # Save the chunk to a file
-#             chunk_filename = f'chunk_{i}_{speaker_name}.mp3'
-#             chunk_path = os.path.join(TEMP_DIR, chunk_filename)
-#             with open(chunk_path, 'wb') as f:
-#                 f.write(audio_content)
-#
-#             # Get duration using moviepy
-#             with AudioFileClip(chunk_path) as audio_clip:
-#                 duration = audio_clip.duration
-#
-#             # Create AudioChunkInfo object
-#             chunk_info = AudioChunkInfo(
-#                 content=audio_content,
-#                 duration=duration,
-#                 speaker=speaker_name,
-#                 text=line_text,
-#                 filename=chunk_filename
-#             )
-#
-#             audio_chunks_info.append(chunk_info)
-#
-#         except Exception as e:
-#             print(f"ERROR generating audio for '{speaker_name}': {e}")
-#             return []
-
-    # print(f"-> Audio generation completed. {len(audio_chunks_info)} chunks were created.")
-    # print(f"-> Audio chunks were saved in: {TEMP_DIR}")
-    #
-    # # Print duration information for each chunk
-    # #test1
-    # #tete
-    # for chunk in audio_chunks_info:
-    #     print(f"-> Chunk: {chunk.filename}")
-    #     print(f"   Duration: {chunk.duration:.2f} seconds")
-    #     print(f"   Speaker: {chunk.speaker}")
-    #     print(f"   Text: {chunk.text}")
-    #
-    # return audio_chunks_info
 
 def clean_temp_audio():
     """

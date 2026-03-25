@@ -1,19 +1,37 @@
-from sqlmodel import SQLModel, Field
-from typing import Optional
-from datetime import datetime
+from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional, List
+from datetime import datetime, timezone
 
-class SFXLibrary(SQLModel, table=True):
-    __tablename__ = "sfx_library"
+
+class SFXAssetTagLink(SQLModel, table=True):
+    """Junction table for the N:M relationship between SFXAsset and SFXTag."""
+    __tablename__ = "sfx_asset_tag_link"
+
+    asset_id: Optional[int] = Field(default=None, foreign_key="sfx_asset.id", primary_key=True)
+    tag_id: Optional[int] = Field(default=None, foreign_key="sfx_tag.id", primary_key=True)
+
+
+class SFXTag(SQLModel, table=True):
+    """A single descriptive trait tag (e.g., 'bonk', 'metallic', 'cartoon')."""
+    __tablename__ = "sfx_tag"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    category: str = Field(index=True)      # e.g., 'horror', 'comedy'
-    intent_tag: str = Field(index=True)    # e.g., 'scare', 'laugh', 'fahh'
-    sfx_name: str                          # Nombre descriptivo
-    file_path: str = Field(unique=True)    # Ruta al archivo local
-    description: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    
-    # New fields for usage tracking and source
-    usage_count: int = Field(default=0)    # Veces que se ha usado en un video
-    last_used: Optional[datetime] = None   # Fecha de última utilización
-    source: str = Field(default="local")   # 'local' o 'eleven_labs'
+    name: str = Field(unique=True, index=True)
+
+    assets: List["SFXAsset"] = Relationship(back_populates="tags", link_model=SFXAssetTagLink)
+
+
+class SFXAsset(SQLModel, table=True):
+    """An audio asset in the SFX library, described by a category and N:M trait tags."""
+    __tablename__ = "sfx_asset"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    file_path: str = Field(unique=True)
+    category: str = Field(index=True)          # e.g., 'horror', 'comedy', 'neutral'
+    usage_count: int = Field(default=0)
+    popularity_score: float = Field(default=0.0)
+    source: str = Field(default="local")        # 'local' or 'eleven_labs'
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_used: Optional[datetime] = None
+
+    tags: List[SFXTag] = Relationship(back_populates="assets", link_model=SFXAssetTagLink)

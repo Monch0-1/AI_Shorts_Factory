@@ -7,8 +7,7 @@ from CreateShorts.theme_config import ThemeConfig, ThemeManager
 from CreateShorts.loadEnvData import load_env_data
 from CreateShorts.ContextualDataService.ContextualDataGenerator import get_fresh_context
 
-WORDS_PER_MINUTE: Final[int] = 250
-SECONDS: Final[int] = 60
+from CreateShorts.config import WORDS_PER_MINUTE, SECONDS_PER_MINUTE as SECONDS
 
 def generate_debate_script_json(
         topic: str,
@@ -45,11 +44,16 @@ def generate_debate_script_json(
                 2.  **Content:** Include at least one **humorous or simple analogy** from Tina.
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
-                5. **EDITION HIGHLIGHTS:** Identify key moments and tag them.
-                   - Use this mapping to select highlights (Category: [Tags]):
+                5. **EDITION HIGHLIGHTS:** Identify key moments and tag them with an SFX highlight.
+                   - 'category' MUST be one of: {list(sfx_mapping.keys())}
+                   - 'desired_traits' MUST be a list of 2 to 5 descriptive strings for the sound's
+                     texture and mood. Draw from or be inspired by this trait catalog:
                      {json.dumps(sfx_mapping, indent=4)}
-                   - The 'type' property MUST be one of the Categories (keys).
-                   - The 'context' property MUST be one of the Tags (values) associated with that Category.
+                   - 'beat_delay' controls the pause after the SFX plays:
+                     'none' = no pause, 'short' = 0.3s, 'long' = 0.7s (use for dramatic effect)
+                   - 'placement': 'start' triggers the SFX at the beginning of the segment, 'end' triggers at the end
+                   - 'offset_seconds': fine-tune trigger time in seconds (e.g. -0.2 to trigger slightly before)
+                   - 'volume_modifier': dB adjustment for this SFX (e.g. -3 for quieter, 0 for default)
                         
             Strictly adhere to the established character roles and return ONLY the JSON array structure.
             """
@@ -81,11 +85,16 @@ def generate_debate_script_json(
                 2.  **Content:** Include at least one **humorous or simple analogy** from Tina per challenged item.
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
-                5. **EDITION HIGHLIGHTS:** Identify key moments and tag them.
-                   - Use this mapping to select highlights (Category: [Tags]):
+                5. **EDITION HIGHLIGHTS:** Identify key moments and tag them with an SFX highlight.
+                   - 'category' MUST be one of: {list(sfx_mapping.keys())}
+                   - 'desired_traits' MUST be a list of 2 to 5 descriptive strings for the sound's
+                     texture and mood. Draw from or be inspired by this trait catalog:
                      {json.dumps(sfx_mapping, indent=4)}
-                   - The 'type' property MUST be one of the Categories (keys).
-                   - The 'context' property MUST be one of the Tags (values) associated with that Category.
+                   - 'beat_delay' controls the pause after the SFX plays:
+                     'none' = no pause, 'short' = 0.3s, 'long' = 0.7s (use for dramatic effect)
+                   - 'placement': 'start' triggers the SFX at the beginning of the segment, 'end' triggers at the end
+                   - 'offset_seconds': fine-tune trigger time in seconds (e.g. -0.2 to trigger slightly before)
+                   - 'volume_modifier': dB adjustment for this SFX (e.g. -3 for quieter, 0 for default)
 
     
                 Return **ONLY** the JSON array structure.

@@ -1,187 +1,225 @@
 [
   {
     "speaker": "Nina",
-    "line": "Okay, so everyone keeps saying \"don't test in production.\"",
-    "topic": "Testing in Production",
+    "line": "Okay, so everyone says 'don't test in production.'",
+    "topic": "Testing in production: initial skepticism",
     "highlight": {
-      "type": "neutral",
-      "context": "transition",
-      "placement": "start",
-      "offset_seconds": 0.0,
-      "volume_modifier": -5.0
-    }
-  },
-  {
-    "speaker": "Nina",
-    "line": "But honestly, what's the big deal? It's just a quick fix, right? Seems faster.",
-    "topic": "Testing in Production"
-  },
-  {
-    "speaker": "Tina",
-    "line": "Nina, my friend, that's like trying to change a flat tire on your car",
-    "topic": "Risks of Testing in Production"
-  },
-  {
-    "speaker": "Tina",
-    "line": "while you're still doing 80 on the highway. With your kids in the back.",
-    "topic": "Risks of Testing in Production"
-  },
-  {
-    "speaker": "Tina",
-    "line": "And the brakes are made of cheese.",
-    "topic": "Risks of Testing in Production",
-    "highlight": {
-      "type": "comedy",
-      "context": "punchline",
+      "category": "neutral",
+      "desired_traits": ["gentle", "quick", "clear"],
       "placement": "end",
-      "offset_seconds": 0.15,
-      "volume_modifier": 1.0
-    }
-  },
-  {
-    "speaker": "Nina",
-    "line": "Whoa, okay, I get the highway part.",
-    "topic": "Small Changes in Production"
-  },
-  {
-    "speaker": "Nina",
-    "line": "But like, what if it's just a super tiny, harmless change? Like, just changing a button color?",
-    "topic": "Small Changes in Production",
-    "highlight": {
-      "type": "neutral",
-      "context": "transition",
-      "placement": "end",
-      "offset_seconds": -0.2,
-      "volume_modifier": -3.0
-    }
-  },
-  {
-    "speaker": "Tina",
-    "line": "Even a tiny change can have massive, unforeseen consequences.",
-    "topic": "Unforeseen Consequences"
-  },
-  {
-    "speaker": "Tina",
-    "line": "Imagine you're at a five-star restaurant, and the chef decides to \"test\" a new, experimental spice",
-    "topic": "Unforeseen Consequences"
-  },
-  {
-    "speaker": "Tina",
-    "line": "by sprinkling it directly into your perfectly cooked main course. Without telling you. Or anyone.",
-    "topic": "Unforeseen Consequences",
-    "highlight": {
-      "type": "comedy",
-      "context": "funny_mistake",
-      "placement": "end",
-      "offset_seconds": 0.15,
-      "volume_modifier": 0.5
-    }
-  },
-  {
-    "speaker": "Nina",
-    "line": "Ugh, I'd send that back immediately! But what about all the sensitive data? Like, my personal info?",
-    "topic": "Data Privacy Risks",
-    "highlight": {
-      "type": "horror",
-      "context": "reveal",
-      "placement": "end",
-      "offset_seconds": -0.2,
-      "volume_modifier": 2.0
-    }
-  },
-  {
-    "speaker": "Tina",
-    "line": "Exactly! Production environments are full of real, live customer data.",
-    "topic": "Data Privacy Risks"
-  },
-  {
-    "speaker": "Tina",
-    "line": "Think of it as a giant vault, full of everyone's most private secrets and credit card numbers.",
-    "topic": "Data Privacy Risks"
-  },
-  {
-    "speaker": "Tina",
-    "line": "Testing in there is like letting a toddler play with a loaded squirt gun in a data center.",
-    "topic": "Data Privacy Risks"
-  },
-  {
-    "speaker": "Tina",
-    "line": "It's just a bad idea. For everyone.",
-    "topic": "Data Privacy Risks",
-    "highlight": {
-      "type": "comedy",
-      "context": "punchline",
-      "placement": "end",
-      "offset_seconds": 0.15,
-      "volume_modifier": 1.5
-    }
-  },
-  {
-    "speaker": "Nina",
-    "line": "So, we're basically saying that my \"quick fix\" could expose everyone's data and crash the whole system?",
-    "topic": "System Stability Risks",
-    "highlight": {
-      "type": "horror",
-      "context": "hit",
-      "placement": "end",
-      "offset_seconds": -0.2,
-      "volume_modifier": 2.5
-    }
-  },
-  {
-    "speaker": "Tina",
-    "line": "Pretty much! That's why we have dedicated test environments.",
-    "topic": "Dedicated Test Environments"
-  },
-  {
-    "speaker": "Tina",
-    "line": "They're like a safe, padded playground built specifically for trying out new things.",
-    "topic": "Dedicated Test Environments"
-  },
-  {
-    "speaker": "Tina",
-    "line": "You can break all the swings you want there, and no one gets hurt.",
-    "topic": "Dedicated Test Environments"
-  },
-  {
-    "speaker": "Tina",
-    "line": "And no one's private info accidentally gets plastered on the internet.",
-    "topic": "Dedicated Test Environments",
-    "highlight": {
-      "type": "neutral",
-      "context": "transition",
-      "placement": "end",
-      "offset_seconds": 0.1,
+      "offset_seconds": -0.1,
       "volume_modifier": -2.0
     }
   },
   {
     "speaker": "Nina",
-    "line": "Okay, okay, I get it now. No more experimenting with the live system.",
-    "topic": "Understanding Best Practices"
+    "line": "But like, why not? It's the real environment, right? Seems kinda efficient.",
+    "topic": "Testing in production: initial skepticism"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Oh, Nina. Testing in production is like trying to change a flat tire...",
+    "topic": "Risk of testing in production: analogy"
+  },
+  {
+    "speaker": "Tina",
+    "line": "while driving 80 miles an hour down the highway.",
+    "topic": "Risk of testing in production: analogy",
+    "highlight": {
+      "category": "comedy",
+      "desired_traits": ["cartoon", "punchy", "silly"],
+      "placement": "end",
+      "beat_delay": "short",
+      "volume_modifier": 1.0
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "With all your passengers still inside.",
+    "topic": "Risk of testing in production: analogy"
   },
   {
     "speaker": "Nina",
-    "line": "The cheese brakes and toddler with a squirt gun really sealed the deal.",
-    "topic": "Understanding Best Practices",
+    "line": "But what if it's just a tiny little tweak?",
+    "topic": "Small changes in production",
     "highlight": {
-      "type": "comedy",
-      "context": "laugh",
+      "category": "neutral",
+      "desired_traits": ["subtle", "gentle", "quick"],
       "placement": "end",
-      "offset_seconds": 0.15,
+      "offset_seconds": -0.1
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "Like, changing a button color? Nobody's gonna notice that, right?",
+    "topic": "Small changes in production"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Even a tiny tweak can unravel the whole system.",
+    "topic": "Cascading failures from small changes"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Imagine you change that button,",
+    "topic": "Cascading failures from small changes"
+  },
+  {
+    "speaker": "Tina",
+    "line": "but it accidentally deletes everyone's shopping carts.",
+    "topic": "Cascading failures from small changes",
+    "highlight": {
+      "category": "comedy",
+      "desired_traits": ["bonk", "silly", "sudden", "fast"],
+      "placement": "end",
+      "beat_delay": "short",
+      "volume_modifier": 0.5
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "Suddenly, you've got angry customers, lost sales, and a huge mess.",
+    "topic": "Business impact of production errors"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Or worse, you expose sensitive customer data.",
+    "topic": "Data security risks",
+    "highlight": {
+      "category": "horror",
+      "desired_traits": ["tense", "eerie", "deep", "sudden"],
+      "placement": "end",
+      "beat_delay": "long",
+      "volume_modifier": 2.0
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "That's a big, big no-no for compliance!",
+    "topic": "Compliance and legal risks"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Yikes! So, if we can't test where it's actually running,",
+    "topic": "Alternative testing environments",
+    "highlight": {
+      "category": "horror",
+      "desired_traits": ["sharp", "sudden", "tense"],
+      "placement": "start",
+      "volume_modifier": -3.0
+    }
+  },
+  {
+    "speaker": "Nina",
+    "line": "where *do* we test all this stuff?",
+    "topic": "Alternative testing environments"
+  },
+  {
+    "speaker": "Tina",
+    "line": "That's where your 'staging' or 'dev' environments come in.",
+    "topic": "Dedicated non-production environments",
+    "highlight": {
+      "category": "neutral",
+      "desired_traits": ["bright", "clear", "quick"],
+      "placement": "start"
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "Think of them as a highly accurate replica of the highway.",
+    "topic": "Dedicated non-production environments: analogy"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You can change that tire, even crash the car a few times,",
+    "topic": "Benefits of non-production environments",
+    "highlight": {
+      "category": "comedy",
+      "desired_traits": ["cartoon", "bonk", "fast", "silly"],
+      "placement": "end",
+      "beat_delay": "short",
       "volume_modifier": 0.8
     }
   },
   {
     "speaker": "Tina",
-    "line": "Glad we could clear that up, Nina! Stay safe out there, and happy (separate) testing!",
-    "topic": "Farewell",
+    "line": "all without affecting anyone on the real road.",
+    "topic": "Benefits of non-production environments"
+  },
+  {
+    "speaker": "Tina",
+    "line": "You fix it, test it, make sure it's perfect,",
+    "topic": "Benefits of non-production environments"
+  },
+  {
+    "speaker": "Tina",
+    "line": "THEN you swap it out.",
+    "topic": "Deployment process"
+  },
+  {
+    "speaker": "Nina",
+    "line": "So it's like having a dress rehearsal before the actual play?",
+    "topic": "Understanding non-production environments: analogy",
     "highlight": {
-      "type": "neutral",
-      "context": "transition",
+      "category": "neutral",
+      "desired_traits": ["bright", "clear", "gentle"],
       "placement": "end",
-      "offset_seconds": 0.2,
-      "volume_modifier": -4.0
+      "beat_delay": "short",
+      "volume_modifier": -1.0
     }
+  },
+  {
+    "speaker": "Nina",
+    "line": "You figure out all the costume malfunctions and forgotten lines backstage, not in front of a live audience.",
+    "topic": "Understanding non-production environments: analogy"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Exactly! Because nobody wants to see the lead actor forget their pants mid-scene.",
+    "topic": "Consequences of production errors: humorous analogy",
+    "highlight": {
+      "category": "comedy",
+      "desired_traits": ["laugh", "silly", "light"],
+      "placement": "end",
+      "beat_delay": "short",
+      "volume_modifier": 1.5
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "Especially when those pants are holding everyone's banking information.",
+    "topic": "Consequences of production errors: data security"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Okay, that makes so much more sense now.",
+    "topic": "Realization and understanding"
+  },
+  {
+    "speaker": "Nina",
+    "line": "I definitely don't want to be the one responsible for pants-less banking data.",
+    "topic": "Personal responsibility for data security",
+    "highlight": {
+      "category": "comedy",
+      "desired_traits": ["light", "silly", "quick", "laugh"],
+      "placement": "end",
+      "offset_seconds": -0.2,
+      "volume_modifier": 0.5
+    }
+  },
+  {
+    "speaker": "Tina",
+    "line": "Smart choice! Always test safely, folks.",
+    "topic": "Call to action"
+  },
+  {
+    "speaker": "Nina",
+    "line": "Alright, thanks for clearing that up, Tina!",
+    "topic": "Farewell"
+  },
+  {
+    "speaker": "Tina",
+    "line": "Anytime, Nina! Stay safe out there, digitally speaking.",
+    "topic": "Farewell"
   }
 ]

@@ -2,32 +2,26 @@ import json
 import random
 import os
 import time
+import logging
 from pathlib import Path
 from typing import Final, Optional, Union
-from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.Models.video_models import VideoRequest, VideoOptions
 from CreateShorts.Data_Gen.create_audio import assemble_dialogue_v2
 from CreateShorts.Data_Gen.mix_assets import create_final_video
-from CreateShorts.Data_Gen.text_to_speach import clean_temp_audio
+from CreateShorts.Data_Gen.text_to_speech import clean_temp_audio
 from CreateShorts.Data_Gen.subtitle_generator import SubtitleGenerator, SubtitleConfig
 from CreateShorts.Data_Gen.formatter_script import generate_formatter_script_json
 from CreateShorts.Factory.factory import get_script_provider, get_audio_provider
 from CreateShorts.theme_config import ThemeManager, ThemeConfig
-from CreateShorts.utils import sanitize_filename, get_project_root
+from CreateShorts.utils import sanitize_filename, get_project_root, setup_ffmpeg
 
 MAX_TIME_LIMIT: Final[int] = 120
 
-# Future update Skyreels.ai
-# Create custom configuration (optional)
-
-try:
-    import imageio_ffmpeg
-    os.environ["IMAGEIO_FFMPEG_EXE"] = imageio_ffmpeg.get_ffmpeg_exe()
-    print("✅ FFmpeg configured successfully")
-except Exception as e:
-    print(f"⚠️ FFmpeg configuration warning: {e}")
+setup_ffmpeg()
 
 config = SubtitleConfig(
     fontsize=45,
@@ -313,15 +307,15 @@ if __name__ == "__main__":
 
     # Example using the new nested structure
     video_options = VideoOptions(
-        duration_seconds=120,
+        duration_seconds=10,
         video_index=None,
         enable_refiner=False, 
         use_script_template=True,
-        include_sfx=False
+        include_sfx=True
     )
 
     video_request = VideoRequest(
-        topic="The new intern at my company is trying to get me fired",
+        topic="quick hi test run 10 sec vid",
         theme="reddit", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
         is_monologue=True, # Use monologue features such as the new prompt refiner
         context_story=_context_story, # Your context

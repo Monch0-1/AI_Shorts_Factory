@@ -11,24 +11,23 @@ def test_sfx_service_logic():
     
     # Test 1: Successful selection and DB update
     category = "horror"
-    tag = "jump_scare"
-    print(f"Testing selection for {category}/{tag}...")
-    
-    path1 = service.get_sfx_path(category, tag)
+    traits = ["sharp", "metallic"]
+    print(f"Testing selection for {category}/{traits}...")
+
+    path1 = service.get_sfx_path(category, traits)
     if path1:
         print(f"✅ Success: Selected {path1}")
     else:
         print("❌ Failure: No SFX selected")
 
     # Test 2: Verify usage_count increment (manual check via path)
-    # We'll just run it again to see if it works
-    path2 = service.get_sfx_path(category, tag)
+    path2 = service.get_sfx_path(category, traits)
     if path2:
         print(f"✅ Success: Selected second time {path2}")
 
-    # Test 3: Missing tag handling
-    print("\nTesting missing tag handling...")
-    path_missing = service.get_sfx_path("non_existent", "tag")
+    # Test 3: Missing category handling
+    print("\nTesting missing category handling...")
+    path_missing = service.get_sfx_path("non_existent", ["tag"])
     if path_missing is None:
         print("✅ Success: Correctly handled missing tag with None")
     else:

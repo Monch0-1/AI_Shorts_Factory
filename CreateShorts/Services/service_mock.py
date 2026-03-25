@@ -37,7 +37,7 @@ class MockAudioService(IAudioService):
 
         for i, segment in enumerate(script.segments):
             # Buscamos un audio que se llame igual que el speaker (Nina.mp3, Tina.mp3)
-            mock_source = MOCK_DIR / f"{segment.speaker}.mp3"
+            mock_source = MOCK_DIR / f"mock_seg_{i}_{segment.speaker}.mp3"
 
             # Si no existe, usamos un "fahhh_original.mp3" que tengas ahí
             if not mock_source.exists():

@@ -1,27 +1,31 @@
 import yaml
 from pathlib import Path
-from dataclasses import dataclass, field
 from typing import Dict, Optional, List, Set
+from pydantic import BaseModel, Field, ConfigDict
 from google.genai import types
 from CreateShorts.utils import get_project_root
 from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
 
-@dataclass
-class PromptingConfig:
+
+class PromptingConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     system_instruction: str
     script_schema: types.Schema
-    refinement_goal: str
-    target_quality_rules: List[str] = field(default_factory=list)
-    best_examples: List[str] = field(default_factory=list)
+    refinement_goal: str = ""
+    target_quality_rules: List[str] = Field(default_factory=list)
+    best_examples: List[str] = Field(default_factory=list)
 
-@dataclass
-class ThemeConfig:
+
+class ThemeConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     name: str
     video_paths: List[str]
     music_path: str
     music_volume: float
     prompting: PromptingConfig
-    resources: Dict = field(default_factory=dict)
+    resources: Dict = Field(default_factory=dict)
     voice_settings: Optional[ElevenLabsVoiceSettings] = None
 
 

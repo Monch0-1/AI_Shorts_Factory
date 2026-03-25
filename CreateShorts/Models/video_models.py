@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
 from typing import Optional
 
-@dataclass
-class VideoOptions:
+class VideoOptions(BaseModel):
     """Configuration options for the video generation process."""
     duration_seconds: int = 60
     video_index: Optional[int] = None
@@ -10,8 +9,7 @@ class VideoOptions:
     use_script_template: bool = False
     include_sfx: bool = True
 
-@dataclass
-class VideoRequest:
+class VideoRequest(BaseModel):
     """
     Encapsulates the parameters required to create a short video.
     Acts as a Data Transfer Object (DTO) for video generation requests.
@@ -20,11 +18,7 @@ class VideoRequest:
     theme: str = "default"
     is_monologue: bool = False
     context_story: str = ""
-    options: VideoOptions = None
-
-    def __post_init__(self):
-        if self.options is None:
-            self.options = VideoOptions()
+    options: VideoOptions = Field(default_factory=VideoOptions)
 
     @classmethod
     def from_dict(cls, data: dict) -> 'VideoRequest':

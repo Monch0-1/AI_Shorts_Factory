@@ -18,7 +18,7 @@ engine = create_engine(DATABASE_URL, echo=False)
 
 def init_db():
     """Crea las tablas si no existen (hibernate.hbm2ddl.auto=update)"""
-    from CreateShorts.Models.database_models import SFXLibrary # Import local para evitar circular imports
+    from CreateShorts.Models.database_models import SFXAsset, SFXTag, SFXAssetTagLink  # local import to avoid circular imports
     SQLModel.metadata.create_all(engine)
 
 def get_session():

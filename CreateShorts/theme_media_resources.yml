@@ -1,33 +1,32 @@
 resources:
   sfx_audio:
     comedy:
-    - audience_laugh
     - bonk
-    - cartoon_voice
-    - confused
-    - funny_mistake
+    - cartoon
+    - fast
     - laugh
-    - punchline
-    - shocked
-    - suspicious
-    - thinking
-    - transition
+    - light
+    - punchy
+    - silly
+    - squeaky
     horror:
-    - ambiance
-    - creacking
-    - heartbeat
-    - hit
-    - jump_scare
-    - loud_scream
-    - screach
-    - thud
-    - violin
-    - whisper
+    - atmospheric
+    - creepy
+    - deep
+    - echo
+    - eerie
+    - metallic
+    - sharp
+    - sudden
+    - tense
     neutral:
-    - bell
-    - shock
-    - short_tap_ding
-    - transition
+    - bright
+    - clean
+    - clear
+    - gentle
+    - quick
+    - soft
+    - subtle
 themes:
   default:
     name: default
@@ -53,59 +52,93 @@ themes:
       best_examples:
       - 'Example 1: (Tina uses the ''universal coffee recipe'' analogy.)'
       - 'Example 2: (Nina''s question uses a common, frustrated developer phrase.)'
-      system_instruction: 'You are a highly skilled scriptwriter for short-form social
-        media comedy and tech debates.
+      system_instruction: |
+        You are a highly skilled scriptwriter for short-form social media comedy and tech debates.
 
-        Your primary goal is to write a casual, witty, and engaging dialogue strictly
-        between two characters.
+        Your primary goal is to write a casual, witty, and engaging dialogue strictly between two characters.
 
         Nina must pose skeptical, common-sense questions to expose flaws.
 
-        Tina must provide clear, witty, and often funny analogies to explain complex
-        concepts simply.
+        Tina must provide clear, witty, and often funny analogies to explain complex concepts simply.
 
         The conversation must flow naturally without lecturing the audience.
 
 
         **PROFESSIONAL SFX EDITOR MODE:**
 
-        Act as a professional audio editor. Use the ''highlight'' object to time SFX
-        for maximum impact:
+        Act as a professional audio editor. Use the 'highlight' object to time SFX for maximum impact:
 
-        1. **Anticipatory Hits (J-Cuts):** Use placement: "end" with offset_seconds:
-        -0.2 to start the sound just before the line finishes. Great for shockers
-        or sudden realizations.
+        1. **category:** Must be one of the available SFX categories (e.g., 'comedy', 'horror', 'neutral').
 
-        2. **Comedic Beats:** Use placement: "end" with offset_seconds: 0.15 to let
-        a punchline land before triggering a laugh or rimshot.
+        2. **desired_traits:** A list of 2 to 5 descriptive strings for the sound's texture and mood
+           (e.g., ["bonk", "cartoon", "fast"]). Choose from the trait catalog or describe creatively.
 
-        3. **Atmospheric Bedding:** Use placement: "start" to trigger sounds right
-        as a speaker begins.
+        3. **beat_delay:** Controls the pause inserted after the SFX plays.
+           - 'none': No pause, dialogue continues immediately.
+           - 'short': 0.3s pause — good for comedic beats after a punchline.
+           - 'long': 0.7s pause — good for dramatic reveals or tension buildup.
 
-        4. **Volume Control:** Use volume_modifier (in dB) to make background sounds
-        subtle (-5.0) or punchy stings stand out (+2.0).
+        4. **Anticipatory Hits (J-Cuts):** Use placement: "end" with offset_seconds: -0.2 to start
+           the sound just before the line finishes. Great for shockers or sudden realizations.
 
-        '
-      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of turns\
-        \ in the dialogue.\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\"\
-        : {\n      \"speaker\": {\n        \"type\": \"string\",\n        \"description\"\
-        : \"Nina or Tina\"\n      },\n      \"line\": {\n        \"type\": \"string\"\
-        ,\n        \"description\": \"The concise line text.\"\n      },\n      \"\
-        topic\": {\n        \"type\": \"string\",\n        \"description\": \"The\
-        \ discussed subtopic.\"\n      },\n      \"highlight\": {\n        \"type\"\
-        : \"object\",\n        \"properties\": {\n          \"type\": { \"type\":\
-        \ \"string\", \"description\": \"The SFX Category (e.g., horror, comedy, neutral)\"\
-        \ },\n          \"context\": { \"type\": \"string\", \"description\": \"The\
-        \ specific Intent Tag (e.g., jump_scare, punchline, transition)\" },\n   \
-        \       \"placement\": { \"type\": \"string\", \"enum\": [\"start\", \"end\"\
-        ], \"description\": \"Trigger at 'start' or 'end' of dialogue segment.\" },\n\
-        \          \"offset_seconds\": { \"type\": \"number\", \"description\": \"\
-        Shift in seconds. Negative = Overlap, Positive = Delay. Range: -0.5 to 0.5.\"\
-        \ },\n          \"volume_modifier\": { \"type\": \"number\", \"description\"\
-        : \"dB adjustment. Negative for subtle, positive for loud. Range: -10 to 5.\"\
-        \ }\n        },\n        \"required\": [\"type\", \"context\", \"placement\"\
-        ]\n      }\n    },\n    \"required\": [\"speaker\", \"line\", \"topic\"]\n\
-        \  }\n}\n"
+        5. **Atmospheric Bedding:** Use placement: "start" to trigger sounds right as a speaker begins.
+
+        6. **Volume Control:** Use volume_modifier (in dB) to make background sounds subtle (-5.0)
+           or punchy stings stand out (+2.0).
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of turns in the dialogue.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "speaker": {
+                "type": "string",
+                "description": "Nina or Tina"
+              },
+              "line": {
+                "type": "string",
+                "description": "The concise line text."
+              },
+              "topic": {
+                "type": "string",
+                "description": "The discussed subtopic."
+              },
+              "highlight": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "SFX category: 'comedy', 'horror', or 'neutral'"
+                  },
+                  "desired_traits": {
+                    "type": "array",
+                    "description": "2 to 5 descriptive trait strings (e.g., bonk, cartoon, fast)",
+                    "items": { "type": "string" }
+                  },
+                  "placement": {
+                    "type": "string",
+                    "description": "Trigger at 'start' or 'end' of dialogue segment."
+                  },
+                  "beat_delay": {
+                    "type": "string",
+                    "description": "Pause after SFX: 'none' (no pause), 'short' (0.3s), 'long' (0.7s)"
+                  },
+                  "offset_seconds": {
+                    "type": "number",
+                    "description": "Fine-tune trigger. Negative = overlap, Positive = delay. Range: -0.5 to 0.5."
+                  },
+                  "volume_modifier": {
+                    "type": "number",
+                    "description": "dB adjustment. Negative for subtle, positive for loud. Range: -10 to 5."
+                  }
+                },
+                "required": ["category", "desired_traits", "placement"]
+              }
+            },
+            "required": ["speaker", "line", "topic"]
+          }
+        }
     voice_settings:
       stability: 0.75
       similarity_boost: 0.9
@@ -121,65 +154,88 @@ themes:
       path: resources/audio/stale.mp3
       volume: 0.35
     prompting:
-      system_instruction: 'You are a master of psychological horror and suspense.
-        Your goal is to adapt the user''s story into a high-retention script.
-
+      system_instruction: |
+        You are a master of psychological horror and suspense. Your goal is to adapt the user's story
+        into a high-retention script.
 
         STRATEGY:
-
         1. Use short, punchy sentences to build anxiety.
-
-        2. Identify "Beats of Terror": moments where a sound effect (SFX) will maximize
-        the impact.
+        2. Identify "Beats of Terror": moments where a sound effect (SFX) will maximize the impact.
 
 
         **PROFESSIONAL SFX EDITOR MODE:**
 
-        Act as a professional audio editor. Use the ''highlight'' object to time SFX
-        for maximum impact:
+        Act as a professional audio editor. Use the 'highlight' object to time SFX for maximum impact:
 
-        1. **Anticipatory Hits (J-Cuts):** Use placement: "end" with offset_seconds:
-        -0.2 to start a shocker just before a revelation line ends.
+        1. **category:** Must be one of the available SFX categories (e.g., 'comedy', 'horror', 'neutral').
 
-        2. **Atmospheric Drones:** Use placement: "start" to trigger a whisper or
-        low hit right as a creepy segment begins.
+        2. **desired_traits:** A list of 2 to 5 descriptive strings for the sound's texture and mood
+           (e.g., ["sharp", "metallic", "sudden"]). Choose from the trait catalog or describe creatively.
 
-        3. **Volume Control:** Use volume_modifier (in dB) to make whispers subtle
-        (-8.0) or jump scares loud (+3.0).
+        3. **beat_delay:** Controls the pause inserted after the SFX plays.
+           - 'none': No pause, narration continues immediately.
+           - 'short': 0.3s pause — good for a quick tension beat.
+           - 'long': 0.7s pause — ideal after a jump scare or revelation to let it land.
 
+        4. **Anticipatory Hits (J-Cuts):** Use placement: "end" with offset_seconds: -0.2 to start
+           a shocker just before a revelation line ends.
+
+        5. **Atmospheric Drones:** Use placement: "start" to trigger a whisper or low hit right as
+           a creepy segment begins.
+
+        6. **Volume Control:** Use volume_modifier (in dB) to make whispers subtle (-8.0) or
+           jump scares loud (+3.0).
 
         HIGHLIGHT RULES:
-
-        - Use ''type: horror, context: jump_scare'' only at the climax of a revelation
-        or a sudden noise in the story.
-
-        - Use ''type: horror, context: reveal'' when the narrator discovers something
-        unsettling but not yet aggressive.
-
-        - Use ''type: shock, context: reveal'' for dramatic plot twists.
-
-
-        CRITICAL: Every highlight must be logically placed. Never use more than 3
-        highlights in a 60-second script to avoid cluttering.
-
-        '
-      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of lines\
-        \ in the first-person monologue.\",\n  \"items\": {\n    \"type\": \"object\"\
-        ,\n    \"properties\": {\n      \"speaker\": { \"type\": \"string\" },\n \
-        \     \"line\": { \"type\": \"string\" },\n      \"mood\": { \"type\": \"\
-        string\" },\n      \"highlight\": {\n        \"type\": \"object\",\n     \
-        \   \"properties\": {\n          \"type\": { \"type\": \"string\", \"description\"\
-        : \"The SFX Category (e.g., horror, comedy, neutral)\" },\n          \"context\"\
-        : { \"type\": \"string\", \"description\": \"The specific Intent Tag (e.g.,\
-        \ jump_scare, punchline, transition)\" },\n          \"placement\": { \"type\"\
-        : \"string\", \"enum\": [\"start\", \"end\"], \"description\": \"Trigger at\
-        \ 'start' or 'end' of dialogue segment.\" },\n          \"offset_seconds\"\
-        : { \"type\": \"number\", \"description\": \"Shift in seconds. Negative =\
-        \ Overlap, Positive = Delay. Range: -0.5 to 0.5.\" },\n          \"volume_modifier\"\
-        : { \"type\": \"number\", \"description\": \"dB adjustment. Negative for subtle,\
-        \ positive for loud.\" }\n        },\n        \"required\": [\"type\", \"\
-        context\", \"placement\"]\n      }\n    },\n    \"required\": [\"speaker\"\
-        , \"line\", \"mood\"]\n  }\n}\n"
+        - Use category: 'horror', desired_traits: ['sharp', 'sudden'] only at the climax of a revelation.
+        - Use category: 'horror', desired_traits: ['eerie', 'atmospheric'] when something unsettling is discovered.
+        - Use category: 'neutral', desired_traits: ['subtle', 'clean'] for dramatic plot twists.
+        - CRITICAL: Never use more than 3 highlights in a 60-second script to avoid cluttering.
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of lines in the first-person monologue.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "speaker": { "type": "string" },
+              "line": { "type": "string" },
+              "mood": { "type": "string" },
+              "highlight": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "SFX category: 'comedy', 'horror', or 'neutral'"
+                  },
+                  "desired_traits": {
+                    "type": "array",
+                    "description": "2 to 5 descriptive trait strings (e.g., sharp, metallic, echo)",
+                    "items": { "type": "string" }
+                  },
+                  "placement": {
+                    "type": "string",
+                    "description": "Trigger at 'start' or 'end' of dialogue segment."
+                  },
+                  "beat_delay": {
+                    "type": "string",
+                    "description": "Pause after SFX: 'none' (no pause), 'short' (0.3s), 'long' (0.7s)"
+                  },
+                  "offset_seconds": {
+                    "type": "number",
+                    "description": "Shift in seconds. Negative = Overlap, Positive = Delay. Range: -0.5 to 0.5."
+                  },
+                  "volume_modifier": {
+                    "type": "number",
+                    "description": "dB adjustment. Negative for subtle, positive for loud."
+                  }
+                },
+                "required": ["category", "desired_traits", "placement"]
+              }
+            },
+            "required": ["speaker", "line", "mood"]
+          }
+        }
     voice_settings:
       stability: 0.9
       similarity_boost: 0.85
@@ -200,49 +256,90 @@ themes:
       - 'Example 1: The opening hook must occur within the first 10 words.'
       - 'Example 2: The narrative must use visual metaphor keywords like ''cold dread''
         or ''unsettling silence''.'
-      system_instruction: 'You are a master script editor and adapter for short-form
-        social media narratives. Your primary goal is to convert a user-provided story
-        concept into a compelling, first-person monologue designed for high retention.
+      system_instruction: |
+        You are a master script editor and adapter for short-form social media narratives.
+        Your primary goal is to convert a user-provided story concept into a compelling,
+        first-person monologue designed for high retention.
 
-        The narrative must be reflective, engaging or amusing and build to a clear
-        point of learning, unexpected twist or funny anecdote. The mood must be flexible
+        The narrative must be reflective, engaging or amusing and build to a clear point of
+        learning, unexpected twist or funny anecdote. The mood must be flexible
         (e.g., Amused, Vengeful, Thoughtful).
 
 
         **PROFESSIONAL SFX EDITOR MODE:**
 
-        Use the ''highlight'' object to time SFX for maximum impact:
+        Use the 'highlight' object to time SFX for maximum impact:
 
-        1. **Anticipatory Hits:** Use placement: "end" with offset_seconds: -0.2 for
-        sudden realizations.
+        1. **category:** Must be one of the available SFX categories (e.g., 'comedy', 'horror', 'neutral').
 
-        2. **Atmospheric Bedding:** Use placement: "start" to trigger background elements
-        right as a speaker begins.
+        2. **desired_traits:** A list of 2 to 5 descriptive strings for the sound's texture and mood
+           (e.g., ["punchy", "light", "quick"]). Choose from the trait catalog or describe creatively.
 
-        3. **Volume Control:** Use volume_modifier (in dB) to balance effects.
+        3. **beat_delay:** Controls the pause inserted after the SFX plays.
+           - 'none': No pause, narration continues immediately.
+           - 'short': 0.3s pause — good for comedic or emotional beats.
+           - 'long': 0.7s pause — ideal after a key revelation or dramatic twist.
 
-        '
-      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of lines\
-        \ in the first-person monologue.\",\n  \"items\": {\n    \"type\": \"object\"\
-        ,\n    \"properties\": {\n      \"speaker\": {\n        \"type\": \"string\"\
-        ,\n        \"description\": \"The narrator's name (e.g., Anon, Survivor).\"\
-        \n      },\n      \"line\": {\n        \"type\": \"string\",\n        \"description\"\
-        : \"The concise line of the monologue.\"\n      },\n      \"mood\": {\n  \
-        \      \"type\": \"string\",\n        \"description\": \"The emotional state\
-        \ of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked).\"\n      },\n\
-        \      \"highlight\": {\n        \"type\": \"object\",\n        \"properties\"\
-        : {\n          \"type\": { \"type\": \"string\", \"description\": \"The SFX\
-        \ Category (e.g., horror, comedy, neutral)\" },\n          \"context\": {\
-        \ \"type\": \"string\", \"description\": \"The specific Intent Tag (e.g.,\
-        \ jump_scare, punchline, transition)\" },\n          \"placement\": { \"type\"\
-        : \"string\", \"enum\": [\"start\", \"end\"], \"description\": \"Trigger at\
-        \ 'start' or 'end' of dialogue segment.\" },\n          \"offset_seconds\"\
-        : { \"type\": \"number\", \"description\": \"Shift in seconds. Negative =\
-        \ Overlap, Positive = Delay. Range: -0.5 to 0.5.\" },\n          \"volume_modifier\"\
-        : { \"type\": \"number\", \"description\": \"dB adjustment. Negative for subtle,\
-        \ positive for loud.\" }\n        },\n        \"required\": [\"type\", \"\
-        context\", \"placement\"]\n      }\n    },\n    \"required\": [\"speaker\"\
-        , \"line\", \"mood\"]\n  }\n}\n"
+        4. **Anticipatory Hits:** Use placement: "end" with offset_seconds: -0.2 for sudden realizations.
+
+        5. **Atmospheric Bedding:** Use placement: "start" to trigger background elements right as
+           a speaker begins.
+
+        6. **Volume Control:** Use volume_modifier (in dB) to balance effects.
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of lines in the first-person monologue.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "speaker": {
+                "type": "string",
+                "description": "The narrator's name (e.g., Anon, Survivor)."
+              },
+              "line": {
+                "type": "string",
+                "description": "The concise line of the monologue."
+              },
+              "mood": {
+                "type": "string",
+                "description": "The emotional state of the speaker (e.g., Amused, Vengeful, Thoughtful, Shocked)."
+              },
+              "highlight": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "SFX category: 'comedy', 'horror', or 'neutral'"
+                  },
+                  "desired_traits": {
+                    "type": "array",
+                    "description": "2 to 5 descriptive trait strings (e.g., punchy, light, quick)",
+                    "items": { "type": "string" }
+                  },
+                  "placement": {
+                    "type": "string",
+                    "description": "Trigger at 'start' or 'end' of dialogue segment."
+                  },
+                  "beat_delay": {
+                    "type": "string",
+                    "description": "Pause after SFX: 'none' (no pause), 'short' (0.3s), 'long' (0.7s)"
+                  },
+                  "offset_seconds": {
+                    "type": "number",
+                    "description": "Shift in seconds. Negative = Overlap, Positive = Delay. Range: -0.5 to 0.5."
+                  },
+                  "volume_modifier": {
+                    "type": "number",
+                    "description": "dB adjustment. Negative for subtle, positive for loud."
+                  }
+                },
+                "required": ["category", "desired_traits", "placement"]
+              }
+            },
+            "required": ["speaker", "line", "mood"]
+          }
+        }
     voice_settings:
       stability: 0.75
       similarity_boost: 0.9
@@ -258,28 +355,42 @@ themes:
       path: resources/audio/inspirational_music.mp3
       volume: 0.18
     prompting:
-      refinement_goal: The narrative must  connect with an audience through shared
+      refinement_goal: The narrative must connect with an audience through shared
         emotions and relatable stories, while also providing a clear, actionable message
         and a strong call to action.
       best_examples:
       - 'Example 1: Organize the speech with an engaging introduction, a well-developed
-        body, and a powerful conclusion. '
+        body, and a powerful conclusion.'
       - 'Example 2: The narrative must offer practical insights, strategies, or perspectives
         that the audience can use to make positive changes'
-      system_instruction: "You are a highly articulate and authoritative life coach\
-        \ and software entrepreneur. \nYour primary goal is to adapt the user's core\
-        \ idea into a compelling, motivational monologue designed for personal and\
-        \ professional reflection. \nThe speech must be delivered with clarity, conviction,\
-        \ and a friendly, reflective tone.\n"
-      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of lines\
-        \ in the motivational monologue.\",\n  \"items\": {\n    \"type\": \"object\"\
-        ,\n    \"properties\": {\n      \"speaker\": {\n        \"type\": \"string\"\
-        ,\n        \"description\": \"The speaker's name (e.g., Tina, Expert).\"\n\
-        \      },\n      \"line\": {\n        \"type\": \"string\",\n        \"description\"\
-        : \"The concise line of the monologue.\"\n      },\n      \"mood\": {\n  \
-        \      \"type\": \"string\",\n        \"description\": \"The emotional state\
-        \ (e.g., Reflective, Assertive, Calming, Conclusive).\"\n      }\n    },\n\
-        \    \"required\": [\"speaker\", \"line\", \"mood\"]\n  }\n}\n"
+      system_instruction: |
+        You are a highly articulate and authoritative life coach and software entrepreneur.
+        Your primary goal is to adapt the user's core idea into a compelling, motivational
+        monologue designed for personal and professional reflection.
+        The speech must be delivered with clarity, conviction, and a friendly, reflective tone.
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of lines in the motivational monologue.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "speaker": {
+                "type": "string",
+                "description": "The speaker's name (e.g., Tina, Expert)."
+              },
+              "line": {
+                "type": "string",
+                "description": "The concise line of the monologue."
+              },
+              "mood": {
+                "type": "string",
+                "description": "The emotional state (e.g., Reflective, Assertive, Calming, Conclusive)."
+              }
+            },
+            "required": ["speaker", "line", "mood"]
+          }
+        }
     voice_settings:
       stability: 0.9
       similarity_boost: 0.9
@@ -295,33 +406,53 @@ themes:
       path: resources/audio/2_23_AM.mp3
       volume: 0.02
     prompting:
-      system_instruction: 'You are a meticulous script editor, your primary task is
-        to adapt the user''s raw text into a series of short, serialized video parts.
-
-        '
-      script_schema: "{\n  \"type\": \"array\",\n  \"description\": \"List of complete\
-        \ video parts. Each part contains a segment of the story.\",\n  \"items\"\
-        : {\n    \"type\": \"object\",\n    \"properties\": {\n      \"part_number\"\
-        : {\n        \"type\": \"integer\",\n        \"description\": \"The index\
-        \ of the part (e.g., 1, 2, 3).\"\n      },\n      \"story_summary\": {\n \
-        \       \"type\": \"string\",\n        \"description\": \"A brief summary\
-        \ of the content in this part (e.g., 'The discovery of the mystery door' or\
-        \ 'The aftermath of the fight').\"\n      },\n      \"script_lines\": {\n\
-        \        \"type\": \"array\",\n        \"description\": \"The segmented script\
-        \ lines for this specific video part.\",\n        \"items\": {\n         \
-        \ \"type\": \"object\",\n          \"properties\": {\n            \"speaker\"\
-        : {\n              \"type\": \"string\",\n              \"description\": \"\
-        The consistent narrator's name.\"\n            },\n            \"line\": {\n\
-        \              \"type\": \"string\",\n              \"description\": \"The\
-        \ concise line text (max 10 words).\"\n            },\n            \"mood\"\
-        : {\n              \"type\": \"string\",\n              \"description\": \"\
-        The emotional tone for the line.\"\n            }\n          },\n        \
-        \  \"required\": [\"speaker\", \"line\", \"mood\"]\n        }\n      }\n \
-        \   },\n    \"required\": [\"part_number\", \"story_summary\", \"script_lines\"\
-        ]\n  }\n}\n"
-      refinement_goal: The output must be a faithful segment-by-segment retelling
-        of the user's input, optimized for subtitle reading speed and clarity, without
-        adding new commentary or opinion.
+      system_instruction: |
+        You are a meticulous script editor. Your primary task is to adapt the user's raw text
+        into a series of short, serialized video parts.
+      script_schema: |
+        {
+          "type": "array",
+          "description": "List of complete video parts. Each part contains a segment of the story.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "part_number": {
+                "type": "integer",
+                "description": "The index of the part (e.g., 1, 2, 3)."
+              },
+              "story_summary": {
+                "type": "string",
+                "description": "A brief summary of the content in this part."
+              },
+              "script_lines": {
+                "type": "array",
+                "description": "The segmented script lines for this specific video part.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "speaker": {
+                      "type": "string",
+                      "description": "The consistent narrator's name."
+                    },
+                    "line": {
+                      "type": "string",
+                      "description": "The concise line text (max 10 words)."
+                    },
+                    "mood": {
+                      "type": "string",
+                      "description": "The emotional tone for the line."
+                    }
+                  },
+                  "required": ["speaker", "line", "mood"]
+                }
+              }
+            },
+            "required": ["part_number", "story_summary", "script_lines"]
+          }
+        }
+      refinement_goal: The output must be a faithful segment-by-segment retelling of the
+        user's input, optimized for subtitle reading speed and clarity, without adding new
+        commentary or opinion.
       best_examples: []
     voice_settings:
       stability: 0.85

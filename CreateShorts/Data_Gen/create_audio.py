@@ -1,23 +1,18 @@
 import os
+import math
 import random
 from moviepy.editor import AudioFileClip, CompositeAudioClip
 from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Services.SFXService import SFXService
+from CreateShorts.utils import setup_ffmpeg
+from CreateShorts.config import BEAT_DELAY_SECONDS
 
-# Configurar FFmpeg al inicio del módulo
-try:
-    import imageio_ffmpeg
-    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
-    os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_exe
-    print(f"🔧 [CONFIG] FFmpeg configured at: {ffmpeg_exe}")
-except ImportError:
-    print("⚠️ [WARNING] imageio-ffmpeg not found, FFmpeg auto-detection may fail")
-except Exception as e:
-    print(f"⚠️ [WARNING] FFmpeg configuration failed: {e}")
+setup_ffmpeg()
+
 
 def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, output_filename: str, include_sfx: bool = True):
-    
+
     voice_clips = []
     sfx_clips = []
     current_time = 0.0
@@ -52,19 +47,20 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
                 voice_clips.append(v_clip)
                 segments_with_audio += 1
                 
-                # Increment time BEFORE potentially adding SFX
+                # Advance timeline by segment duration
                 current_time += segment.duration
 
-                # 2. Lógica de Highlights (SFX) via Database
+                # 2. Highlight (SFX) + Comfort Gap logic
                 if include_sfx and segment.highlight:
-                    h_type = segment.highlight.type
-                    h_context = segment.highlight.context
+                    h_category = segment.highlight.category
+                    h_traits = segment.highlight.desired_traits
                     h_placement = segment.highlight.placement
+                    h_beat_delay = segment.highlight.beat_delay
                     h_offset = segment.highlight.offset_seconds
                     h_vol_mod = segment.highlight.volume_modifier
 
-                    print(f"   [Highlight] Searching SFX for Type: {h_type}, Context: {h_context}")
-                    sfx_path = sfx_service.get_sfx_path(h_type, h_context)
+                    print(f"   [Highlight] Searching SFX for Category: {h_category}, Traits: {h_traits}")
+                    sfx_path = sfx_service.get_sfx_path(h_category, h_traits)
 
                     if sfx_path and os.path.exists(sfx_path):
                         # Calculate trigger time based on placement
@@ -73,20 +69,22 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
                         final_start_time = max(0, trigger_time + h_offset)
 
                         # Calculate volume multiplier from dB modifier
-                        import math
                         base_vol = 0.8
                         vol_multiplier = base_vol * (10 ** (h_vol_mod / 20))
 
-                        print(f"   [Highlight] Inserting SFX at {final_start_time:.2f}s (Placement: {h_placement}, Offset: {h_offset}s) | Vol: {vol_multiplier:.2f} | Path: {sfx_path}")
+                        comfort_gap = BEAT_DELAY_SECONDS.get(h_beat_delay, 0.0)
+                        print(f"   [Highlight] Inserting SFX at {final_start_time:.2f}s (Placement: {h_placement}, Offset: {h_offset}s, BeatDelay: {h_beat_delay}) | Vol: {vol_multiplier:.2f} | Path: {sfx_path}")
 
                         try:
                             sfx_clip = AudioFileClip(sfx_path).set_start(final_start_time)
                             sfx_clip = sfx_clip.volumex(vol_multiplier)
                             sfx_clips.append(sfx_clip)
+                            # Apply Comfort Gap: push next dialogue start by beat_delay
+                            current_time += comfort_gap
                         except Exception as inner_e:
                             print(f"⚠️ WARNING: Failed to load SFX file '{sfx_path}': {inner_e}")
                     else:
-                        print(f"⚠️ SKIP: No SFX found in DB for {h_type}/{h_context}")
+                        print(f"⚠️ SKIP: No SFX found in DB for category={h_category}, traits={h_traits}")
 
             except Exception as e:
                 print(f"❌ ERROR: Failed to process segment: {e}")

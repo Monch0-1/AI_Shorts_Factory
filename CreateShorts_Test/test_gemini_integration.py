@@ -45,17 +45,17 @@ class TestGeminiScriptGeneration:
             
             if "highlight" in segment:
                 highlight = segment["highlight"]
-                assert "type" in highlight
-                assert "context" in highlight
-                # New fields from Professional SFX Editor Mode
+                # Required schema fields
+                assert "category" in highlight
+                assert "desired_traits" in highlight
+                assert isinstance(highlight["desired_traits"], list)
                 assert "placement" in highlight
                 assert highlight["placement"] in ["start", "end"]
-                assert "offset_seconds" in highlight
-                assert isinstance(highlight["offset_seconds"], (int, float))
-                assert "volume_modifier" in highlight
-                assert isinstance(highlight["volume_modifier"], (int, float))
-                
-                assert highlight["type"] in ["horror", "shock", "funny", "neutral", "comedy"]
+                # Optional fields — only validate type if present
+                if "offset_seconds" in highlight:
+                    assert isinstance(highlight["offset_seconds"], (int, float))
+                if "volume_modifier" in highlight:
+                    assert isinstance(highlight["volume_modifier"], (int, float))
                 has_highlight = True
         
         assert has_highlight, "Horror script should contain at least one highlight/SFX marker"
@@ -77,26 +77,32 @@ class TestGeminiScriptGeneration:
         )
         
         assert isinstance(response_text, str)
+        assert not response_text.startswith("Error"), f"Gemini returned an error: {response_text}"
         script_data = json.loads(response_text)
         assert isinstance(script_data, list)
         assert len(script_data) > 0
-        
+
         valid_speakers = ["Nina", "Tina"]
         has_highlight = False
-        
+
         for segment in script_data:
             assert "speaker" in segment
             assert segment["speaker"] in valid_speakers
             assert "line" in segment
             assert "topic" in segment
-            
+
             if "highlight" in segment:
                 highlight = segment["highlight"]
-                assert "type" in highlight
-                assert "context" in highlight
+                # Required schema fields
+                assert "category" in highlight
+                assert "desired_traits" in highlight
+                assert isinstance(highlight["desired_traits"], list)
                 assert "placement" in highlight
-                assert "offset_seconds" in highlight
-                assert "volume_modifier" in highlight
+                # Optional fields — only validate type if present
+                if "offset_seconds" in highlight:
+                    assert isinstance(highlight["offset_seconds"], (int, float))
+                if "volume_modifier" in highlight:
+                    assert isinstance(highlight["volume_modifier"], (int, float))
                 has_highlight = True
                 
         assert has_highlight, "Debate script should contain at least one highlight marker (funny/shock)"

@@ -1,103 +1,82 @@
-import random
 import logging
 from typing import Optional, List
-from datetime import datetime
+from CreateShorts.Interfaces.interfaces import ISFXProvider
+from CreateShorts.Services.SFXProviderLocal import LocalSFXProvider
+from CreateShorts.Services.SFXProviderElevenLabs import ElevenLabsSFXProvider
+from CreateShorts.theme_config import ThemeManager
 from sqlmodel import Session, select
 from CreateShorts.database import engine
-from CreateShorts.Models.database_models import SFXLibrary
+from CreateShorts.Models.database_models import SFXAsset
 
-# Configure logging for SFX Service
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class SFXService:
-    def __init__(self, session: Optional[Session] = None):
+    """
+    Coordinator for SFX asset selection (RF3).
+
+    Selection flow:
+      1. LocalSFXProvider  — semantic scoring against the local DB.
+         Accepts if score >= 60/100. Returns None if below threshold.
+      2. ElevenLabsSFXProvider — AI generation fallback.
+         Saves result locally and auto-tags it (Self-Learning Cache, RT2).
+      3. If both fail, logs a warning and returns None.
+    """
+
+    def __init__(
+        self,
+        local_provider: Optional[ISFXProvider] = None,
+        ai_provider: Optional[ISFXProvider] = None,
+    ):
+        self._local = local_provider or LocalSFXProvider()
+        self._ai = ai_provider or ElevenLabsSFXProvider()
+
+    def get_sfx_path(self, category: str, desired_traits: List[str]) -> Optional[str]:
         """
-        Initializes the SFXService.
-        :param session: Optional existing session (for transactions).
+        Returns a file path for the best matching SFX asset.
+
+        :param category: Primary SFX category (e.g., 'comedy', 'horror', 'neutral')
+        :param desired_traits: Descriptive trait strings (e.g., ['bonk', 'cartoon'])
+        :return: File path or None if no suitable asset could be found or generated.
         """
-        self._provided_session = session
+        # 1. Try local
+        path = self._local.get_sfx(category, desired_traits)
+        if path:
+            return path
 
-    def _get_session(self) -> Session:
-        """Returns the provided session or creates a new one from the engine."""
-        if self._provided_session:
-            return self._provided_session
-        return Session(engine)
+        # 2. Fallback to AI generation
+        logger.info(
+            f"SFXService: Local provider returned None for category='{category}', "
+            f"traits={desired_traits}. Trying ElevenLabs."
+        )
+        path = self._ai.get_sfx(category, desired_traits)
+        if path:
+            return path
 
-    def get_sfx_path(self, category: str, intent_tag: str) -> Optional[str]:
+        logger.warning(
+            f"SFXService: All providers failed for category='{category}', "
+            f"traits={desired_traits}. No SFX will be applied."
+        )
+        return None
+
+    def sync_yaml_to_db(self, theme_manager: ThemeManager):
         """
-        Queries the database for an SFX matching category and intent_tag.
-        If found, updates its tracking fields and returns the file_path.
-        
-        :param category: The SFX category (e.g., 'horror', 'comedy')
-        :param intent_tag: The specific intent (e.g., 'jump_scare', 'laugh')
-        :return: Path to the audio file, or None if no matching resource exists.
-        """
-        session = self._get_session()
-        try:
-            # Query for all matches
-            statement = select(SFXLibrary).where(
-                SFXLibrary.category == category,
-                SFXLibrary.intent_tag == intent_tag
-            )
-            results = session.exec(statement).all()
-
-            if not results:
-                logger.warning(
-                    f"--- SFX MISSING ---\n"
-                    f"Category: {category}, Tag: {intent_tag}\n"
-                    f"No local resource found in SFXLibrary. "
-                    f"Planned future improvement: Trigger ElevenLabs SFX API."
-                )
-                return None
-
-            # Selection Strategy: Random for now
-            selected_sfx = random.choice(results)
-
-            # Update usage tracking
-            selected_sfx.usage_count += 1
-            selected_sfx.last_used = datetime.utcnow()
-            
-            session.add(selected_sfx)
-            session.commit()
-            session.refresh(selected_sfx)
-
-            logger.info(f"Selected SFX: '{selected_sfx.sfx_name}' from {selected_sfx.file_path}")
-            return selected_sfx.file_path
-
-        except Exception as e:
-            logger.error(f"Error querying SFXLibrary: {e}")
-            session.rollback()
-            return None
-        finally:
-            # Only close if we created the session ourselves
-            if not self._provided_session:
-                session.close()
-
-    def sync_yaml_to_db(self, theme_manager):
-        """
-        Future utility: Check if all tags in theme_media_resources.yml 
-        have at least one file in the SFXLibrary database.
+        Checks that all categories in the trait catalog have at least one local asset.
         """
         sfx_mapping = theme_manager.get_sfx_mapping()
         missing_count = 0
-        
+
         logger.info("--- SFX DB Sync Status ---")
-        for category, tags in sfx_mapping.items():
-            for tag in tags:
-                with Session(engine) as session:
-                    exists = session.exec(
-                        select(SFXLibrary).where(
-                            SFXLibrary.category == category, 
-                            SFXLibrary.intent_tag == tag
-                        )
-                    ).first()
-                    
-                    if not exists:
-                        logger.warning(f"DB Sync Alert: Category '{category}', Tag '{tag}' has NO files in database.")
-                        missing_count += 1
-        
+        for category in sfx_mapping.keys():
+            with Session(engine) as session:
+                exists = session.exec(
+                    select(SFXAsset).where(SFXAsset.category == category)
+                ).first()
+                if not exists:
+                    logger.warning(f"DB Sync: Category '{category}' has NO assets in database.")
+                    missing_count += 1
+
         if missing_count == 0:
-            logger.info("All YAML tags are fully synchronized with the database.")
+            logger.info("All categories are present in the database.")
         else:
-            logger.info(f"Sync Check complete: {missing_count} tags are missing local files.")
+            logger.info(f"Sync check complete: {missing_count} categories missing local assets.")

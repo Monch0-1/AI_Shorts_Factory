@@ -5,9 +5,7 @@ from google import genai
 from google.genai import types
 from CreateShorts.theme_config import ThemeConfig, ThemeManager
 from CreateShorts.loadEnvData import load_env_data
-
-WORDS_PER_MINUTE: Final[int] = 250
-SECONDS: Final[int] = 60
+from CreateShorts.config import WORDS_PER_MINUTE, SECONDS_PER_MINUTE as SECONDS
 
 def generate_monolog_script_json(
         final_script_prompt: str,
@@ -45,11 +43,13 @@ def generate_monolog_script_json(
                 2.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consistency, 
                       the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 3.  **End**: Finish with a nice casual farewell
-                4.  **EDITION HIGHLIGHTS:** Identify key moments and tag them.
-                   - Use this mapping to select highlights (Category: [Tags]):
+                4.  **EDITION HIGHLIGHTS:** Identify key moments and tag them with an SFX highlight.
+                   - 'category' MUST be one of: {list(sfx_mapping.keys())}
+                   - 'desired_traits' MUST be a list of 2 to 5 descriptive strings for the sound's
+                     texture and mood. Draw from or be inspired by this trait catalog:
                      {json.dumps(sfx_mapping, indent=4)}
-                   - The 'type' property MUST be one of the Categories (keys).
-                   - The 'context' property MUST be one of the Tags (values) associated with that Category.
+                   - 'beat_delay' controls the pause after the SFX plays:
+                     'none' = no pause, 'short' = 0.3s, 'long' = 0.7s (use for dramatic effect)
 
         Use the context given by the user to guide the script.
 

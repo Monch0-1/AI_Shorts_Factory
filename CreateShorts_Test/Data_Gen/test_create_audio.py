@@ -39,10 +39,10 @@ def test_assemble_dialogue_v2_success(mock_makedirs, mock_exists, mock_sfx_servi
     
     # Create ScriptDTO with one highlight using new fields
     highlight = HighlightDTO(
-        type="funny", 
-        context="counter", 
-        placement="end", 
-        offset_seconds=0.1, 
+        category="funny",
+        desired_traits=["counter"],
+        placement="end",
+        offset_seconds=0.1,
         volume_modifier=-2.0
     )
     segments = [
@@ -74,7 +74,7 @@ def test_assemble_dialogue_v2_include_sfx_false(mock_exists, mock_sfx_service_cl
     mock_exists.return_value = True
     mock_sfx_service = mock_sfx_service_class.return_value
     
-    highlight = HighlightDTO(type="funny", context="counter")
+    highlight = HighlightDTO(category="funny", desired_traits=["counter"])
     segments = [
         SegmentDTO(speaker="Nina", line="Joke", audio_path="nina.mp3", duration=2.0, highlight=highlight)
     ]
@@ -96,11 +96,12 @@ def test_assemble_dialogue_v2_no_segments(mock_exists, mock_audio_clip_class, mo
     assert result is None
 
 @patch('CreateShorts.Data_Gen.create_audio.AudioFileClip')
-@patch('os.path.exists')
-def test_assemble_dialogue_v2_missing_audio_files(mock_exists, mock_audio_clip_class, mock_theme_config):
+@patch('CreateShorts.Data_Gen.create_audio.SFXService')
+@patch('CreateShorts.Data_Gen.create_audio.os.path.exists')
+def test_assemble_dialogue_v2_missing_audio_files(mock_exists, mock_sfx_service_class, mock_audio_clip_class, mock_theme_config):
     mock_exists.return_value = False
     segments = [SegmentDTO(speaker="Nina", line="No audio", audio_path="missing.mp3")]
     script = ScriptDTO(topic="Test", segments=segments)
-    
+
     result = assemble_dialogue_v2(script, mock_theme_config, "output.mp3")
     assert result is None

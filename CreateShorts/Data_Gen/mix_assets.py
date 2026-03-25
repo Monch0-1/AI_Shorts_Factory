@@ -5,10 +5,13 @@ This module handles the creation of vertical format videos (9:16) for social med
 including audio mixing and video composition functionality.
 """
 
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, ColorClip, CompositeVideoClip, TextClip
-from PIL import Image
+import logging
 import os
 from typing import Optional, List
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, ColorClip, CompositeVideoClip, TextClip
+from PIL import Image
+
+logger = logging.getLogger(__name__)
 from moviepy.editor import concatenate_videoclips, concatenate_audioclips
 from CreateShorts.Data_Gen.moviepy_config import get_render_params
 
@@ -111,93 +114,89 @@ def create_looped_clip(clip: VideoFileClip, target_duration: float) -> VideoFile
         return result
         
     except Exception as e:
-        print(f"Error in create_looped_clip: {str(e)}")
+        logger.error(f"Error in create_looped_clip: {str(e)}")
         raise
+
+
+def _get_dialogue_duration(voice_path: str) -> float:
+    """Returns the real duration of the dialogue audio file in seconds."""
+    try:
+        clip = AudioFileClip(voice_path)
+        duration = clip.duration
+        clip.close()
+        return duration
+    except Exception as e:
+        raise ValueError(f"Failed to load voice file '{voice_path}': {str(e)}")
+
+
+def _prepare_background_clip(video_path: str, target_duration: float) -> VideoFileClip:
+    """Loads and loops/trims the background video to match target_duration."""
+    try:
+        clip = VideoFileClip(video_path)
+    except Exception as e:
+        raise ValueError(f"Failed to load background video '{video_path}': {str(e)}")
+
+    if clip.duration < target_duration:
+        looped = create_looped_clip(clip, target_duration)
+        logger.info(f"Background video looped to reach {target_duration:.2f}s")
+        return looped
+    return clip.subclip(0, target_duration)
+
+
+def _render_video(formatted_video, master_audio, subtitle_clips, output_path: str):
+    """Composites subtitles, attaches audio, and writes the final video file."""
+    if subtitle_clips:
+        formatted_video = CompositeVideoClip([formatted_video] + subtitle_clips)
+
+    final_clip = formatted_video.set_audio(master_audio)
+    render_params = get_render_params()
+
+    logger.info(f"Rendering final video (9:16) using codec: {render_params['codec']}")
+    final_clip.write_videofile(
+        output_path,
+        fps=FPS,
+        audio_codec=AUDIO_CODEC,
+        logger=None,
+        threads=4,
+        **render_params
+    )
+    logger.info(f"Video completed: {output_path}")
+    return final_clip
 
 
 def create_final_video(voice_path: str, music_path: str, video_background_path: str,
                        output_path: str, duration_sec: float,
                        subtitle_clips: List[TextClip] = None,
                        background_volume: float = 0.10) -> None:
-    
-    # Validación de entrada crítica
+
     if not voice_path or not os.path.exists(voice_path):
         raise ValueError(f"Voice file not found or invalid path: {voice_path}")
-    
     if not video_background_path or not os.path.exists(video_background_path):
         raise ValueError(f"Background video file not found: {video_background_path}")
-    
-    # Crear directorio de salida si no existe
+
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-    
-    # 1. Get the REAL duration of the dialogue.
-    try:
-        voice_clip_temp = AudioFileClip(voice_path)
-        dialogue_duration = voice_clip_temp.duration
-        voice_clip_temp.close()  # Release the temporary clip.
-    except Exception as e:
-        raise ValueError(f"Failed to load voice file '{voice_path}': {str(e)}")
 
-    # 2. CALCULATE FINAL DURATION: Dialogue + 0.5s Buffer.
-    final_video_duration = dialogue_duration + AUDIO_BUFFER_SEC
+    final_duration = _get_dialogue_duration(voice_path) + AUDIO_BUFFER_SEC
 
-    # 3. The cut and loop logic now uses the FINAL duration.
-    try:
-        background_clip = VideoFileClip(video_background_path)
-    except Exception as e:
-        raise ValueError(f"Failed to load background video '{video_background_path}': {str(e)}")
-
-    if background_clip.duration < final_video_duration:
-        video_clip_final = create_looped_clip(background_clip, final_video_duration)
-        print(f"Alert: Background video looped to reach {final_video_duration:.2f}s")
-    else:
-        video_clip_final = background_clip.subclip(0, final_video_duration)
+    background_clip = None
+    master_audio = None
+    formatted_video = None
+    final_clip = None
 
     try:
-        # Create audio mix: WE PASS THE FINAL DURATION.
-        master_audio = create_mixed_audio_clip(voice_path, music_path, final_video_duration, background_volume)
-
-        # Load and format background video
-        formatted_video = format_video_vertical(video_clip_final, final_video_duration)
-
-        # Combine with subtitles if provided
-        if subtitle_clips:
-            formatted_video = CompositeVideoClip([formatted_video] + subtitle_clips)
-
-        # Add audio
-        final_clip = formatted_video.set_audio(master_audio)
-
-        # Get dynamic render params based on hardware availability
-        render_params = get_render_params()
-
-        # Render final video
-        print(f"-> Rendering final video with subtitles (9:16 Optimized) using {render_params['codec']}...")
-        final_clip.write_videofile(
-            output_path,
-            fps=FPS,
-            audio_codec=AUDIO_CODEC,
-            logger=None,
-            threads=4,
-            **render_params
-        )
-        print(f"-> Video completed: {output_path}")
+        background_clip = _prepare_background_clip(video_background_path, final_duration)
+        master_audio = create_mixed_audio_clip(voice_path, music_path, final_duration, background_volume)
+        formatted_video = format_video_vertical(background_clip, final_duration)
+        final_clip = _render_video(formatted_video, master_audio, subtitle_clips, output_path)
 
     except Exception as e:
         raise VideoMixingError(f"Failed to create final video: {str(e)}")
     finally:
-        # Cleanup resources
-        try:
-            if 'background_clip' in locals():
-                background_clip.close()
-            if 'video_clip_final' in locals():
-                video_clip_final.close()
-            if 'formatted_video' in locals():
-                formatted_video.close()
-            if 'final_clip' in locals():
-                final_clip.close()
-            if 'master_audio' in locals():
-                master_audio.close()
-        except Exception as cleanup_error:
-            print(f"⚠️ WARNING: Error during cleanup: {cleanup_error}")
+        for clip in [background_clip, master_audio, formatted_video, final_clip]:
+            if clip is not None:
+                try:
+                    clip.close()
+                except Exception as cleanup_error:
+                    logger.warning(f"Error during cleanup: {cleanup_error}")

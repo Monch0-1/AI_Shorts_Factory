@@ -1,5 +1,5 @@
 from CreateShorts.Interfaces.interfaces import IAudioService, IScriptService
-from CreateShorts.Data_Gen.text_to_speach import generate_script_audio_v2
+from CreateShorts.Data_Gen.text_to_speech import generate_script_audio_v2
 from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.Data_Gen.create_script_monologue import generate_monolog_script_json
 from CreateShorts.Data_Gen.create_script_debate import generate_debate_script_json

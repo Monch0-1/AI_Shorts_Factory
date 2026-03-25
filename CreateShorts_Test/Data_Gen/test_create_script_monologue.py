@@ -61,7 +61,7 @@ def test_generate_monolog_script_json_success(mock_load_env, mock_theme_manager_
     assert "60" in prompt
     assert '"horror": [\n                     "jump_scare"\n                   ]' in prompt or "horror" in prompt
     assert "Narrator_Male" in prompt
-    assert "The 'type' property MUST be one of the Categories" in prompt
+    assert "'category' MUST be one of:" in prompt
 
 @patch('CreateShorts.Data_Gen.create_script_monologue.ThemeManager')
 @patch('CreateShorts.Data_Gen.create_script_monologue.load_env_data')

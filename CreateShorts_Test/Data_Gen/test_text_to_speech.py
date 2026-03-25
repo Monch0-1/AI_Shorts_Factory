@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch, mock_open
-from CreateShorts.Data_Gen.text_to_speach import generate_script_audio_v2, get_elevenlabs_settings
+from CreateShorts.Data_Gen.text_to_speech import generate_script_audio_v2, get_elevenlabs_settings
 from CreateShorts.Models.script_models import ScriptDTO, SegmentDTO
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Data_Gen.eleven_labs_voice_settings_config import ElevenLabsVoiceSettings
@@ -23,7 +23,7 @@ def test_get_elevenlabs_settings_default():
     settings = get_elevenlabs_settings(None)
     assert settings.stability == 0.5
     assert settings.similarity_boost == 0.75
-    assert settings.speed == 1.0
+    assert settings.speed == 1.4
 
 def test_get_elevenlabs_settings_custom():
     custom_data = ElevenLabsVoiceSettings(stability=0.8, similarity_boost=0.9)
@@ -32,8 +32,8 @@ def test_get_elevenlabs_settings_custom():
     assert settings.similarity_boost == 0.9
     assert settings.speed == 1.0 # Default from the function
 
-@patch('CreateShorts.Data_Gen.text_to_speach.AudioFileClip')
-@patch('CreateShorts.Data_Gen.text_to_speach.client')
+@patch('CreateShorts.Data_Gen.text_to_speech.AudioFileClip')
+@patch('CreateShorts.Data_Gen.text_to_speech.client')
 @patch('os.makedirs')
 @patch('builtins.open', new_callable=mock_open)
 def test_generate_script_audio_v2_success(mock_file, mock_makedirs, mock_client, mock_audio_clip_class, mock_theme_config):
@@ -65,10 +65,10 @@ def test_generate_script_audio_v2_success(mock_file, mock_makedirs, mock_client,
     # Verify we wrote the combined chunks
     mock_file().write.assert_called_with(b'audio_chunk_1audio_chunk_2')
 
-@patch('CreateShorts.Data_Gen.text_to_speach.client')
+@patch('CreateShorts.Data_Gen.text_to_speech.client')
 def test_generate_script_audio_v2_no_client(mock_client):
     # Set global client to None in the module scope for this test
-    with patch('CreateShorts.Data_Gen.text_to_speach.client', None):
+    with patch('CreateShorts.Data_Gen.text_to_speech.client', None):
         script = ScriptDTO(topic="Test", segments=[])
         theme_config = MagicMock()
         result = generate_script_audio_v2(script, theme_config)
