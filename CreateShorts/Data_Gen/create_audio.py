@@ -16,7 +16,6 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
     voice_clips = []
     sfx_clips = []
     current_time = 0.0
-    sfx_service = SFXService()
 
     print(f"-> Starting Advanced Audio Assembly for topic: {script_dto.topic}")
     if not include_sfx:
@@ -26,6 +25,7 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
             seg.highlight = None
 
     try:
+        sfx_service = SFXService()
         # Validar que tenemos segmentos
         if not script_dto.segments:
             print("❌ ERROR: No segments found in script_dto")

@@ -29,7 +29,11 @@ class ElevenLabsSFXProvider(ISFXProvider):
     """
 
     def __init__(self):
-        self._client: Optional[ElevenLabs] = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
+        try:
+            self._client: Optional[ElevenLabs] = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
+        except (ValueError, RuntimeError) as e:
+            logger.warning(f"ElevenLabsSFXProvider: Client not available — {e}")
+            self._client = None
         self._processor = AssetProcessor()
         self._project_root = get_project_root()
 

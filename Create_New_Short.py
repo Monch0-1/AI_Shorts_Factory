@@ -274,27 +274,21 @@ if __name__ == "__main__":
 
     _context_story = """
     BASE_TEXT:
-    I've been working at myu current job for almost 10 years, I started as a part of the sales team and climb the ladder 
-    to manager, recently the direction and management team decided that we need a new batch of interns to get fresh ideas
-    this is not new, it happens about once a year when we hire interns and keep the most promising ones, so that was the same this year
-    the new intern assigned for my team, Michael, started about a month before this events, he seemed a little bit to full of himself
-    maybe over confidence in is decision, seems like he wanted to grab the spotlight and almost impose his ideas, I didn't 
-    think much of it, people like that comes from time to time, but little by little things started to spyral out of control,
-    I started to receive complains from my team, from some of the seniors even, seems like Michael was getting very friendly with the HR
-    department, he was boasting about that and started pressure my team things like "if you don't agree maybe candice from HR 
-    could hear about work place harassment", I called him to my office after some more offenses to have a serious conversation.
-    "Michael, you cant threaten the staff just because dont agree with you or because they didn't bring coffee to you, if you
-    keep this attitude I will have no other option but to let you go", for a week that was the end of it, but a few days after
-    I got a meeting from HR, Michael was there crying, Candice, her bestie from HR was upset, "We take workplace harassment very
-    seriously here Anon, do you think this is appropriated from a staff manager to say to an intern, what do you think our 
-    reputation will end up", I checked the files Candice wasd referring to in the table, copies of fabricated email saying 
-    just the worst things, things that wold get you out to the streets in no time, work abuse, inappropriate behaviour, physical
-    violence threads, the whole package, I got off with a serious warning, I was not fired because I have a good reputation
-    with my colleagues anh the direction team, but I was warned there is no second time, later that day I found Michael
-    sitting in my office, when I arrived he just said, "You better know from now and on who makes decisions in this office,
-    I could not get you fired this time but you heard, there will not be another chance, this works in my favor so you better
-    behave", he smirk and got out, I saw his expression change from smug to victim before he got out the door, I have to face 
-    this kid again but I dont even know what he did or how he did it, what should I do?
+    I didn't even have the time to react as I was getting all my evidence ready, Michael was ready to strike, I receive another
+    HR meeting email, so I braced myself, there he was, Michael with a black eye, that was too far definitively and as expected,
+    there was the head of HR, Candice, the meeting went as you might think, Candice screaming at me loudly enough so everyone could
+    hear, it was humiliating, after she calmed down she said, "really Anon, to resort to physical abuse of a coworker, we should
+    involve the police here, you are for now suspended without pay until we decide if we are going to present charges".
+    I left the office, took my things thinking UI would never be back, but something wasn't right, if they were confident 
+    I punched Michael, why wait to present charges for assault, and even more, why was I suspended and not fired, I called a 
+    subordinated to check if they knew something, as itr turns out it seems I "asked for vacations without notice", that is the
+    official version Candice gave, so I think they had nothing, I was exasperated so, I Asked a friend of mine what could I do,
+    he is a lawyer you know, so he simply said, "man that is an easy case, you even have evidence, sue them for defamation,
+    work abuse, Perjury, forgery, you have a solid case, I will take charge", apparently even if I got the evidence from a 
+    private chat, legally I can use it as this is internal policy and the computer where I got it from is company owned and can
+    used by me, the manager, at any given time, that is even stipulated in the company rules, it is responsibility of the 
+    employee to close the chats and secure personal information.
+    I have a case, I am going to sue, this has been dragging enough but, if you have any other advice let me know in the comments.
     
     INSTRUCTIONS:
     - Create a relatable story  from the given BASE_TEXT
@@ -307,7 +301,7 @@ if __name__ == "__main__":
 
     # Example using the new nested structure
     video_options = VideoOptions(
-        duration_seconds=10,
+        duration_seconds=120,
         video_index=None,
         enable_refiner=False, 
         use_script_template=True,
@@ -315,7 +309,7 @@ if __name__ == "__main__":
     )
 
     video_request = VideoRequest(
-        topic="quick hi test run 10 sec vid",
+        topic="UPDATE, the new intern at my company is trying to get me fired",
         theme="reddit", # Which theme is your video like (redit stories, top 5, horror, etc, if not exists with will use default)
         is_monologue=True, # Use monologue features such as the new prompt refiner
         context_story=_context_story, # Your context
