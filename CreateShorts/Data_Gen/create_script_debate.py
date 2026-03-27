@@ -45,16 +45,22 @@ def generate_debate_script_json(
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
                 5. **EDITION HIGHLIGHTS:** Identify key moments and tag them with an SFX highlight.
+                   - CRITICAL: You may use UP TO {max(1, time_limit // 20)} highlights total — use fewer or none if the
+                     script does not have enough genuinely impactful moments. Never place two highlights
+                     within 15 seconds of each other.
                    - 'category' MUST be one of: {list(sfx_mapping.keys())}
                    - 'desired_traits' MUST be a list of 2 to 5 descriptive strings for the sound's
                      texture and mood. Draw from or be inspired by this trait catalog:
                      {json.dumps(sfx_mapping, indent=4)}
+                   - 'description' MUST be a single natural language sentence describing the exact sound
+                     you want (e.g., "a quick cartoon bonk with a spring reverb tail"). This is used
+                     as the generation prompt for ElevenLabs when no local asset matches.
                    - 'beat_delay' controls the pause after the SFX plays:
                      'none' = no pause, 'short' = 0.3s, 'long' = 0.7s (use for dramatic effect)
                    - 'placement': 'start' triggers the SFX at the beginning of the segment, 'end' triggers at the end
                    - 'offset_seconds': fine-tune trigger time in seconds (e.g. -0.2 to trigger slightly before)
                    - 'volume_modifier': dB adjustment for this SFX (e.g. -3 for quieter, 0 for default)
-                        
+
             Strictly adhere to the established character roles and return ONLY the JSON array structure.
             """
     else:
@@ -86,17 +92,23 @@ def generate_debate_script_json(
                 3.  **Json Format:** If a dialog is longer than 20 words, break it into multiple lines from the same narrator to keep consitency, the line dialog overall can be over 20 words, we are breaking it just to have short subtitles NOT TO HAVE SHORT DIALOGS(this for short subtitles).
                 4. **End**: Finish with a nice casual farewell
                 5. **EDITION HIGHLIGHTS:** Identify key moments and tag them with an SFX highlight.
+                   - CRITICAL: You may use UP TO {max(1, time_limit // 20)} highlights total — use fewer or none if the
+                     script does not have enough genuinely impactful moments. Never place two highlights
+                     within 15 seconds of each other.
                    - 'category' MUST be one of: {list(sfx_mapping.keys())}
                    - 'desired_traits' MUST be a list of 2 to 5 descriptive strings for the sound's
                      texture and mood. Draw from or be inspired by this trait catalog:
                      {json.dumps(sfx_mapping, indent=4)}
+                   - 'description' MUST be a single natural language sentence describing the exact sound
+                     you want (e.g., "a quick cartoon bonk with a spring reverb tail"). This is used
+                     as the generation prompt for ElevenLabs when no local asset matches.
                    - 'beat_delay' controls the pause after the SFX plays:
                      'none' = no pause, 'short' = 0.3s, 'long' = 0.7s (use for dramatic effect)
                    - 'placement': 'start' triggers the SFX at the beginning of the segment, 'end' triggers at the end
                    - 'offset_seconds': fine-tune trigger time in seconds (e.g. -0.2 to trigger slightly before)
                    - 'volume_modifier': dB adjustment for this SFX (e.g. -3 for quieter, 0 for default)
 
-    
+
                 Return **ONLY** the JSON array structure.
             """
 

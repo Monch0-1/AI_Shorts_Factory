@@ -8,7 +8,7 @@ including audio mixing and video composition functionality.
 import logging
 import os
 from typing import Optional, List
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, ColorClip, CompositeVideoClip, TextClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, CompositeVideoClip, TextClip
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -61,35 +61,31 @@ def create_mixed_audio_clip(voice_path: str, music_path: str, duration_sec: floa
     except Exception as e:
         raise VideoMixingError(f"Failed to create mixed audio: {str(e)}")
 
-def format_video_vertical(video_clip: VideoFileClip, duration_sec: float) -> CompositeVideoClip:
+def format_video_vertical(video_clip: VideoFileClip, duration_sec: float) -> VideoFileClip:
     """
-    Formats a video clip to vertical 9:16 format with centered content.
+    Formats a video clip to vertical 9:16 format using crop-to-fill.
+    Scales the input uniformly so it covers the full 1080x1920 canvas,
+    then center-crops to exact dimensions. No black bars regardless of input aspect ratio.
 
     Args:
         video_clip (VideoFileClip): Input video clip to format
         duration_sec (float): Desired duration in seconds
 
     Returns:
-        CompositeVideoClip: Formatted vertical video clip
+        VideoFileClip: Cropped vertical video clip (1080x1920)
     """
-    # Cut to desired duration
     video_cut = video_clip.subclip(0, duration_sec)
-    
-    # Scale to cover full width
-    video_resized = video_cut.resize(width=VERTICAL_WIDTH)
-    
-    # Create black vertical canvas
-    canvas = ColorClip(
-        size=(VERTICAL_WIDTH, VERTICAL_HEIGHT),
-        color=(0, 0, 0),
-        duration=duration_sec
+
+    src_w, src_h = video_cut.size
+    scale = max(VERTICAL_WIDTH / src_w, VERTICAL_HEIGHT / src_h)
+    video_scaled = video_cut.resize(scale)
+
+    return video_scaled.crop(
+        x_center=video_scaled.w / 2,
+        y_center=video_scaled.h / 2,
+        width=VERTICAL_WIDTH,
+        height=VERTICAL_HEIGHT
     )
-    
-    # Compose video on canvas
-    return CompositeVideoClip([
-        canvas,
-        video_resized.set_pos("center")
-    ])
 
 def create_looped_clip(clip: VideoFileClip, target_duration: float) -> VideoFileClip:
     """

@@ -31,14 +31,19 @@ class SFXService:
         self._local = local_provider or LocalSFXProvider()
         self._ai = ai_provider or ElevenLabsSFXProvider()
 
-    def get_sfx_path(self, category: str, desired_traits: List[str]) -> Optional[str]:
+    def get_sfx_path(self, category: str, desired_traits: List[str], description: Optional[str] = None) -> Optional[str]:
         """
         Returns a file path for the best matching SFX asset.
 
         :param category: Primary SFX category (e.g., 'comedy', 'horror', 'neutral')
         :param desired_traits: Descriptive trait strings (e.g., ['bonk', 'cartoon'])
+        :param description: Optional natural language prompt forwarded to ElevenLabs if local lookup fails
         :return: File path or None if no suitable asset could be found or generated.
         """
+        if not category:
+            logger.warning("SFXService: category is required but was empty or None. Skipping SFX.")
+            return None
+
         # 1. Try local
         path = self._local.get_sfx(category, desired_traits)
         if path:
@@ -49,7 +54,7 @@ class SFXService:
             f"SFXService: Local provider returned None for category='{category}', "
             f"traits={desired_traits}. Trying ElevenLabs."
         )
-        path = self._ai.get_sfx(category, desired_traits)
+        path = self._ai.get_sfx(category, desired_traits, description)
         if path:
             return path
 

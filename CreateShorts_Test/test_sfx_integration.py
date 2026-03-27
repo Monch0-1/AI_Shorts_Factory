@@ -25,13 +25,13 @@ def test_sfx_service_logic():
     if path2:
         print(f"✅ Success: Selected second time {path2}")
 
-    # Test 3: Missing category handling
-    print("\nTesting missing category handling...")
-    path_missing = service.get_sfx_path("non_existent", ["tag"])
-    if path_missing is None:
-        print("✅ Success: Correctly handled missing tag with None")
-    else:
-        print(f"❌ Failure: Should have returned None but got {path_missing}")
+    # Test 3: None/empty category is rejected before hitting any provider
+    print("\nTesting None category guard...")
+    path_none = service.get_sfx_path(None, ["tag"])
+    assert path_none is None, f"Expected None for missing category but got {path_none}"
+    path_empty = service.get_sfx_path("", ["tag"])
+    assert path_empty is None, f"Expected None for empty category but got {path_empty}"
+    print("✅ Success: None and empty category correctly return None")
 
     # Test 4: Sync Check
     print("\nTesting YAML to DB Sync...")

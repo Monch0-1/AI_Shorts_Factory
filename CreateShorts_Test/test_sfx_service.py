@@ -33,7 +33,7 @@ def test_local_miss_triggers_ai_fallback():
 
     assert result == "sfx/comedy/generated/gen_abc123.mp3"
     local.get_sfx.assert_called_once()
-    ai.get_sfx.assert_called_once_with("comedy", ["silly", "fast"])
+    ai.get_sfx.assert_called_once_with("comedy", ["silly", "fast"], None)
 
 
 def test_both_fail_returns_none():
@@ -54,4 +54,24 @@ def test_correct_args_passed_to_providers():
     service.get_sfx_path("neutral", ["clean", "soft", "gentle"])
 
     local.get_sfx.assert_called_once_with("neutral", ["clean", "soft", "gentle"])
-    ai.get_sfx.assert_called_once_with("neutral", ["clean", "soft", "gentle"])
+    ai.get_sfx.assert_called_once_with("neutral", ["clean", "soft", "gentle"], None)
+
+
+def test_none_category_returns_none_immediately():
+    """None or empty category skips both providers and returns None."""
+    service, local, ai = _make_service("sfx/comedy/bonk.mp3", "sfx/comedy/gen.mp3")
+
+    assert service.get_sfx_path(None, ["bonk"]) is None
+    assert service.get_sfx_path("", ["bonk"]) is None
+    local.get_sfx.assert_not_called()
+    ai.get_sfx.assert_not_called()
+
+
+def test_description_forwarded_to_ai_provider():
+    """Description is forwarded to the AI provider when local lookup fails."""
+    service, local, ai = _make_service(None, "sfx/comedy/generated/gen_xyz.mp3")
+
+    result = service.get_sfx_path("comedy", ["silly"], "a quick silly cartoon boing sound")
+
+    assert result == "sfx/comedy/generated/gen_xyz.mp3"
+    ai.get_sfx.assert_called_once_with("comedy", ["silly"], "a quick silly cartoon boing sound")

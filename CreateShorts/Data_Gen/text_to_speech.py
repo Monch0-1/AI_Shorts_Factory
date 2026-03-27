@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from moviepy.editor import AudioFileClip
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
@@ -20,7 +21,8 @@ VOICE_IDS = {
 }
 MODEL_ID = "eleven_multilingual_v2"
 client = load_env_data(ElevenLabs, "ELEVEN_API_KEY")
-TEMP_DIR = os.path.join("MockAudioFiles", "CreateShorts", "resources", "audio", "temp_audio")
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+TEMP_DIR = str(_PROJECT_ROOT / "MockAudioFiles" / "CreateShorts" / "resources" / "audio" / "temp_audio")
 
 
 def get_elevenlabs_settings(settings_data: Optional[ElevenLabsVoiceSettings]) -> Optional[VoiceSettings]:

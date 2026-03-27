@@ -1,10 +1,12 @@
 import argparse
+from CreateShorts.database import init_db
 from CreateShorts.Services.SFXLibraryManager import SFXLibraryManager
 
 def main():
     parser = argparse.ArgumentParser(description="Unified SFX Library Management Tool")
-    parser.add_argument("action", choices=["sync", "ingest", "yaml", "list", "reset"], 
+    parser.add_argument("action", choices=["init", "sync", "ingest", "yaml", "list", "reset"],
                         help="Action to perform: \n"
+                             "init: Create DB tables if they don't exist (non-destructive)\n"
                              "sync: Run both ingest and yaml sync (atomic)\n"
                              "ingest: Scan folders and add new files to DB\n"
                              "yaml: Update theme_media_resources.yml from DB\n"
@@ -14,7 +16,10 @@ def main():
     args = parser.parse_args()
     manager = SFXLibraryManager()
 
-    if args.action == "sync":
+    if args.action == "init":
+        init_db()
+        print("Database initialized — tables created if they did not exist.")
+    elif args.action == "sync":
         manager.full_sync()
     elif args.action == "ingest":
         manager.bulk_ingest()

@@ -19,3 +19,4 @@ DEFAULT_BACKGROUND_VOLUME: Final[float] = 0.10
 SFX_MAX_DURATION_MS: Final[int] = 3000
 SFX_TARGET_DBFS: Final[float] = -6.0
 BEAT_DELAY_SECONDS: Final[dict] = {"none": 0.0, "short": 0.3, "long": 0.7}
+SFX_TAIL_OVERLAP_SECONDS: Final[float] = 0.5  # SFX tail that bleeds under the next dialogue line

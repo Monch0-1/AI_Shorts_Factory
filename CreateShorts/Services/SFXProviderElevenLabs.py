@@ -37,12 +37,12 @@ class ElevenLabsSFXProvider(ISFXProvider):
         self._processor = AssetProcessor()
         self._project_root = get_project_root()
 
-    def get_sfx(self, category: str, desired_traits: List[str]) -> Optional[str]:
+    def get_sfx(self, category: str, desired_traits: List[str], description: Optional[str] = None) -> Optional[str]:
         if self._client is None:
             logger.error("ElevenLabsSFXProvider: ELEVEN_API_KEY not configured.")
             return None
 
-        prompt = self._build_prompt(category, desired_traits)
+        prompt = self._build_prompt(category, desired_traits, description)
         logger.info(f"ElevenLabsSFXProvider: Generating SFX for prompt: '{prompt}'")
 
         try:
@@ -67,7 +67,7 @@ class ElevenLabsSFXProvider(ISFXProvider):
             self._processor.process(abs_path)
 
             # Register in DB with requested traits (Self-Learning Cache)
-            self._register_asset(file_path, category, desired_traits)
+            self._register_asset(file_path, category, desired_traits, prompt)
 
             logger.info(f"ElevenLabsSFXProvider: Saved and registered '{file_path}'")
             return file_path
@@ -76,8 +76,10 @@ class ElevenLabsSFXProvider(ISFXProvider):
             logger.error(f"ElevenLabsSFXProvider: Generation failed: {e}")
             return None
 
-    def _build_prompt(self, category: str, desired_traits: List[str]) -> str:
-        """Combines category and traits into a descriptive sound prompt."""
+    def _build_prompt(self, category: str, desired_traits: List[str], description: Optional[str] = None) -> str:
+        """Builds the ElevenLabs generation prompt. Uses description when available, else falls back to category + traits."""
+        if description:
+            return description
         if desired_traits:
             return f"{category} sound effect: {', '.join(desired_traits)}"
         return f"{category} sound effect"
@@ -99,13 +101,14 @@ class ElevenLabsSFXProvider(ISFXProvider):
             logger.error(f"ElevenLabsSFXProvider: Failed to save asset: {e}")
             return None
 
-    def _register_asset(self, file_path: str, category: str, traits: List[str]):
+    def _register_asset(self, file_path: str, category: str, traits: List[str], description: Optional[str] = None):
         """Registers the generated asset in the DB and links trait tags (RT2)."""
         with Session(engine) as session:
             try:
                 asset = SFXAsset(
                     file_path=file_path,
                     category=category,
+                    description=description,
                     source="eleven_labs",
                     created_at=datetime.now(timezone.utc)
                 )

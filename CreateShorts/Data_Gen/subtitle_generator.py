@@ -7,136 +7,149 @@ import os
 
 from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.Data_Gen.moviepy_config import get_render_params
+from CreateShorts.config import VERTICAL_HEIGHT
+
+CHUNK_SIZE = 4              # Max words per subtitle chunk
+SUBTITLE_Y_RATIO = 0.80     # Vertical position as fraction of frame height (lower-third)
+PILL_PAD_X = 24             # Horizontal padding inside pill background
+PILL_PAD_Y = 10             # Vertical padding inside pill background
+PILL_RADIUS = 14            # Corner radius of pill background
+PILL_FILL = (0, 0, 0, 160)  # Semi-transparent black
+
 
 @dataclass
 class SubtitleConfig:
     """Configuration for the subtitle style"""
-    fontsize: int = 150  # Balanced size for readability
+    fontsize: int = 150
     font: str = 'Impact'
     color: str = 'white'
     stroke_color: str = 'black'
-    stroke_width: int = 6  # Thicker stroke for better contrast
-    size: tuple = (800, None)  # Max width
+    stroke_width: int = 6
+    size: tuple = (800, None)
     method: str = 'caption'
     align: str = 'center'
     interline: int = -1
 
+
 class SubtitleGenerator:
     def __init__(self, config: SubtitleConfig = None):
         self.config = config or SubtitleConfig()
-        self.temp_images = []  # Para limpiar archivos temporales
+        self.temp_images = []
+
+    def _load_font(self) -> ImageFont.FreeTypeFont:
+        """Loads the configured font with fallback to system default."""
+        try:
+            if os.name == 'nt':
+                font_path = "C:/Windows/Fonts/impact.ttf"
+                if not os.path.exists(font_path):
+                    font_path = "C:/Windows/Fonts/arialbd.ttf"
+            else:
+                font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            if os.path.exists(font_path):
+                return ImageFont.truetype(font_path, self.config.fontsize)
+        except Exception:
+            pass
+        return ImageFont.load_default()
+
+    def _split_into_chunks(self, text: str) -> List[str]:
+        """Splits text into chunks of up to CHUNK_SIZE words for word-paced display."""
+        words = ' '.join(text.split()).split()
+        if not words:
+            return [text] if text.strip() else []
+        return [' '.join(words[i:i + CHUNK_SIZE]) for i in range(0, len(words), CHUNK_SIZE)]
 
     def _create_text_image(self, text: str) -> str:
-        """Creates a text image using PIL and returns the temporary file path"""
+        """
+        Creates a centered text image with a semi-transparent pill background.
+        Text is always horizontally centered regardless of length.
+        """
+        img_width = 1080
+        font = self._load_font()
+
         try:
-            # Configuración de imagen - Increased height for larger fonts
-            img_width = 1080
-            img_height = 500
-            
-            # Crear imagen transparente
+            # Measure text on a minimal scratch surface
+            scratch = Image.new('RGBA', (1, 1))
+            draw = ImageDraw.Draw(scratch)
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+
+            img_height = text_h + PILL_PAD_Y * 2 + 10
+
             img = Image.new('RGBA', (img_width, img_height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
-            
-            # Intentar cargar fuente, con fallback
+
+            # Pill: centered horizontally around the text
+            pill_x1 = (img_width - text_w) // 2 - PILL_PAD_X
+            pill_y1 = 5
+            pill_x2 = (img_width + text_w) // 2 + PILL_PAD_X
+            pill_y2 = img_height - 5
+
             try:
-                # Buscar fuente del sistema (Impact is preferred for shorts)
-                if os.name == 'nt':  # Windows
-                    font_path = "C:/Windows/Fonts/impact.ttf"
-                    if not os.path.exists(font_path):
-                        font_path = "C:/Windows/Fonts/arialbd.ttf"
-                else:  # Linux/Mac
-                    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-                
-                if os.path.exists(font_path):
-                    # Use full fontsize
-                    font = ImageFont.truetype(font_path, self.config.fontsize)
-                else:
-                    font = ImageFont.load_default()
-            except:
-                font = ImageFont.load_default()
-            
-            # Calcular posición del texto (centrado)
-            bbox = draw.textbbox((0, 0), text, font=font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
-            x = (img_width - text_width) // 2
-            y = (img_height - text_height) // 2
-            
-            # Dibujar contorno (stroke)
+                draw.rounded_rectangle([pill_x1, pill_y1, pill_x2, pill_y2],
+                                       radius=PILL_RADIUS, fill=PILL_FILL)
+            except AttributeError:
+                # Pillow < 8.2 fallback
+                draw.rectangle([pill_x1, pill_y1, pill_x2, pill_y2], fill=PILL_FILL)
+
+            # Text centered horizontally
+            text_x = (img_width - text_w) // 2
+            text_y = PILL_PAD_Y + 5
+
+            # Stroke
             if self.config.stroke_width > 0:
-                for adj_x in range(-self.config.stroke_width, self.config.stroke_width + 1):
-                    for adj_y in range(-self.config.stroke_width, self.config.stroke_width + 1):
-                        if adj_x != 0 or adj_y != 0:
-                            draw.text((x + adj_x, y + adj_y), text, font=font, fill=self.config.stroke_color)
-            
-            # Dibujar texto principal
-            draw.text((x, y), text, font=font, fill=self.config.color)
-            
-            # Guardar imagen temporal
-            temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-            temp_path = temp_file.name
-            temp_file.close()
-            
-            img.save(temp_path, 'PNG')
-            self.temp_images.append(temp_path)  # Para limpieza posterior
-            
-            return temp_path
-            
+                for dx in range(-self.config.stroke_width, self.config.stroke_width + 1):
+                    for dy in range(-self.config.stroke_width, self.config.stroke_width + 1):
+                        if dx != 0 or dy != 0:
+                            draw.text((text_x + dx, text_y + dy), text,
+                                      font=font, fill=self.config.stroke_color)
+
+            # Main text
+            draw.text((text_x, text_y), text, font=font, fill=self.config.color)
+
         except Exception as e:
             print(f"❌ Error creating text image: {e}")
-            # Crear imagen simple como fallback
-            img = Image.new('RGBA', (800, 100), (0, 0, 0, 0))
+            img = Image.new('RGBA', (img_width, 80), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
-            draw.text((50, 25), text[:50], fill='white')  # Texto simple
-            
-            temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-            temp_path = temp_file.name
-            temp_file.close()
-            img.save(temp_path, 'PNG')
-            self.temp_images.append(temp_path)
-            
-            return temp_path
+            draw.text((20, 20), text[:50], fill='white')
+
+        temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        temp_path = temp_file.name
+        temp_file.close()
+        img.save(temp_path, 'PNG')
+        self.temp_images.append(temp_path)
+        return temp_path
 
     def create_subtitle_clips_v2(self, script_dto: ScriptDTO) -> List[ImageClip]:
         subtitle_clips = []
-        current_time = 0.0
+        y_pos = int(VERTICAL_HEIGHT * SUBTITLE_Y_RATIO)
 
         print("-> Creating subtitle clips from DTO using PIL...")
 
         for segment in script_dto.segments:
-            # Optimizar el texto
-            text = self._optimize_text(segment.line)
-
-            try:
-                # Crear imagen de texto
-                image_path = self._create_text_image(text)
-                
-                # Crear clip de imagen
-                img_clip = (ImageClip(image_path)
-                          .set_position(('center', 'center'))
-                          .set_start(current_time)
-                          .set_duration(segment.duration))
-
-                subtitle_clips.append(img_clip)
-                
-            except Exception as e:
-                print(f"❌ Error creating subtitle clip: {e}")
+            chunks = self._split_into_chunks(segment.line)
+            if not chunks:
                 continue
 
-            current_time += segment.duration
+            chunk_duration = segment.duration / len(chunks)
+
+            for i, chunk in enumerate(chunks):
+                chunk_start = segment.start_time + i * chunk_duration
+                try:
+                    image_path = self._create_text_image(chunk)
+                    img_clip = (ImageClip(image_path)
+                                .set_position(('center', y_pos))
+                                .set_start(chunk_start)
+                                .set_duration(chunk_duration))
+                    subtitle_clips.append(img_clip)
+                except Exception as e:
+                    print(f"❌ Error creating subtitle clip: {e}")
+                    continue
 
         return subtitle_clips
 
-    def _optimize_text(self, text: str) -> str:
-        text = ' '.join(text.split())
-        words = text.split()
-        if len(words) > 6:
-            mid = len(words) // 2
-            return ' '.join(words[:mid]) + '\n' + ' '.join(words[mid:])
-        return text
-
     def cleanup_temp_files(self):
-        """Limpia archivos temporales creados"""
+        """Cleans up temporary image files created during subtitle generation."""
         for temp_path in self.temp_images:
             try:
                 if os.path.exists(temp_path):
@@ -157,7 +170,6 @@ class SubtitleGenerator:
             print("-> Composing final video with subtitles...")
             final_video = CompositeVideoClip([video] + subtitle_clips)
 
-            # Get dynamic render params based on hardware availability
             render_params = get_render_params()
 
             print(f"-> Rendering video with subtitles using {render_params['codec']}...")
@@ -175,10 +187,11 @@ class SubtitleGenerator:
             print(f"❌ Error adding subtitles: {str(e)}")
             raise
         finally:
-            if 'video' in locals(): video.close()
-            if 'final_video' in locals(): final_video.close()
+            if 'video' in locals():
+                video.close()
+            if 'final_video' in locals():
+                final_video.close()
             if 'subtitle_clips' in locals():
                 for clip in subtitle_clips:
                     clip.close()
-            # Limpiar archivos temporales
             self.cleanup_temp_files()

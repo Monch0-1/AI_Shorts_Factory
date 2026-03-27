@@ -51,18 +51,54 @@ def test_create_mixed_audio_clip_looping(mock_exists, mock_concat, mock_audio_cl
         args, _ = mock_concat.call_args
         assert len(args[0]) == 4
 
-@patch('CreateShorts.Data_Gen.mix_assets.ColorClip')
-@patch('CreateShorts.Data_Gen.mix_assets.CompositeVideoClip')
-def test_format_video_vertical(mock_composite, mock_color_clip):
+def test_format_video_vertical_16_9_crops_to_fill():
+    """16:9 input (1920x1080) must scale to cover 1080x1920 and center-crop — no black bars."""
+    mock_cut = MagicMock()
+    mock_cut.size = (1920, 1080)
+
+    # scale = max(1080/1920, 1920/1080) = max(0.5625, 1.778) = 1.778
+    mock_scaled = MagicMock()
+    mock_scaled.w = round(1920 * (1920 / 1080))  # 3413
+    mock_scaled.h = 1920
+    mock_cut.resize.return_value = mock_scaled
+
+    mock_cropped = MagicMock()
+    mock_scaled.crop.return_value = mock_cropped
+
     mock_video = MagicMock()
-    mock_video.subclip.return_value.resize.return_value = MagicMock()
-    
+    mock_video.subclip.return_value = mock_cut
+
     result = format_video_vertical(mock_video, 10.0)
-    
-    assert result is not None
+
     mock_video.subclip.assert_called_with(0, 10.0)
-    mock_color_clip.assert_called_once()
-    assert mock_color_clip.call_args[1]['size'] == (1080, 1920)
+    scale_used = mock_cut.resize.call_args[0][0]
+    assert abs(scale_used - (1920 / 1080)) < 0.01  # ~1.778
+    mock_scaled.crop.assert_called_once_with(
+        x_center=mock_scaled.w / 2,
+        y_center=mock_scaled.h / 2,
+        width=1080,
+        height=1920
+    )
+    assert result is mock_cropped
+
+
+def test_format_video_vertical_9_16_no_upscale_needed():
+    """Native 9:16 input (1080x1920) — scale factor is 1.0, crop is a no-op passthrough."""
+    mock_cut = MagicMock()
+    mock_cut.size = (1080, 1920)
+
+    mock_scaled = MagicMock()
+    mock_scaled.w = 1080
+    mock_scaled.h = 1920
+    mock_cut.resize.return_value = mock_scaled
+
+    mock_video = MagicMock()
+    mock_video.subclip.return_value = mock_cut
+
+    format_video_vertical(mock_video, 10.0)
+
+    scale_used = mock_cut.resize.call_args[0][0]
+    assert abs(scale_used - 1.0) < 0.01
 
 @patch('CreateShorts.Data_Gen.mix_assets.concatenate_videoclips')
 def test_create_looped_clip(mock_concat):

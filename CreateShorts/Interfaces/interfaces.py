@@ -24,12 +24,13 @@ class ISFXProvider(ABC):
     Implementations: LocalSFXProvider (DB scoring), ElevenLabsSFXProvider (AI generation).
     """
     @abstractmethod
-    def get_sfx(self, category: str, desired_traits: List[str]) -> Optional[str]:
+    def get_sfx(self, category: str, desired_traits: List[str], description: Optional[str] = None) -> Optional[str]:
         """
         Returns the file path of a suitable SFX asset, or None if unavailable.
 
         :param category: Primary SFX category (e.g., 'comedy', 'horror', 'neutral')
         :param desired_traits: Descriptive trait strings (e.g., ['bonk', 'cartoon', 'fast'])
+        :param description: Optional natural language prompt (used by ElevenLabs for richer generation)
         :return: Absolute or relative file path, or None.
         """
         pass

@@ -6,7 +6,7 @@ from CreateShorts.Models.script_models import ScriptDTO
 from CreateShorts.theme_config import ThemeConfig
 from CreateShorts.Services.SFXService import SFXService
 from CreateShorts.utils import setup_ffmpeg
-from CreateShorts.config import BEAT_DELAY_SECONDS
+from CreateShorts.config import BEAT_DELAY_SECONDS, SFX_TAIL_OVERLAP_SECONDS
 
 setup_ffmpeg()
 
@@ -43,10 +43,11 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
                 continue
 
             try:
+                segment.start_time = current_time  # Record actual timeline position for subtitle sync
                 v_clip = AudioFileClip(segment.audio_path).set_start(current_time)
                 voice_clips.append(v_clip)
                 segments_with_audio += 1
-                
+
                 # Advance timeline by segment duration
                 current_time += segment.duration
 
@@ -54,13 +55,14 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
                 if include_sfx and segment.highlight:
                     h_category = segment.highlight.category
                     h_traits = segment.highlight.desired_traits
+                    h_description = segment.highlight.description
                     h_placement = segment.highlight.placement
                     h_beat_delay = segment.highlight.beat_delay
                     h_offset = segment.highlight.offset_seconds
                     h_vol_mod = segment.highlight.volume_modifier
 
                     print(f"   [Highlight] Searching SFX for Category: {h_category}, Traits: {h_traits}")
-                    sfx_path = sfx_service.get_sfx_path(h_category, h_traits)
+                    sfx_path = sfx_service.get_sfx_path(h_category, h_traits, h_description)
 
                     if sfx_path and os.path.exists(sfx_path):
                         # Calculate trigger time based on placement
@@ -72,15 +74,22 @@ def assemble_dialogue_v2(script_dto: ScriptDTO, theme_config: ThemeConfig, outpu
                         base_vol = 0.8
                         vol_multiplier = base_vol * (10 ** (h_vol_mod / 20))
 
-                        comfort_gap = BEAT_DELAY_SECONDS.get(h_beat_delay, 0.0)
+                        beat_delay = BEAT_DELAY_SECONDS.get(h_beat_delay, 0.0)
                         print(f"   [Highlight] Inserting SFX at {final_start_time:.2f}s (Placement: {h_placement}, Offset: {h_offset}s, BeatDelay: {h_beat_delay}) | Vol: {vol_multiplier:.2f} | Path: {sfx_path}")
 
                         try:
                             sfx_clip = AudioFileClip(sfx_path).set_start(final_start_time)
                             sfx_clip = sfx_clip.volumex(vol_multiplier)
                             sfx_clips.append(sfx_clip)
-                            # Apply Comfort Gap: push next dialogue start by beat_delay
-                            current_time += comfort_gap
+                            # RF4: SFX starts at segment end and fades under the opening of the next line.
+                            # Advance by (sfx_duration - tail_overlap) + beat_delay so the last
+                            # SFX_TAIL_OVERLAP_SECONDS bleed naturally into the next dialogue.
+                            # start-placement SFX plays simultaneously with the segment — only beat_delay applies.
+                            if h_placement == "end":
+                                tail_bleed = max(sfx_clip.duration - SFX_TAIL_OVERLAP_SECONDS, 0.0)
+                                current_time += tail_bleed + beat_delay
+                            else:
+                                current_time += beat_delay
                         except Exception as inner_e:
                             print(f"⚠️ WARNING: Failed to load SFX file '{sfx_path}': {inner_e}")
                     else:

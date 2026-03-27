@@ -31,7 +31,7 @@ class LocalSFXProvider(ISFXProvider):
     coordinator to fall back to the AI provider.
     """
 
-    def get_sfx(self, category: str, desired_traits: List[str]) -> Optional[str]:
+    def get_sfx(self, category: str, desired_traits: List[str], description: Optional[str] = None) -> Optional[str]:
         with Session(engine) as session:
             try:
                 assets = session.exec(

@@ -116,6 +116,10 @@ themes:
                     "description": "2 to 5 descriptive trait strings (e.g., bonk, cartoon, fast)",
                     "items": { "type": "string" }
                   },
+                  "description": {
+                    "type": "string",
+                    "description": "Natural language prompt for ElevenLabs generation (e.g., 'a quick cartoon bonk with a spring reverb tail')"
+                  },
                   "placement": {
                     "type": "string",
                     "description": "Trigger at 'start' or 'end' of dialogue segment."
@@ -212,6 +216,10 @@ themes:
                     "type": "array",
                     "description": "2 to 5 descriptive trait strings (e.g., sharp, metallic, echo)",
                     "items": { "type": "string" }
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Natural language prompt for ElevenLabs generation (e.g., 'a sharp sudden metallic sting with an eerie echo')"
                   },
                   "placement": {
                     "type": "string",
@@ -316,6 +324,10 @@ themes:
                     "type": "array",
                     "description": "2 to 5 descriptive trait strings (e.g., punchy, light, quick)",
                     "items": { "type": "string" }
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Natural language prompt for ElevenLabs generation (e.g., 'a punchy light whoosh with a quick snappy tail')"
                   },
                   "placement": {
                     "type": "string",
